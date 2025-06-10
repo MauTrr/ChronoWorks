@@ -51,7 +51,7 @@ public class AsignacionService {
         nuevaAsignacion.setEstado(dto.getEstado());
 
         Asignacion asignacionGuardada = asignacionRepository.save(nuevaAsignacion);
-        return
+        return mapToRespuestaAsignacionDTO(asignacionGuardada);
     }
 
     private RespuestaAsignacionDTO mapToRespuestaAsignacionDTO(Asignacion asignacion)  {
