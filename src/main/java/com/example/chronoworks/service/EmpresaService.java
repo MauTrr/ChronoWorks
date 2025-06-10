@@ -23,7 +23,7 @@ public class EmpresaService {
     @Transactional
     public RespuestaEmpresaDTO registrarEmpresa(RespuestaEmpresaDTO dto) {
         if (empresaRepository.findByNombreEmpresa(dto.getNombreEmpresa()).isPresent()) {
-            throw new BadRequestException("La empresa con el nombre " + dto.getIdEmpresa() + " ya esta registrada");
+            throw new BadRequestException("La empresa con el nombre " + dto.getNombreEmpresa() + " ya esta registrada");
         }
 
         Empresa nuevaEmpresa = new Empresa();

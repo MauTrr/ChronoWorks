@@ -1,5 +1,6 @@
 package com.example.chronoworks.dto.campaña;
 
+import com.example.chronoworks.model.enums.CampañaEstado;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,4 +16,5 @@ public class RespuestaCampañaDTO {
     private LocalDate fechaFin;
     private Integer idEmpresa;
     private String nombreEmpresa;
+    private CampañaEstado estado;
 }

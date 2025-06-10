@@ -7,7 +7,7 @@ import java.time.LocalTime;
 
 @Data
 @Builder
-public class TurnoRespuestaDTO {
+public class RespuestaTurnoDTO {
     private Integer idTurno;
     private LocalTime horaEntrada;
     private LocalTime horaSalida;

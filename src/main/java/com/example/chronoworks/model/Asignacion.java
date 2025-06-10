@@ -1,9 +1,11 @@
 package com.example.chronoworks.model;
 
+import com.example.chronoworks.model.enums.AsignacionEstado;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "asignacion")
@@ -16,9 +18,13 @@ public class Asignacion {
     private Integer idAsignacion;
 
     @Column(name = "fecha")
-    private LocalDate fecha;
+    private LocalDateTime fecha;
     @Column(name = "observaciones")
     private String observaciones;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado", nullable = false)
+    private AsignacionEstado estado;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tarea", nullable = false)

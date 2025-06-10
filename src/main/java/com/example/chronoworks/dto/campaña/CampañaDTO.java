@@ -1,5 +1,6 @@
 package com.example.chronoworks.dto.campaña;
 
+import com.example.chronoworks.model.enums.CampañaEstado;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -24,5 +25,8 @@ public class CampañaDTO {
 
     @NotNull(message = "El ID de la empresa no puede ser nulo")
     private Integer idEmpresa;
+
+    @NotNull(message = "El estadp inicial de la campaña es obligatorio.")
+    private CampañaEstado estado;
 
 }

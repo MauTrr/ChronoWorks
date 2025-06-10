@@ -1,5 +1,6 @@
 package com.example.chronoworks.model;
 
+import com.example.chronoworks.model.enums.CampañaEstado;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -24,10 +25,16 @@ public class Campaña {
     @Column(name = "fecha_fin")
     private LocalDate fechafin;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado",  nullable = false)
+    private CampañaEstado estado;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_empresa", nullable = false)
     private Empresa empresa;
 
     @OneToMany(mappedBy = "campaña", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private java.util.List<Asignacion> asignaciones;
+
+
 }

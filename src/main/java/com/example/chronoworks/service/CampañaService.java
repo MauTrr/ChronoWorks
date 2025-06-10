@@ -6,6 +6,7 @@ import com.example.chronoworks.exception.BadRequestException;
 import com.example.chronoworks.exception.ResourceNotFoundException;
 import com.example.chronoworks.model.Campaña;
 import com.example.chronoworks.model.Empresa;
+import com.example.chronoworks.model.enums.CampañaEstado;
 import com.example.chronoworks.repository.CampañaRepository;
 import com.example.chronoworks.repository.EmpresaRepository;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class CampañaService {
         nuevaCampaña.setFechaInicio(dto.getFechaInicio());
         nuevaCampaña.setFechafin(dto.getFechaFin());
         nuevaCampaña.setEmpresa(empresa);
+        nuevaCampaña.setEstado(dto.getEstado());
 
         Campaña campañaGuardada = campañaRepository.save(nuevaCampaña);
 
@@ -60,12 +62,17 @@ public class CampañaService {
     }
 
     @Transactional
-    public RespuestaCampañaDTO actualizarCampaña(Integer idCampaña, CampañaDTO dto) {
+    public RespuestaCampañaDTO actualizarCampaña(Integer idCampaña, CampañaDTO dto, CampañaEstado nuevoEstado) {
         Campaña campañaExistente = campañaRepository.findById(idCampaña)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaña con ID " + idCampaña + " no encontrada"));
         if(dto.getNombreCampaña() != null && dto.getNombreCampaña().equals(campañaExistente.getNombreCampaña())){
             throw new BadRequestException("El nuevo nombre de la campaña '" + dto.getNombreCampaña() + "' no encontrada");
         }
+        if ((campañaExistente.getEstado() == CampañaEstado.FINALIZADA || campañaExistente.getEstado() == CampañaEstado.CANCELADA)
+        && (nuevoEstado == CampañaEstado.ACTIVA || nuevoEstado == CampañaEstado.PLANEADA)) {
+            throw new BadRequestException("No se puede cambiar el estado de una campaña cancelada o finalizada a activa a planificada.");
+        }
+
         campañaExistente.setNombreCampaña(dto.getNombreCampaña());
 
         if(dto.getNombreCampaña() != null) campañaExistente.setNombreCampaña(dto.getNombreCampaña());
@@ -76,9 +83,15 @@ public class CampañaService {
             Empresa nuevaEmpresa = empresaRepository.findById(dto.getIdEmpresa())
                     .orElseThrow(() -> new ResourceNotFoundException("Empresa con ID " + dto.getIdEmpresa() + " no encontrada"));
         }
-
+        campañaExistente.setEstado(nuevoEstado);
         Campaña campañaActualizada = campañaRepository.save(campañaExistente);
         return mapToRespuestaCampañaDTO(campañaActualizada);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RespuestaCampañaDTO> buscarCampañaporEstado(CampañaEstado estado) {
+        return  campañaRepository.findByEstado(estado).stream()
+                .map(this::mapToRespuestaCampañaDTO).collect(Collectors.toList());
     }
 
     @Transactional
@@ -90,7 +103,6 @@ public class CampañaService {
                 .map(this::mapToRespuestaCampañaDTO)
                 .collect(Collectors.toList());
     }
-
 
     private RespuestaCampañaDTO mapToRespuestaCampañaDTO(Campaña campaña) {
         return  RespuestaCampañaDTO.builder()
