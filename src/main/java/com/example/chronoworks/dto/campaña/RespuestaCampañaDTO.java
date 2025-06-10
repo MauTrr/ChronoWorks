@@ -9,7 +9,7 @@ import java.time.LocalDate;
 @Builder
 public class RespuestaCampañaDTO {
     private Integer idCampaña;
-    private String nommbreCampaña;
+    private String nombreCampaña;
     private String descripcion;
     private LocalDate fechaInicio;
     private LocalDate fechaFin;

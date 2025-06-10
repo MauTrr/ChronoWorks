@@ -9,8 +9,8 @@ import java.util.Optional;
 public interface ControlAccesoRepository extends JpaRepository<ControlAcceso, Integer> {
 
     //Metodo para encontrar el ultimo registro de ingreso de un empleado que aun no ha marcado su salida
-    Optional<ControlAcceso> findUltimoEmpleadoActivo(Empleado empleado);
+    Optional<ControlAcceso> findFirstByEmpleadoAndHoraSalidaIsNullOrderByHoraEntradaDesc(Empleado empleado);
 
     //Metodo para obtener el historial del control de acceso de un empleaddo
-    Optional<ControlAcceso> findByEmpleadoOrdenPorHoras(Empleado empleado);
+    Optional<ControlAcceso> findByEmpleadoOrderByHoraEntradaDesc(Empleado empleado);
 }

@@ -81,31 +81,31 @@ public class EmpleadoService {
         Empleado empleadoGuardado  = empleadoRepository.save(empleado);
 
         //Mapea al DTO de respuesta y regresa
-        return mapToEmpleadoRespuestaDTO(empleadoGuardado);
+        return mapToRespuestaEmpleadoDTO(empleadoGuardado);
     }
 
     @Transactional(readOnly = true)
-    public RespuestaEmpleadoDTO obtenerEmpleado(Integer id) {
-        Empleado empleado = empleadoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException( "Empleado con ID " + id + " no encontrado"));
-        return mapToEmpleadoRespuestaDTO(empleado);
+    public RespuestaEmpleadoDTO obtenerEmpleado(Integer idEmpleado) {
+        Empleado empleado = empleadoRepository.findById(idEmpleado)
+                .orElseThrow(() -> new ResourceNotFoundException( "Empleado con ID " + idEmpleado + " no encontrado"));
+        return mapToRespuestaEmpleadoDTO(empleado);
     }
 
     @Transactional(readOnly = true)
     public List<RespuestaEmpleadoDTO> listarEmpleados() {
-        return empleadoRepository.findAll().stream().map(this::mapToEmpleadoRespuestaDTO).collect(Collectors.toList());
+        return empleadoRepository.findAll().stream().map(this::mapToRespuestaEmpleadoDTO).collect(Collectors.toList());
     }
 
     @Transactional
-    public RespuestaEmpleadoDTO actualizarEmpleado(Integer id, ActualizarEmpleadoDTO dto) {
-        Empleado empleadoExistente = empleadoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException( "Empleado con ID " + id + " no encontrado"));
+    public RespuestaEmpleadoDTO actualizarEmpleado(Integer idEmpleado, ActualizarEmpleadoDTO dto) {
+        Empleado empleadoExistente = empleadoRepository.findById(idEmpleado)
+                .orElseThrow(() -> new ResourceNotFoundException( "Empleado con ID " + idEmpleado + " no encontrado"));
 
         if(dto.getNombre() != null) empleadoExistente.setNombre(dto.getNombre());
         if(dto.getApellido() !=null) empleadoExistente.setApellido(dto.getApellido());
         if(dto.getCorreo() !=null) {
             empleadoRepository.findByCorreo(dto.getCorreo()).ifPresent(e ->{
-                if (!e.getIdEmpleado().equals(id)) {
+                if (!e.getIdEmpleado().equals(idEmpleado)) {
                     throw new BadRequestException("El correo electronico ya esta registrado por otro empleado");
                 }
             });
@@ -118,19 +118,19 @@ public class EmpleadoService {
             empleadoExistente.setTurno(nuevoTurno);
         }
         Empleado empleadoActualizado = empleadoRepository.save(empleadoExistente);
-        return mapToEmpleadoRespuestaDTO(empleadoActualizado);
+        return mapToRespuestaEmpleadoDTO(empleadoActualizado);
     }
 
     @Transactional
-    public void eliminarEmpleado(Integer id) {
-        if (!empleadoRepository.existsById(id)){
-            throw new ResourceNotFoundException("Empleado con ID " + id + " no se ha encontrado para eliminar");
+    public void eliminarEmpleado(Integer idEmpleado) {
+        if (!empleadoRepository.existsById(idEmpleado)){
+            throw new ResourceNotFoundException("Empleado con ID " + idEmpleado + " no se ha encontrado para eliminar");
         }
-        empleadoRepository.deleteById(id);
+        empleadoRepository.deleteById(idEmpleado);
     }
 
 
-    private RespuestaEmpleadoDTO mapToEmpleadoRespuestaDTO(Empleado empleado) {
+    private RespuestaEmpleadoDTO mapToRespuestaEmpleadoDTO(Empleado empleado) {
         return RespuestaEmpleadoDTO.builder()
                 .idEmpleado(empleado.getIdEmpleado())
                 .nombre(empleado.getNombre())
