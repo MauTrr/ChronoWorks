@@ -1,19 +1,26 @@
 package com.example.chronoworks.service;
 
 import com.example.chronoworks.dto.asignacion.AsignacionDTO;
+import com.example.chronoworks.dto.asignacion.FiltroAsignacionDTO;
 import com.example.chronoworks.dto.asignacion.RespuestaAsignacionDTO;
+import com.example.chronoworks.exception.IllegalStateException;
 import com.example.chronoworks.exception.ResourceNotFoundException;
 import com.example.chronoworks.model.Asignacion;
 import com.example.chronoworks.model.Campana;
 import com.example.chronoworks.model.Empleado;
 import com.example.chronoworks.model.Tarea;
+import com.example.chronoworks.model.enums.AsignacionEstado;
 import com.example.chronoworks.repository.AsignacionRepository;
 import com.example.chronoworks.repository.CampanaRepository;
 import com.example.chronoworks.repository.EmpleadoRepository;
 import com.example.chronoworks.repository.TareaRepository;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,14 +44,14 @@ public class AsignacionService {
     }
 
     @Transactional
-    public RespuestaAsignacionDTO crearAsignacion(RespuestaAsignacionDTO dto) {
+    public RespuestaAsignacionDTO crearAsignacion(AsignacionDTO dto) {
 
         Tarea tarea = tareaRepository.findById(dto.getIdTarea())
-                .orElseThrow(() -> new ResourceNotFoundException("Tarea con ID " + dto.getIdTarea() + " no encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada."));
         Empleado empleado = empleadoRepository.findById(dto.getIdEmpleado())
-                .orElseThrow(() -> new ResourceNotFoundException("Empleado con ID " + dto.getIdEmpleado() + " no encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado."));
         Campana campana = campanaRepository.findById(dto.getIdCampana())
-                .orElseThrow(() -> new ResourceNotFoundException("Campaña con ID " + dto.getIdCampana() + " no encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Campaña no encontrada."));
 
         Asignacion nuevaAsignacion = new Asignacion();
         nuevaAsignacion.setFecha(dto.getFecha());
@@ -52,7 +59,7 @@ public class AsignacionService {
         nuevaAsignacion.setTarea(tarea);
         nuevaAsignacion.setEmpleado(empleado);
         nuevaAsignacion.setCampana(campana);
-        nuevaAsignacion.setEstado(dto.getEstado());
+        nuevaAsignacion.setEstado(AsignacionEstado.ACTIVA);
 
         Asignacion asignacionGuardada = asignacionRepository.save(nuevaAsignacion);
         return mapToRespuestaAsignacionDTO(asignacionGuardada);
@@ -61,35 +68,86 @@ public class AsignacionService {
     @Transactional(readOnly = true)
     public RespuestaAsignacionDTO obtenerAsignacion(Integer idAsignacion) {
         Asignacion asignacion = asignacionRepository.findById(idAsignacion)
-                .orElseThrow(() -> new ResourceNotFoundException("Asignacion con ID " + idAsignacion + " no encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
         return mapToRespuestaAsignacionDTO(asignacion);
     }
 
+
     @Transactional(readOnly = true)
-    public List<RespuestaAsignacionDTO> listarAsignaciones() {
-        return asignacionRepository.findAll().stream().map(this::mapToRespuestaAsignacionDTO).collect(Collectors.toList());
+    public List<RespuestaAsignacionDTO> listarAsignaciones(FiltroAsignacionDTO filtro) {
+        return listarAsignacionesConFiltros(filtro, false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RespuestaAsignacionDTO> listarAsignacionesActivas(FiltroAsignacionDTO filtro) {
+        return listarAsignacionesConFiltros(filtro, true);
+    }
+
+    private List<RespuestaAsignacionDTO> listarAsignacionesConFiltros(FiltroAsignacionDTO filtro, boolean soloActivas) {
+        Specification<Asignacion> spec = crearSpecification(filtro, soloActivas);
+        List<Asignacion> asignaciones = asignacionRepository.findAll(spec);
+        return asignaciones.stream().map(this::mapToRespuestaAsignacionDTO).collect(Collectors.toList());
+    }
+
+    private Specification<Asignacion> crearSpecification(FiltroAsignacionDTO filtro, boolean soloActivas) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if(filtro.getNombreEmpleado()!= null && !filtro.getNombreEmpleado().trim().isEmpty()) {
+                Join<Asignacion, Empleado> empleadoJoin = root.join("empleado");
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(empleadoJoin.get("nombre")),
+                        "%" + filtro.getNombreEmpleado().toLowerCase() + "%"));
+            }
+
+            if(filtro.getApellidoEmpleado()!= null && !filtro.getApellidoEmpleado().trim().isEmpty()){
+                Join<Asignacion, Empleado> empleadoJoin  = root.join("empleado");
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(empleadoJoin.get("apellido")),
+                        "%" + filtro.getApellidoEmpleado().toLowerCase() + "%"));
+            }
+
+            if(filtro.getNombreCampana()!= null && !filtro.getNombreCampana().trim().isEmpty()) {
+                Join<Asignacion, Campana> campanaJoin = root.join("campaña");
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(campanaJoin.get("nombre_campaña")),
+                        "%" + filtro.getNombreCampana().toLowerCase() + "%"));
+            }
+
+            if(filtro.getFechaAsignacion()!= null) {
+                predicates.add(criteriaBuilder.equal(root.get("fecha"), filtro.getFechaAsignacion()));
+            }
+
+            if(filtro.getEstado()!= null) {
+                predicates.add(criteriaBuilder.equal(root.get("estado"), filtro.getEstado()));
+            }
+
+            if(soloActivas) {
+                predicates.add(criteriaBuilder.notEqual(root.get("estado"), AsignacionEstado.ARCHIVADA));
+                predicates.add(criteriaBuilder.notEqual(root.get("estado"), AsignacionEstado.CANCELADA));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
     }
 
     @Transactional
     public RespuestaAsignacionDTO actualizarAsignacion(Integer idAsignacion, AsignacionDTO dto) {
         Asignacion asignacionExistente = asignacionRepository.findById(idAsignacion)
-                .orElseThrow(() -> new ResourceNotFoundException("Asignacion con ID " + idAsignacion + " no encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
 
         if(dto.getFecha() != null) asignacionExistente.setFecha(dto.getFecha());
         if(dto.getObservaciones()!= null) asignacionExistente.setObservaciones(dto.getObservaciones());
         if(dto.getIdTarea()!= null) {
             Tarea nuevaTarea = tareaRepository.findById(dto.getIdTarea())
-                    .orElseThrow(()-> new ResourceNotFoundException("Tarea  con ID " + dto.getIdTarea() + " no encontrada."));
+                    .orElseThrow(()-> new ResourceNotFoundException("Tarea no encontrada."));
             asignacionExistente.setTarea(nuevaTarea);
         }
         if(dto.getIdCampana()!=  null) {
             Campana nuevaCampana = campanaRepository.findById(dto.getIdCampana())
-                    .orElseThrow(() -> new ResourceNotFoundException("Campaaña con ID " + dto.getIdCampana() + " no encontrada."));
+                    .orElseThrow(() -> new ResourceNotFoundException("Campaaña no encontrada."));
             asignacionExistente.setCampana(nuevaCampana);
         }
         if(dto.getIdEmpleado()!= null) {
             Empleado nuevoEmpleado = empleadoRepository.findById(dto.getIdEmpleado())
-                    .orElseThrow(() -> new ResourceNotFoundException("Empleado con ID " + dto.getIdEmpleado() + " no encontrado."));
+                    .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado."));
             asignacionExistente.setEmpleado(nuevoEmpleado);
         }
 
@@ -97,7 +155,60 @@ public class AsignacionService {
         return mapToRespuestaAsignacionDTO(asignacionActualizada);
     }
 
+    @Transactional
+    public RespuestaAsignacionDTO iniciarAsignacion(Integer idAsignacion) {
+        Asignacion asignacion= asignacionRepository.findById(idAsignacion)
+                .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
 
+        if(asignacion.getEstado()!= AsignacionEstado.ACTIVA) {
+            throw new IllegalStateException("Solo se pueden iniciar asignaciones en el estado ACTIVA");
+        }
+
+        asignacion.setEstado(AsignacionEstado.EN_PROCESO);
+        return mapToRespuestaAsignacionDTO(asignacionRepository.save(asignacion));
+    }
+
+    @Transactional
+    public RespuestaAsignacionDTO finalizarAsignacion(Integer idAsignacion) {
+        Asignacion asignacion= asignacionRepository.findById(idAsignacion)
+                .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
+
+        if(asignacion.getEstado()!= AsignacionEstado.EN_PROCESO) {
+            throw new IllegalStateException("Solo se pueden iniciar asignaciones en el estado ACTIVA");
+        }
+
+        asignacion.setEstado(AsignacionEstado.FINALIZADA);
+        return mapToRespuestaAsignacionDTO(asignacionRepository.save(asignacion));
+    }
+
+    @Transactional
+    public RespuestaAsignacionDTO cancelarAsignacion(Integer idAsignacion) {
+        Asignacion asignacion = asignacionRepository.findById(idAsignacion)
+                .orElseThrow(() -> new ResourceNotFoundException("Asignacion con ID " + idAsignacion + " no encontrada."));
+
+        if(asignacion.getEstado() == AsignacionEstado.FINALIZADA) {
+            throw new IllegalStateException("No se puede cancelar una asignacion ya finalizada");
+        }
+
+        asignacion.setEstado(AsignacionEstado.CANCELADA);
+
+        Asignacion asignacionActualizada = asignacionRepository.save(asignacion);
+        return mapToRespuestaAsignacionDTO(asignacionActualizada);
+    }
+
+    @Transactional
+    public RespuestaAsignacionDTO archivarAsignacion(Integer idAsignacion) {
+        Asignacion asignacion = asignacionRepository.findById(idAsignacion)
+                .orElseThrow(() -> new ResourceNotFoundException("Asignacion con ID " + idAsignacion + " no encontrada."));
+
+        if(asignacion.getEstado()!= AsignacionEstado.FINALIZADA && asignacion.getEstado()!= AsignacionEstado.CANCELADA) {
+            throw new IllegalStateException("Solo  se pueden archivar asignaciones finalizadas o canceladas");
+        }
+
+        asignacion.setEstado(AsignacionEstado.ARCHIVADA);
+        Asignacion asignacionActualizada = asignacionRepository.save(asignacion);
+        return  mapToRespuestaAsignacionDTO(asignacionActualizada);
+    }
 
     private RespuestaAsignacionDTO mapToRespuestaAsignacionDTO(Asignacion asignacion)  {
         return RespuestaAsignacionDTO.builder()

@@ -12,6 +12,8 @@ import com.example.chronoworks.repository.EmpresaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,7 +42,7 @@ public class CampanaService {
         nuevaCampana.setNombreCampana(dto.getNombreCampana());
         nuevaCampana.setDescripcion(dto.getDescripcion());
         nuevaCampana.setFechaInicio(dto.getFechaInicio());
-        nuevaCampana.setFechafin(dto.getFechaFin());
+        nuevaCampana.setFechaFin(dto.getFechaFin());
         nuevaCampana.setEmpresa(empresa);
         nuevaCampana.setEstado(dto.getEstado());
 
@@ -58,7 +60,8 @@ public class CampanaService {
 
     @Transactional(readOnly = true)
     public List<RespuestaCampanaDTO> listarCampanas() {
-        return campanaRepository.findAll().stream().map(this::mapToRespuestaCampanaDTO).collect(Collectors.toList());
+        List<CampanaEstado> estadosVisibles = Arrays.asList(CampanaEstado.PLANEADA, CampanaEstado.ACTIVA);
+        return campanaRepository.findByEstadoIn(estadosVisibles).stream().map(this::mapToRespuestaCampanaDTO).collect(Collectors.toList());
     }
 
     @Transactional
@@ -66,11 +69,7 @@ public class CampanaService {
         Campana campanaExistente = campanaRepository.findById(idCampana)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaña con ID " + idCampana + " no encontrada"));
         if(dto.getNombreCampana() != null && dto.getNombreCampana().equals(campanaExistente.getNombreCampana())){
-            throw new BadRequestException("El nuevo nombre de la campaña '" + dto.getNombreCampana() + "' no encontrada");
-        }
-        if ((campanaExistente.getEstado() == CampanaEstado.FINALIZADA || campanaExistente.getEstado() == CampanaEstado.CANCELADA)
-        && (nuevoEstado == CampanaEstado.ACTIVA || nuevoEstado == CampanaEstado.PLANEADA)) {
-            throw new BadRequestException("No se puede cambiar el estado de una campaña cancelada o finalizada a activa a planificada.");
+            throw new BadRequestException("El nuevo nombre de la campaña '" + dto.getNombreCampana() + "' ya esta en uso");
         }
 
         campanaExistente.setNombreCampana(dto.getNombreCampana());
@@ -78,13 +77,35 @@ public class CampanaService {
         if(dto.getNombreCampana() != null) campanaExistente.setNombreCampana(dto.getNombreCampana());
         if(dto.getDescripcion() != null) campanaExistente.setDescripcion(dto.getDescripcion());
         if(dto.getFechaInicio() != null) campanaExistente.setFechaInicio(dto.getFechaInicio());
-        if(dto.getFechaFin() != null) campanaExistente.setFechafin(dto.getFechaFin());
+        if(dto.getFechaFin() != null) campanaExistente.setFechaFin(dto.getFechaFin());
         if(dto.getIdEmpresa() != null) {
             Empresa nuevaEmpresa = empresaRepository.findById(dto.getIdEmpresa())
                     .orElseThrow(() -> new ResourceNotFoundException("Empresa con ID " + dto.getIdEmpresa() + " no encontrada"));
         }
-        campanaExistente.setEstado(nuevoEstado);
+
         Campana campanaActualizada = campanaRepository.save(campanaExistente);
+        return mapToRespuestaCampanaDTO(campanaActualizada);
+    }
+
+    @Transactional RespuestaCampanaDTO actualizarEstadosCampana(Integer idCampana, CampanaEstado nuevoEstado) {
+        Campana campana = campanaRepository.findById(idCampana)
+                .orElseThrow(() -> new ResourceNotFoundException("Campaña con ID " + idCampana + " no encontrada."));
+
+        if ((campana.getEstado() == CampanaEstado.FINALIZADA || campana.getEstado() == CampanaEstado.CANCELADA)
+                && (nuevoEstado == CampanaEstado.ACTIVA || nuevoEstado == CampanaEstado.PLANEADA)) {
+            throw new BadRequestException("No se puede cambiar el estado de una campaña finalizada o cancelada a activa o planificada.");
+        }
+
+        if (campana.getEstado() == nuevoEstado) {
+            throw new BadRequestException("La campaña con ID " + idCampana + " ya se encuentra en el estado " + nuevoEstado + ".");
+        }
+
+        if (nuevoEstado == CampanaEstado.FINALIZADA && campana.getFechaFin() == null) {
+            campana.setFechaFin(LocalDate.now());
+        }
+
+        campana.setEstado(nuevoEstado);
+        Campana campanaActualizada = campanaRepository.save(campana);
         return mapToRespuestaCampanaDTO(campanaActualizada);
     }
 
@@ -99,7 +120,8 @@ public class CampanaService {
         if (nombreFiltro == null || nombreFiltro.trim().isEmpty()) {
             return listarCampanas();
         }
-        return campanaRepository.findByNombreCampanaContainingIgnoreCase(nombreFiltro).stream()
+        List<CampanaEstado> estadosVisibles = Arrays.asList(CampanaEstado.PLANEADA, CampanaEstado.ACTIVA);
+        return campanaRepository.findByNombreCampanaContainingIgnoreCaseAndEstadoIn(nombreFiltro, estadosVisibles).stream()
                 .map(this::mapToRespuestaCampanaDTO)
                 .collect(Collectors.toList());
     }
@@ -110,7 +132,7 @@ public class CampanaService {
                 .nombreCampana(campana.getNombreCampana())
                 .descripcion(campana.getDescripcion())
                 .fechaInicio(campana.getFechaInicio())
-                .fechaFin(campana.getFechafin())
+                .fechaFin(campana.getFechaFin())
                 .idEmpresa(campana.getEmpresa()!= null ? campana.getEmpresa().getIdEmpresa() : null)
                 .nombreEmpresa(campana.getNombreCampana()!= null ? campana.getEmpresa().getNombreEmpresa():null)
                 .build();

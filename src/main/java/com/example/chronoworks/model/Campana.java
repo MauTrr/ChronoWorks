@@ -23,7 +23,7 @@ public class Campana {
     @Column(name = "fecha_inicio")
     private LocalDate fechaInicio;
     @Column(name = "fecha_fin")
-    private LocalDate fechafin;
+    private LocalDate fechaFin;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado",  nullable = false)
