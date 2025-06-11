@@ -4,5 +4,5 @@ public enum CampanaEstado {
     PLANEADA,
     ACTIVA,
     FINALIZADA,
-    CANCELADA;
+    CANCELADA
 }
