@@ -43,15 +43,15 @@ public class AsignacionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tarea con ID " + dto.getIdTarea() + " no encontrada."));
         Empleado empleado = empleadoRepository.findById(dto.getIdEmpleado())
                 .orElseThrow(() -> new ResourceNotFoundException("Empleado con ID " + dto.getIdEmpleado() + " no encontrado."));
-        Campana campaña = campanaRepository.findById(dto.getIdCampaña())
-                .orElseThrow(() -> new ResourceNotFoundException("Campaña con ID " + dto.getIdCampaña() + " no encontrada."));
+        Campana campana = campanaRepository.findById(dto.getIdCampana())
+                .orElseThrow(() -> new ResourceNotFoundException("Campaña con ID " + dto.getIdCampana() + " no encontrada."));
 
         Asignacion nuevaAsignacion = new Asignacion();
         nuevaAsignacion.setFecha(dto.getFecha());
         nuevaAsignacion.setObservaciones(dto.getObservaciones());
         nuevaAsignacion.setTarea(tarea);
         nuevaAsignacion.setEmpleado(empleado);
-        nuevaAsignacion.setCampaña(campaña);
+        nuevaAsignacion.setCampana(campana);
         nuevaAsignacion.setEstado(dto.getEstado());
 
         Asignacion asignacionGuardada = asignacionRepository.save(nuevaAsignacion);
@@ -82,10 +82,10 @@ public class AsignacionService {
                     .orElseThrow(()-> new ResourceNotFoundException("Tarea  con ID " + dto.getIdTarea() + " no encontrada."));
             asignacionExistente.setTarea(nuevaTarea);
         }
-        if(dto.getIdCampaña()!=  null) {
-            Campana nuevaCampaña = campanaRepository.findById(dto.getIdCampaña())
-                    .orElseThrow(() -> new ResourceNotFoundException("Campaaña con ID " + dto.getIdCampaña() + " no encontrada."));
-            asignacionExistente.setCampaña(nuevaCampaña);
+        if(dto.getIdCampana()!=  null) {
+            Campana nuevaCampana = campanaRepository.findById(dto.getIdCampana())
+                    .orElseThrow(() -> new ResourceNotFoundException("Campaaña con ID " + dto.getIdCampana() + " no encontrada."));
+            asignacionExistente.setCampana(nuevaCampana);
         }
         if(dto.getIdEmpleado()!= null) {
             Empleado nuevoEmpleado = empleadoRepository.findById(dto.getIdEmpleado())
@@ -107,8 +107,8 @@ public class AsignacionService {
                 .idTarea(asignacion.getTarea() != null ? asignacion.getTarea().getIdTarea():  null)
                 .nombreTarea(asignacion.getTarea()!= null ? asignacion.getTarea().getNombreTarea(): null)
                 .detalles(asignacion.getTarea()!= null ? asignacion.getTarea().getDetalles(): null)
-                .idCampaña(asignacion.getCampaña() != null ? asignacion.getCampaña().getIdCampaña(): null)
-                .nombreCampaña(asignacion.getCampaña()!= null ? asignacion.getCampaña().getNombreCampaña(): null)
+                .idCampana(asignacion.getCampana() != null ? asignacion.getCampana().getIdCampana(): null)
+                .nombreCampana(asignacion.getCampana()!= null ? asignacion.getCampana().getNombreCampana(): null)
                 .idEmpleado(asignacion.getEmpleado()!= null ? asignacion.getEmpleado().getIdEmpleado(): null)
                 .nombre(asignacion.getTarea()!= null ? asignacion.getEmpleado().getNombre(): null)
                 .apellido(asignacion.getEmpleado()!= null ? asignacion.getEmpleado().getApellido(): null)
