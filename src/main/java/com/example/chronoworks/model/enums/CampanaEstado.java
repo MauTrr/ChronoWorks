@@ -1,6 +1,6 @@
 package com.example.chronoworks.model.enums;
 
-public enum CampañaEstado{
+public enum CampanaEstado {
     PLANEADA,
     ACTIVA,
     FINALIZADA,

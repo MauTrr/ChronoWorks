@@ -25,5 +25,5 @@ public class Empresa {
     private String encargado;
 
     @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private java.util.List<Campaña> campañas;
+    private java.util.List<Campana> campanas;
 }

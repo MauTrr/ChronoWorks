@@ -1,33 +1,37 @@
 package com.example.chronoworks.service;
 
+import com.example.chronoworks.dto.asignacion.AsignacionDTO;
 import com.example.chronoworks.dto.asignacion.RespuestaAsignacionDTO;
 import com.example.chronoworks.exception.ResourceNotFoundException;
 import com.example.chronoworks.model.Asignacion;
-import com.example.chronoworks.model.Campaña;
+import com.example.chronoworks.model.Campana;
 import com.example.chronoworks.model.Empleado;
 import com.example.chronoworks.model.Tarea;
 import com.example.chronoworks.repository.AsignacionRepository;
-import com.example.chronoworks.repository.CampañaRepository;
+import com.example.chronoworks.repository.CampanaRepository;
 import com.example.chronoworks.repository.EmpleadoRepository;
 import com.example.chronoworks.repository.TareaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AsignacionService {
 
     private final AsignacionRepository asignacionRepository;
     private final EmpleadoRepository empleadoRepository;
-    private final CampañaRepository campañaRepository;
+    private final CampanaRepository campanaRepository;
     private final TareaRepository tareaRepository;
 
     public AsignacionService(AsignacionRepository asignacionRepository,
                              EmpleadoRepository empleadoRepository,
-                             CampañaRepository campañaRepository,
+                             CampanaRepository campanaRepository,
                              TareaRepository tareaRepository) {
         this.asignacionRepository = asignacionRepository;
         this.empleadoRepository = empleadoRepository;
-        this.campañaRepository = campañaRepository;
+        this.campanaRepository = campanaRepository;
         this.tareaRepository = tareaRepository;
 
     }
@@ -39,7 +43,7 @@ public class AsignacionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tarea con ID " + dto.getIdTarea() + " no encontrada."));
         Empleado empleado = empleadoRepository.findById(dto.getIdEmpleado())
                 .orElseThrow(() -> new ResourceNotFoundException("Empleado con ID " + dto.getIdEmpleado() + " no encontrado."));
-        Campaña campaña = campañaRepository.findById(dto.getIdCampaña())
+        Campana campaña = campanaRepository.findById(dto.getIdCampaña())
                 .orElseThrow(() -> new ResourceNotFoundException("Campaña con ID " + dto.getIdCampaña() + " no encontrada."));
 
         Asignacion nuevaAsignacion = new Asignacion();
@@ -54,6 +58,47 @@ public class AsignacionService {
         return mapToRespuestaAsignacionDTO(asignacionGuardada);
     }
 
+    @Transactional(readOnly = true)
+    public RespuestaAsignacionDTO obtenerAsignacion(Integer idAsignacion) {
+        Asignacion asignacion = asignacionRepository.findById(idAsignacion)
+                .orElseThrow(() -> new ResourceNotFoundException("Asignacion con ID " + idAsignacion + " no encontrada."));
+        return mapToRespuestaAsignacionDTO(asignacion);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RespuestaAsignacionDTO> listarAsignaciones() {
+        return asignacionRepository.findAll().stream().map(this::mapToRespuestaAsignacionDTO).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public RespuestaAsignacionDTO actualizarAsignacion(Integer idAsignacion, AsignacionDTO dto) {
+        Asignacion asignacionExistente = asignacionRepository.findById(idAsignacion)
+                .orElseThrow(() -> new ResourceNotFoundException("Asignacion con ID " + idAsignacion + " no encontrada."));
+
+        if(dto.getFecha() != null) asignacionExistente.setFecha(dto.getFecha());
+        if(dto.getObservaciones()!= null) asignacionExistente.setObservaciones(dto.getObservaciones());
+        if(dto.getIdTarea()!= null) {
+            Tarea nuevaTarea = tareaRepository.findById(dto.getIdTarea())
+                    .orElseThrow(()-> new ResourceNotFoundException("Tarea  con ID " + dto.getIdTarea() + " no encontrada."));
+            asignacionExistente.setTarea(nuevaTarea);
+        }
+        if(dto.getIdCampaña()!=  null) {
+            Campana nuevaCampaña = campanaRepository.findById(dto.getIdCampaña())
+                    .orElseThrow(() -> new ResourceNotFoundException("Campaaña con ID " + dto.getIdCampaña() + " no encontrada."));
+            asignacionExistente.setCampaña(nuevaCampaña);
+        }
+        if(dto.getIdEmpleado()!= null) {
+            Empleado nuevoEmpleado = empleadoRepository.findById(dto.getIdEmpleado())
+                    .orElseThrow(() -> new ResourceNotFoundException("Empleado con ID " + dto.getIdEmpleado() + " no encontrado."));
+            asignacionExistente.setEmpleado(nuevoEmpleado);
+        }
+
+        Asignacion asignacionActualizada = asignacionRepository.save(asignacionExistente);
+        return mapToRespuestaAsignacionDTO(asignacionActualizada);
+    }
+
+
+
     private RespuestaAsignacionDTO mapToRespuestaAsignacionDTO(Asignacion asignacion)  {
         return RespuestaAsignacionDTO.builder()
                 .idAsignacion(asignacion.getIdAsignacion())
@@ -61,7 +106,12 @@ public class AsignacionService {
                 .observaciones(asignacion.getObservaciones())
                 .idTarea(asignacion.getTarea() != null ? asignacion.getTarea().getIdTarea():  null)
                 .nombreTarea(asignacion.getTarea()!= null ? asignacion.getTarea().getNombreTarea(): null)
+                .detalles(asignacion.getTarea()!= null ? asignacion.getTarea().getDetalles(): null)
                 .idCampaña(asignacion.getCampaña() != null ? asignacion.getCampaña().getIdCampaña(): null)
+                .nombreCampaña(asignacion.getCampaña()!= null ? asignacion.getCampaña().getNombreCampaña(): null)
+                .idEmpleado(asignacion.getEmpleado()!= null ? asignacion.getEmpleado().getIdEmpleado(): null)
+                .nombre(asignacion.getTarea()!= null ? asignacion.getEmpleado().getNombre(): null)
+                .apellido(asignacion.getEmpleado()!= null ? asignacion.getEmpleado().getApellido(): null)
                 .estado(asignacion.getEstado())
                 .build();
     }

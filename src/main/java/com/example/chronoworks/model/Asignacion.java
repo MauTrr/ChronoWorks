@@ -4,7 +4,6 @@ import com.example.chronoworks.model.enums.AsignacionEstado;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -32,7 +31,7 @@ public class Asignacion {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_campaña", nullable = false)
-    private Campaña campaña;
+    private Campana campana;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_empleado", nullable = false)

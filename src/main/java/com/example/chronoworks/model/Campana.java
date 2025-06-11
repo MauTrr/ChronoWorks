@@ -1,6 +1,6 @@
 package com.example.chronoworks.model;
 
-import com.example.chronoworks.model.enums.CampañaEstado;
+import com.example.chronoworks.model.enums.CampanaEstado;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -9,15 +9,15 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "campaña")
 @Data
-public class Campaña {
+public class Campana {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_campaña")
-    private Integer idCampaña;
+    private Integer idCampana;
 
     @Column(name = "nombre_campaña")
-    private String nombreCampaña;
+    private String nombreCampana;
     @Column(name = "descripcion")
     private String descripcion;
     @Column(name = "fecha_inicio")
@@ -27,7 +27,7 @@ public class Campaña {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado",  nullable = false)
-    private CampañaEstado estado;
+    private CampanaEstado estado;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_empresa", nullable = false)

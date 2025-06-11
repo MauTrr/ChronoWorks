@@ -23,7 +23,7 @@ public class AsignacionDTO {
     private Integer idTarea;
 
     @NotNull(message = "El ID de la campaña no puede ser nulo")
-    private Integer idCampaña;
+    private Integer idCampana;
 
     @NotNull(message = "El ID del empleado no puede ser nulo")
     private Integer idEmpleado;

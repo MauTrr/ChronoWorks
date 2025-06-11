@@ -1,6 +1,6 @@
-package com.example.chronoworks.dto.campaña;
+package com.example.chronoworks.dto.campana;
 
-import com.example.chronoworks.model.enums.CampañaEstado;
+import com.example.chronoworks.model.enums.CampanaEstado;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -9,9 +9,9 @@ import lombok.Data;
 import java.time.LocalDate;
 
 @Data
-public class CampañaDTO {
+public class CampanaDTO {
     @NotBlank(message = "El nombre de la campaña no puede estar vacio")
-    private String nombreCampaña;
+    private String nombreCampana;
 
     private String descripcion;
 
@@ -27,6 +27,6 @@ public class CampañaDTO {
     private Integer idEmpresa;
 
     @NotNull(message = "El estadp inicial de la campaña es obligatorio.")
-    private CampañaEstado estado;
+    private CampanaEstado estado;
 
 }

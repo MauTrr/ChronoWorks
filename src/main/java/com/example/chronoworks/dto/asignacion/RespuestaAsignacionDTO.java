@@ -4,7 +4,6 @@ import com.example.chronoworks.model.enums.AsignacionEstado;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -15,10 +14,9 @@ public class RespuestaAsignacionDTO {
     private String observaciones;
     private Integer idTarea;
     private String nombreTarea;
-    private String detallesTarea;
-    private Integer idCampaña;
-    private String nombreCampaña;
-    private String descripcionCampaña;
+    private String detalles;
+    private Integer idCampana;
+    private String nombreCampana;
     private Integer idEmpleado;
     private String nombre;
     private String apellido;
