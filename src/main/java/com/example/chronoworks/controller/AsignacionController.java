@@ -57,7 +57,7 @@ public class AsignacionController {
         return ResponseEntity.ok(asignacionService.listarAsignacionesActivas(filtro, pageable));
     }
 
-    @PutMapping("/{idAsignacion}")
+    @PutMapping("/{idAsignacion}/actualizar")
     public ResponseEntity<RespuestaAsignacionDTO> actualizarAsignacion(@PathVariable Integer idAsignacion, @Valid @RequestBody AsignacionDTO dto) {
         RespuestaAsignacionDTO asignacionActualizada = asignacionService.actualizarAsignacion(idAsignacion, dto);
         return ResponseEntity.ok(asignacionActualizada);

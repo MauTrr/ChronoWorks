@@ -45,7 +45,7 @@ public class EmpresaController {
         return ResponseEntity.ok(empresaService.listarEmpresas(pageable));
     }
 
-    @PutMapping("/{idEmpresa}")
+    @PutMapping("/{idEmpresa}/actualizar")
     public ResponseEntity<RespuestaEmpresaDTO> actualizarEmpresa(@PathVariable Integer idEmpresa, @Valid @RequestBody EmpresaDTO dto) {
         RespuestaEmpresaDTO empresaActualizada = empresaService.actualizarEmpresa(idEmpresa, dto);
         return ResponseEntity.ok(empresaActualizada);

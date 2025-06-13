@@ -37,13 +37,13 @@ public class TurnoController {
         return ResponseEntity.ok(turnos);
     }
 
-    @PutMapping("/{idTurno}")
+    @PutMapping("/{idTurno}/actualizar")
     public ResponseEntity<RespuestaTurnoDTO> actualizarTurno(@PathVariable Integer idTurno, @Valid @RequestBody TurnoDTO dto) {
         RespuestaTurnoDTO turnoActualizado = turnoService.actualizarTurno(idTurno, dto);
         return ResponseEntity.ok(turnoActualizado);
     }
 
-    @DeleteMapping("/{idTurno}")
+    @DeleteMapping("/{idTurno}/eliminar")
     public ResponseEntity<RespuestaTurnoDTO> eliminarTurno(@PathVariable Integer idTurno) {
         turnoService.eliminarTurno(idTurno);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

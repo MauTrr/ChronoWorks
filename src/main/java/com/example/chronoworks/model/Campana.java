@@ -33,7 +33,7 @@ public class Campana {
     @JoinColumn(name = "id_empresa", nullable = false)
     private Empresa empresa;
 
-    @OneToMany(mappedBy = "campaña", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "campana", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private java.util.List<Asignacion> asignaciones;
 
 

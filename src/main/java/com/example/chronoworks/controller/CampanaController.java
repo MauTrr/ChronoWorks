@@ -55,7 +55,7 @@ public class CampanaController {
         return ResponseEntity.ok(campanaService.listarCampanasActivas(filtro, pageable));
     }
 
-    @GetMapping("/{idCampana}")
+    @GetMapping("/{idCampana}/actualizar")
     public ResponseEntity<RespuestaCampanaDTO> actualizarCampana(@PathVariable Integer idCampana, @Valid @RequestBody CampanaDTO dto) {
         RespuestaCampanaDTO campanaActualizada = campanaService.actualizarCampana(idCampana, dto);
         return ResponseEntity.ok(campanaActualizada);
@@ -79,7 +79,7 @@ public class CampanaController {
         return ResponseEntity.ok(respuesta);
     }
 
-    @PutMapping("/{idCampana}/iniciar")
+    @PutMapping("/{idCampana}/archivar")
     public ResponseEntity<RespuestaCampanaDTO> archivarCampana(@PathVariable Integer idCampana) {
         RespuestaCampanaDTO respuesta = campanaService.archivarCampana(idCampana);
         return ResponseEntity.ok(respuesta);

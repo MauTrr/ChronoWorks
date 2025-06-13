@@ -45,7 +45,7 @@ public class TareaController {
         return ResponseEntity.ok(tareaService.listarTarea(pageable));
     }
 
-    @PutMapping("/{idTarea}")
+    @PutMapping("/{idTarea}/actualizar")
     public ResponseEntity<RespuestaTareaDTO> actualizarTarea(@PathVariable Integer idTarea, @Valid @RequestBody TareaDTO dto) {
         RespuestaTareaDTO tareaActualizada = tareaService.actualizarTarea(idTarea, dto);
         return ResponseEntity.ok(tareaActualizada);

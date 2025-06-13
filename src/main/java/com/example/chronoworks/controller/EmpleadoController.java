@@ -29,7 +29,7 @@ public class EmpleadoController {
         return new ResponseEntity<>(nuevoEmpleado, HttpStatus.CREATED);
     }
 
-    @PostMapping("/{idAsignacion}")
+    @PostMapping("/{idEmpleado}")
     public ResponseEntity<RespuestaEmpleadoDTO> obtenerEmpleado(@PathVariable Integer idEmpleado) {
         RespuestaEmpleadoDTO empleado = empleadoService.obtenerEmpleado(idEmpleado);
         return ResponseEntity.ok(empleado);
@@ -46,7 +46,7 @@ public class EmpleadoController {
         return ResponseEntity.ok(empleadoService.listarEmpleados(pageable));
     }
 
-    @PutMapping("/{idEmpleado}")
+    @PutMapping("/{idEmpleado}/actualizar")
     public ResponseEntity<RespuestaEmpleadoDTO> actualizarEmpleado(@PathVariable Integer idEmpleado, @Valid @RequestBody ActualizarEmpleadoDTO dto) {
         RespuestaEmpleadoDTO empleadoActualizado = empleadoService.actualizarEmpleado(idEmpleado, dto);
         return ResponseEntity.ok(empleadoActualizado);
