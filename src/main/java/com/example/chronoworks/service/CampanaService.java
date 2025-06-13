@@ -1,21 +1,26 @@
 package com.example.chronoworks.service;
 
 import com.example.chronoworks.dto.campana.CampanaDTO;
+import com.example.chronoworks.dto.campana.FiltroCampanaDTO;
 import com.example.chronoworks.dto.campana.RespuestaCampanaDTO;
 import com.example.chronoworks.exception.BadRequestException;
+import com.example.chronoworks.exception.IllegalStateException;
 import com.example.chronoworks.exception.ResourceNotFoundException;
 import com.example.chronoworks.model.Campana;
 import com.example.chronoworks.model.Empresa;
 import com.example.chronoworks.model.enums.CampanaEstado;
 import com.example.chronoworks.repository.CampanaRepository;
 import com.example.chronoworks.repository.EmpresaRepository;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class CampanaService {
@@ -30,13 +35,13 @@ public class CampanaService {
     }
 
     @Transactional
-    public RespuestaCampanaDTO crearCampana(RespuestaCampanaDTO dto) {
+    public RespuestaCampanaDTO crearCampana(CampanaDTO dto) {
         if(campanaRepository.findByNombreCampana(dto.getNombreCampana()).isPresent()) {
             throw new BadRequestException("El nombre de la campaña ya esta en uso");
         }
 
         Empresa empresa = empresaRepository.findById(dto.getIdEmpresa())
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa con ID " + dto.getIdEmpresa() + " no encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada."));
 
         Campana nuevaCampana = new Campana();
         nuevaCampana.setNombreCampana(dto.getNombreCampana());
@@ -44,32 +49,70 @@ public class CampanaService {
         nuevaCampana.setFechaInicio(dto.getFechaInicio());
         nuevaCampana.setFechaFin(dto.getFechaFin());
         nuevaCampana.setEmpresa(empresa);
-        nuevaCampana.setEstado(dto.getEstado());
+        nuevaCampana.setEstado(CampanaEstado.ACTIVA);
 
         Campana campanaGuardada = campanaRepository.save(nuevaCampana);
-
         return mapToRespuestaCampanaDTO(campanaGuardada);
     }
 
     @Transactional(readOnly = true)
     public RespuestaCampanaDTO obtenerCampana(Integer idCampana) {
         Campana campana = campanaRepository.findById(idCampana)
-                .orElseThrow(() -> new ResourceNotFoundException( "campaña con ID " + idCampana + " no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException( "Campaña no encontrada."));
         return mapToRespuestaCampanaDTO(campana);
     }
 
     @Transactional(readOnly = true)
-    public List<RespuestaCampanaDTO> listarCampanas() {
-        List<CampanaEstado> estadosVisibles = Arrays.asList(CampanaEstado.PLANEADA, CampanaEstado.ACTIVA);
-        return campanaRepository.findByEstadoIn(estadosVisibles).stream().map(this::mapToRespuestaCampanaDTO).collect(Collectors.toList());
+    public Page<RespuestaCampanaDTO> listarCampanas(FiltroCampanaDTO filtro, Pageable pageable) {
+        return listarCampanasConFiltros(filtro, false, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<RespuestaCampanaDTO> listarCampanasActivas(FiltroCampanaDTO filtro, Pageable pageable) {
+        return listarCampanasConFiltros(filtro, true, pageable);
     }
 
     @Transactional
-    public RespuestaCampanaDTO actualizarCampana(Integer idCampana, CampanaDTO dto, CampanaEstado nuevoEstado) {
+    public  Page<RespuestaCampanaDTO> listarCampanasConFiltros(FiltroCampanaDTO filtro, boolean soloActivas, Pageable pageable) {
+        Specification<Campana> spec = crearSpecificationCampana(filtro, soloActivas);
+        Page<Campana> campanasPage = campanaRepository.findAll(spec, pageable);
+        return campanasPage.map(this::mapToRespuestaCampanaDTO);
+    }
+
+    @Transactional
+    public Specification<Campana> crearSpecificationCampana(FiltroCampanaDTO filtro, boolean soloActivas) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if(filtro.getNombreCampana()!= null) {
+                predicates.add(criteriaBuilder.equal(root.get("nombreCampana"), filtro.getNombreCampana()));
+            }
+
+            if(filtro.getNombreEmpresa()!= null && !filtro.getNombreEmpresa().trim().isEmpty()) {
+                Join<Campana, Empresa> empresaJoin = root.join("Empresa");
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(empresaJoin.get("nombreEmpresa")),
+                        "%" + filtro.getNombreEmpresa().toLowerCase() + "%"));
+            }
+
+            if(filtro.getEstado()!= null) {
+                predicates.add(criteriaBuilder.equal(root.get("estado"), filtro.getEstado()));
+            }
+
+            if(soloActivas) {
+                predicates.add(criteriaBuilder.notEqual(root.get("estado"), CampanaEstado.ARCHIVADA));
+                predicates.add(criteriaBuilder.notEqual(root.get("estado"), CampanaEstado.CANCELADA));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    @Transactional
+    public RespuestaCampanaDTO actualizarCampana(Integer idCampana, CampanaDTO dto) {
         Campana campanaExistente = campanaRepository.findById(idCampana)
-                .orElseThrow(() -> new ResourceNotFoundException("Campaña con ID " + idCampana + " no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Campaña no encontrada."));
         if(dto.getNombreCampana() != null && dto.getNombreCampana().equals(campanaExistente.getNombreCampana())){
-            throw new BadRequestException("El nuevo nombre de la campaña '" + dto.getNombreCampana() + "' ya esta en uso");
+            throw new BadRequestException("El nuevo nombre de la campaña ya esta en uso");
         }
 
         campanaExistente.setNombreCampana(dto.getNombreCampana());
@@ -80,50 +123,65 @@ public class CampanaService {
         if(dto.getFechaFin() != null) campanaExistente.setFechaFin(dto.getFechaFin());
         if(dto.getIdEmpresa() != null) {
             Empresa nuevaEmpresa = empresaRepository.findById(dto.getIdEmpresa())
-                    .orElseThrow(() -> new ResourceNotFoundException("Empresa con ID " + dto.getIdEmpresa() + " no encontrada"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada"));
         }
 
         Campana campanaActualizada = campanaRepository.save(campanaExistente);
         return mapToRespuestaCampanaDTO(campanaActualizada);
     }
 
-    @Transactional RespuestaCampanaDTO actualizarEstadosCampana(Integer idCampana, CampanaEstado nuevoEstado) {
+    @Transactional
+    public RespuestaCampanaDTO iniciarCampana(Integer idCampana) {
         Campana campana = campanaRepository.findById(idCampana)
-                .orElseThrow(() -> new ResourceNotFoundException("Campaña con ID " + idCampana + " no encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException( "Campaña no encontrada."));
 
-        if ((campana.getEstado() == CampanaEstado.FINALIZADA || campana.getEstado() == CampanaEstado.CANCELADA)
-                && (nuevoEstado == CampanaEstado.ACTIVA || nuevoEstado == CampanaEstado.PLANEADA)) {
-            throw new BadRequestException("No se puede cambiar el estado de una campaña finalizada o cancelada a activa o planificada.");
+        if(campana.getEstado()!= CampanaEstado.ACTIVA) {
+            throw new IllegalStateException("Solo se pueden iniciar campañas en el estado ACTIVA");
         }
 
-        if (campana.getEstado() == nuevoEstado) {
-            throw new BadRequestException("La campaña con ID " + idCampana + " ya se encuentra en el estado " + nuevoEstado + ".");
-        }
-
-        if (nuevoEstado == CampanaEstado.FINALIZADA && campana.getFechaFin() == null) {
-            campana.setFechaFin(LocalDate.now());
-        }
-
-        campana.setEstado(nuevoEstado);
-        Campana campanaActualizada = campanaRepository.save(campana);
-        return mapToRespuestaCampanaDTO(campanaActualizada);
-    }
-
-    @Transactional(readOnly = true)
-    public List<RespuestaCampanaDTO> buscarCampanaporEstado(CampanaEstado estado) {
-        return  campanaRepository.findByEstado(estado).stream()
-                .map(this::mapToRespuestaCampanaDTO).collect(Collectors.toList());
+        campana.setEstado(CampanaEstado.EN_PROCESO);
+        return mapToRespuestaCampanaDTO(campanaRepository.save(campana));
     }
 
     @Transactional
-    public List<RespuestaCampanaDTO> buscarCampanaPorNombre(String nombreFiltro) {
-        if (nombreFiltro == null || nombreFiltro.trim().isEmpty()) {
-            return listarCampanas();
+    public RespuestaCampanaDTO finalizarCampana(Integer idCampana) {
+        Campana campana = campanaRepository.findById(idCampana)
+                .orElseThrow(() -> new ResourceNotFoundException( "Campaña no encontrada."));
+
+        if(campana.getEstado()!= CampanaEstado.EN_PROCESO) {
+            throw new IllegalStateException("Solo se pueden finalizar campañas en el estado EN_PROCESO");
         }
-        List<CampanaEstado> estadosVisibles = Arrays.asList(CampanaEstado.PLANEADA, CampanaEstado.ACTIVA);
-        return campanaRepository.findByNombreCampanaContainingIgnoreCaseAndEstadoIn(nombreFiltro, estadosVisibles).stream()
-                .map(this::mapToRespuestaCampanaDTO)
-                .collect(Collectors.toList());
+
+        campana.setEstado(CampanaEstado.FINALIZADA);
+        return mapToRespuestaCampanaDTO(campanaRepository.save(campana));
+    }
+
+    @Transactional
+    public RespuestaCampanaDTO cancelarCampana(Integer idCampana) {
+        Campana campana = campanaRepository.findById(idCampana)
+                .orElseThrow(() -> new ResourceNotFoundException( "Campaña no encontrada."));
+
+        if(campana.getEstado()!= CampanaEstado.FINALIZADA) {
+            throw new IllegalStateException("No se puede cancelar una campaña ya finalizada");
+        }
+
+        campana.setEstado(CampanaEstado.CANCELADA);
+        Campana campanaActualizada = campanaRepository.save(campana);
+        return mapToRespuestaCampanaDTO(campanaRepository.save(campanaActualizada));
+    }
+
+    @Transactional
+    public RespuestaCampanaDTO archivarCampana(Integer idCampana) {
+        Campana campana = campanaRepository.findById(idCampana)
+                .orElseThrow(() -> new ResourceNotFoundException( "Campaña no encontrada."));
+
+        if(campana.getEstado()!= CampanaEstado.FINALIZADA && campana.getEstado()!= CampanaEstado.CANCELADA) {
+            throw new IllegalStateException("Solo se pueden archivar campañas finalizadas o canceladas");
+        }
+
+        campana.setEstado(CampanaEstado.ARCHIVADA);
+        Campana campanaActualizada = campanaRepository.save(campana);
+        return mapToRespuestaCampanaDTO(campanaRepository.save(campanaActualizada));
     }
 
     private RespuestaCampanaDTO mapToRespuestaCampanaDTO(Campana campana) {

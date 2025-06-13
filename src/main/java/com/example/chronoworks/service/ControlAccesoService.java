@@ -1,6 +1,8 @@
 package com.example.chronoworks.service;
 
 
+import com.example.chronoworks.dto.controlacceso.RegistroEntradaDTO;
+import com.example.chronoworks.dto.controlacceso.RegistroSalidaDTO;
 import com.example.chronoworks.dto.controlacceso.RespuestaRegistroDTO;
 import com.example.chronoworks.exception.BadRequestException;
 import com.example.chronoworks.exception.ResourceNotFoundException;
@@ -8,10 +10,15 @@ import com.example.chronoworks.model.ControlAcceso;
 import com.example.chronoworks.model.Empleado;
 import com.example.chronoworks.repository.ControlAccesoRepository;
 import com.example.chronoworks.repository.EmpleadoRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -27,17 +34,18 @@ public class ControlAccesoService {
     }
 
     @Transactional
-    public RespuestaRegistroDTO registrarEntrada(RespuestaRegistroDTO  dto) {
+    public RespuestaRegistroDTO registrarEntrada(RegistroEntradaDTO dto) {
         Empleado empleado = empleadoRepository.findById(dto.getIdEmpleado())
-                .orElseThrow(() -> new ResourceNotFoundException("Empleado con la ID " + dto.getIdEmpleado() +  " no encontrado."));
-        Optional<ControlAcceso> registroAbierto = controlAccesoRepository.findFirstByEmpleadoAndHoraSalidaIsNullOrderByHoraEntradaDesc(empleado);
-        if (registroAbierto.isPresent()) {
-            throw new BadRequestException("El empleado con ID " + dto.getIdEmpleado() + " ya tiene un registro abierto. Debe registrar primero su salida.");
+                .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado."));
+
+        if(controlAccesoRepository.existsByEmpleadoAndHoraSalidaIsNull(empleado)){
+            throw new BadRequestException("El empleado ya tiene un registro abierto");
         }
 
         ControlAcceso nuevoRegistro = new ControlAcceso();
         nuevoRegistro.setEmpleado(empleado);
-        nuevoRegistro.setHoraSalida(null);
+        nuevoRegistro.setFecha(LocalDate.now());
+        nuevoRegistro.setHoraEntrada(LocalTime.now());
         nuevoRegistro.setObservacionEntrada(dto.getObservacionEntrada());
 
         ControlAcceso registroGuardado = controlAccesoRepository.save(nuevoRegistro);
@@ -45,11 +53,11 @@ public class ControlAccesoService {
     }
 
     @Transactional
-    public RespuestaRegistroDTO  registrarSalida(RespuestaRegistroDTO dto) {
+    public RespuestaRegistroDTO  registrarSalida(RegistroSalidaDTO dto) {
         Empleado empleado = empleadoRepository.findById(dto.getIdEmpleado())
-                .orElseThrow(() -> new ResourceNotFoundException("Empleado con la ID " + dto.getIdEmpleado() +  " no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado"));
         ControlAcceso registroAbierto = controlAccesoRepository.findFirstByEmpleadoAndHoraSalidaIsNullOrderByHoraEntradaDesc(empleado)
-                .orElseThrow(()-> new BadRequestException("El empleado con ID " + dto.getIdEmpleado() + " no tiene un registro de entrada abierto."));
+                .orElseThrow(()-> new BadRequestException("No hay registro de entrada abierto."));
 
 
         registroAbierto.setHoraSalida(LocalTime.now());
@@ -62,7 +70,7 @@ public class ControlAccesoService {
     @Transactional
     public RespuestaRegistroDTO actualizarObservacion(Integer idControl,String nuevaObservacionEntrada, String nuevaObservacionSalida) {
         ControlAcceso controlAcceso = controlAccesoRepository.findById(idControl)
-                .orElseThrow(()-> new ResourceNotFoundException("Registro de control con acceso con ID " + idControl + " no encontrado."));
+                .orElseThrow(()-> new ResourceNotFoundException("Registro de control no encontrado."));
         if (nuevaObservacionEntrada != null) {
             controlAcceso.setObservacionEntrada(nuevaObservacionEntrada);
         }
@@ -75,13 +83,29 @@ public class ControlAccesoService {
     }
 
     @Transactional
-    public String ObtenerEstadoActual(Integer idEmpleado) {
+    public Map<String, Object> obtenerEstadoActual(Integer idEmpleado) {
         Empleado empleado = empleadoRepository.findById(idEmpleado)
-                .orElseThrow(()-> new ResourceNotFoundException("Empleado con ID " + idEmpleado + " no encontrado."));
+                .orElseThrow(()-> new ResourceNotFoundException("Empleado no encontrado."));
 
         Optional<ControlAcceso> registroAbierto = controlAccesoRepository.findFirstByEmpleadoAndHoraSalidaIsNullOrderByHoraEntradaDesc(empleado);
 
-        return registroAbierto.isPresent() ? "En turno" : "Fuera de turno";
+        Map<String, Object> respuesta = new HashMap<>();
+        respuesta.put("estado", registroAbierto.isPresent() ? "En turno" : "Fuera de turno");
+
+        registroAbierto.ifPresent(registro -> {
+            respuesta.put("ultimaEntrada", registro.getHoraEntrada());
+            respuesta.put("fecha", registro.getFecha());
+        });
+
+        return respuesta;
+    }
+
+    @Transactional
+    public Page<RespuestaRegistroDTO> obtenerHistorial(Integer idEmpleado, Pageable pageable) {
+        Empleado empleado = empleadoRepository.findById(idEmpleado)
+                .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado"));
+
+        return controlAccesoRepository.findByEmpleadoOrderByHoraEntradaDesc(empleado, pageable).map(this::mapToRespuestaRegistroDTO);
     }
 
     private RespuestaRegistroDTO mapToRespuestaRegistroDTO(ControlAcceso controlAcceso) {
@@ -91,7 +115,7 @@ public class ControlAccesoService {
         }
         return RespuestaRegistroDTO.builder()
                 .idControl(controlAcceso.getIdControl())
-                .idEmpleado(controlAcceso.getEmpleado() != null ? controlAcceso.getEmpleado().getIdEmpleado().intValue() : null)
+                .idEmpleado(controlAcceso.getEmpleado() != null ? controlAcceso.getEmpleado().getIdEmpleado() : null)
                 .nombre(nombreCompletoEmpleado)
                 .horaEntrada(controlAcceso.getHoraEntrada())
                 .horaSalida(controlAcceso.getHoraSalida())

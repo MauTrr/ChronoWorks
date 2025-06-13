@@ -6,11 +6,10 @@ import com.example.chronoworks.exception.BadRequestException;
 import com.example.chronoworks.exception.ResourceNotFoundException;
 import com.example.chronoworks.model.Empresa;
 import com.example.chronoworks.repository.EmpresaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class EmpresaService {
@@ -21,9 +20,9 @@ public class EmpresaService {
     }
 
     @Transactional
-    public RespuestaEmpresaDTO registrarEmpresa(RespuestaEmpresaDTO dto) {
+    public RespuestaEmpresaDTO registrarEmpresa(EmpresaDTO dto) {
         if (empresaRepository.findByNombreEmpresa(dto.getNombreEmpresa()).isPresent()) {
-            throw new BadRequestException("La empresa con el nombre " + dto.getNombreEmpresa() + " ya esta registrada");
+            throw new BadRequestException("La empresa ya esta registrada");
         }
 
         Empresa nuevaEmpresa = new Empresa();
@@ -34,29 +33,29 @@ public class EmpresaService {
         nuevaEmpresa.setEncargado(dto.getEncargado());
 
         Empresa empresaGuardada = empresaRepository.save(nuevaEmpresa);
-
         return mapToRespuestaEmpresaDTO(empresaGuardada);
     }
 
     @Transactional(readOnly = true)
     public RespuestaEmpresaDTO obtenerEmpresa(Integer idEmpresa) {
         Empresa empresa = empresaRepository.findById(idEmpresa)
-                .orElseThrow(() -> new ResourceNotFoundException ("Empresa con ID " + idEmpresa + " no encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException ("Empresa no encontrada."));
         return mapToRespuestaEmpresaDTO(empresa);
     }
 
     @Transactional(readOnly = true)
-    public List<RespuestaEmpresaDTO> listarEmpresas() {
-        return empresaRepository.findAll().stream().map(this::mapToRespuestaEmpresaDTO).collect(Collectors.toList());
+    public Page<RespuestaEmpresaDTO> listarEmpresas(Pageable pageable) {
+        return empresaRepository.findByActivoTrue(pageable).map(this::mapToRespuestaEmpresaDTO);
     }
 
     @Transactional
     public RespuestaEmpresaDTO actualizarEmpresa(Integer idEmpresa, EmpresaDTO dto) {
         Empresa empresaExistente = empresaRepository.findById(idEmpresa)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa con ID " + idEmpresa + " no encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada."));
+
         if (dto.getNombreEmpresa() != null && !dto.getNombreEmpresa().equals(empresaExistente.getNombreEmpresa())){
             if (empresaRepository.findByNombreEmpresa(dto.getNombreEmpresa()).isPresent()) {
-                throw new BadRequestException("El nuevo nombre de empresa '" + dto.getNombreEmpresa() + "' ya esta en uso");
+                throw new BadRequestException("El nuevo nombre de empresa ya esta en uso");
             }
             empresaExistente.setNombreEmpresa(dto.getNombreEmpresa());
         }
@@ -70,21 +69,11 @@ public class EmpresaService {
     }
 
     @Transactional
-    public void eliminarEmpresa(Integer idEmpresa) {
-        if (!empresaRepository.existsById(idEmpresa)){
-            throw new ResourceNotFoundException("Empresa con ID" + idEmpresa + "no se ha encontrado para eliminar.");
-        }
-        empresaRepository.deleteById(idEmpresa);
-    }
-
-    @Transactional(readOnly = true)
-    public List<RespuestaEmpresaDTO> buscarEmpresasPorNombre(String nombreFiltro) {
-        if (nombreFiltro == null || nombreFiltro.trim().isEmpty()) {
-            return  listarEmpresas();
-        }
-        return empresaRepository.findByNombreEmpresaContainingIgnoreCase(nombreFiltro).stream()
-                .map(this::mapToRespuestaEmpresaDTO)
-                .collect(Collectors.toList());
+    public void desactivarEmpresa(Integer idEmpresa) {
+        Empresa empresa = empresaRepository.findById(idEmpresa)
+                        .orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada"));
+        empresa.setActivo(false);
+        empresaRepository.save(empresa);
     }
 
     private  RespuestaEmpresaDTO mapToRespuestaEmpresaDTO(Empresa empresa) {

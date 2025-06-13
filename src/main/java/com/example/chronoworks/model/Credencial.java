@@ -16,7 +16,7 @@ public class Credencial {
     @Column(name = "usuario",  nullable = false, unique = true)
     private String usuario;
     @Column(name = "contraseña", nullable = false)
-    private  String contraseña;
+    private  String contrasena;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_empleado",nullable = false, unique = true)

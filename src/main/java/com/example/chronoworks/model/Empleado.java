@@ -32,4 +32,6 @@ public class Empleado {
 
     @OneToOne(mappedBy = "empleado", cascade = CascadeType.ALL,orphanRemoval = true, fetch = FetchType.LAZY)
     private Credencial credencial;
+
+    private boolean activo = true;
 }

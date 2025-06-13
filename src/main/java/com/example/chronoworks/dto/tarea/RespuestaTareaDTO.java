@@ -9,4 +9,5 @@ public class RespuestaTareaDTO {
     private Integer idTarea;
     private String nombreTarea;
     private String detalles;
+    private boolean activo;
 }

@@ -5,6 +5,10 @@ import com.example.chronoworks.dto.asignacion.FiltroAsignacionDTO;
 import com.example.chronoworks.dto.asignacion.RespuestaAsignacionDTO;
 import com.example.chronoworks.service.AsignacionService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,18 +37,27 @@ public class AsignacionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<RespuestaAsignacionDTO>> listarAsignaciones(@ModelAttribute FiltroAsignacionDTO filtro) {
-        List<RespuestaAsignacionDTO> asignaciones  = asignacionService.listarAsignaciones(filtro);
-        return ResponseEntity.ok(asignaciones);
+    public ResponseEntity<Page<RespuestaAsignacionDTO>> listarAsignaciones(
+            @ModelAttribute FiltroAsignacionDTO filtro,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue =  "10") int size,
+            @RequestParam(defaultValue = "idAsignacion") String sort,
+            @RequestParam(required = false,defaultValue = "asc") String direction) {
+        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
+        return ResponseEntity.ok(asignacionService.listarAsignacionesActivas(filtro, pageable));
     }
 
     @GetMapping("/activas")
-    public ResponseEntity<List<RespuestaAsignacionDTO>> listarAsignacionesActivas(@ModelAttribute FiltroAsignacionDTO filtro) {
-        List<RespuestaAsignacionDTO> asignaciones = asignacionService.listarAsignacionesActivas(filtro);
-        return ResponseEntity.ok(asignaciones);
+    public ResponseEntity<Page<RespuestaAsignacionDTO>> listarAsignacionesActivas(
+            @ModelAttribute FiltroAsignacionDTO filtro,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue =  "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(asignacionService.listarAsignacionesActivas(filtro, pageable));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{idAsignacion}")
     public ResponseEntity<RespuestaAsignacionDTO> actualizarAsignacion(@PathVariable Integer idAsignacion, @Valid @RequestBody AsignacionDTO dto) {
         RespuestaAsignacionDTO asignacionActualizada = asignacionService.actualizarAsignacion(idAsignacion, dto);
         return ResponseEntity.ok(asignacionActualizada);

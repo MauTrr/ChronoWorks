@@ -4,7 +4,6 @@ package com.example.chronoworks.service;
 import com.example.chronoworks.dto.turno.RespuestaTurnoDTO;
 import com.example.chronoworks.dto.turno.TurnoDTO;
 import com.example.chronoworks.exception.ResourceNotFoundException;
-import com.example.chronoworks.model.Tarea;
 import com.example.chronoworks.model.Turno;
 import com.example.chronoworks.repository.TurnoRepository;
 import org.springframework.stereotype.Service;
@@ -35,7 +34,7 @@ public class TurnoService {
     @Transactional(readOnly = true)
     public RespuestaTurnoDTO obtenerTurno(Integer idTurno) {
         Turno turno = turnoRepository.findById(idTurno)
-                .orElseThrow(()-> new ResourceNotFoundException("Turno con ID " + idTurno + " no encontrado"));
+                .orElseThrow(()-> new ResourceNotFoundException("Turno no encontrado"));
         return mapToRespuestaTurnoDTO(turno);
     }
 
@@ -47,7 +46,7 @@ public class TurnoService {
     @Transactional
     public RespuestaTurnoDTO actualizarTurno(Integer idTurno, TurnoDTO dto) {
         Turno turnoExistente = turnoRepository.findById(idTurno)
-                .orElseThrow(()-> new ResourceNotFoundException("Turno con ID " + idTurno + " no encontrado"));
+                .orElseThrow(()-> new ResourceNotFoundException("Turno no encontrado"));
 
         if(dto.getHoraEntrada() != null) turnoExistente.setHoraEntrada(dto.getHoraEntrada());
         if(dto.getHoraSalida() != null) turnoExistente.setHoraSalida(dto.getHoraSalida());
@@ -59,7 +58,7 @@ public class TurnoService {
     @Transactional
     public void eliminarTurno(Integer idTurno) {
         if(!turnoRepository.existsById(idTurno)) {
-            throw new ResourceNotFoundException("Tarea con ID " + idTurno + "no se ha encontrado para eliminar.");
+            throw new ResourceNotFoundException("Turno no  se ha encontrado para eliminar.");
         }
         turnoRepository.deleteById(idTurno);
     }

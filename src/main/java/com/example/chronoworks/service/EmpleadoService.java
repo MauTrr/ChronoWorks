@@ -14,13 +14,11 @@ import com.example.chronoworks.repository.CredencialRepository;
 import com.example.chronoworks.repository.EmpleadoRepository;
 import com.example.chronoworks.repository.RolRepository;
 import com.example.chronoworks.repository.TurnoRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class EmpleadoService {
@@ -55,9 +53,9 @@ public class EmpleadoService {
 
         //Este bloque es para buscar las entidades relacionadas
         Rol rol = rolRepository.findById(dto.getIdRol())
-                .orElseThrow(() -> new ResourceNotFoundException("Rol con ID " + dto.getIdRol() + " no encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado."));
         Turno turno = turnoRepository.findById(dto.getIdTurno())
-                .orElseThrow(() -> new ResourceNotFoundException("Turno con ID " + dto.getIdTurno() + " no encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Turno no encontrado."));
 
         //Crear empleado
         Empleado empleado = new Empleado();
@@ -70,7 +68,7 @@ public class EmpleadoService {
         //Crear credencial
         Credencial credencial = new Credencial();
         credencial.setUsuario(dto.getUsuario());
-        credencial.setContraseña(dto.getContraseña());
+        credencial.setContrasena(passwordEncoder.encode(dto.getContrasena()));
         credencial.setRol(rol);
         credencial.setEmpleado(empleado);
 
@@ -87,19 +85,19 @@ public class EmpleadoService {
     @Transactional(readOnly = true)
     public RespuestaEmpleadoDTO obtenerEmpleado(Integer idEmpleado) {
         Empleado empleado = empleadoRepository.findById(idEmpleado)
-                .orElseThrow(() -> new ResourceNotFoundException( "Empleado con ID " + idEmpleado + " no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException( "Empleado no encontrado"));
         return mapToRespuestaEmpleadoDTO(empleado);
     }
 
     @Transactional(readOnly = true)
-    public List<RespuestaEmpleadoDTO> listarEmpleados() {
-        return empleadoRepository.findAll().stream().map(this::mapToRespuestaEmpleadoDTO).collect(Collectors.toList());
+    public Page<RespuestaEmpleadoDTO> listarEmpleados(Pageable pageable) {
+        return empleadoRepository.findByActivoTrue(pageable).map(this::mapToRespuestaEmpleadoDTO);
     }
 
     @Transactional
     public RespuestaEmpleadoDTO actualizarEmpleado(Integer idEmpleado, ActualizarEmpleadoDTO dto) {
         Empleado empleadoExistente = empleadoRepository.findById(idEmpleado)
-                .orElseThrow(() -> new ResourceNotFoundException( "Empleado con ID " + idEmpleado + " no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException( "Empleado no encontrado"));
 
         if(dto.getNombre() != null) empleadoExistente.setNombre(dto.getNombre());
         if(dto.getApellido() !=null) empleadoExistente.setApellido(dto.getApellido());
@@ -114,21 +112,26 @@ public class EmpleadoService {
         if(dto.getTelefono() !=null) empleadoExistente.setTelefono(dto.getTelefono());
         if(dto.getIdTurno() !=null) {
             Turno nuevoTurno = turnoRepository.findById(dto.getIdTurno())
-                    .orElseThrow(() -> new ResourceNotFoundException("Turno con ID " + dto.getIdTurno() + " no encontrado"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Turno no encontrado"));
             empleadoExistente.setTurno(nuevoTurno);
         }
+        if(dto.getIdRol()!= null) {
+            Rol nuevoRol = rolRepository.findById(dto.getIdRol())
+                    .orElseThrow(() -> new ResourceNotFoundException( "Rol no encontrado."));
+            empleadoExistente.getCredencial().setRol(nuevoRol);
+        }
+
         Empleado empleadoActualizado = empleadoRepository.save(empleadoExistente);
         return mapToRespuestaEmpleadoDTO(empleadoActualizado);
     }
 
     @Transactional
-    public void eliminarEmpleado(Integer idEmpleado) {
-        if (!empleadoRepository.existsById(idEmpleado)){
-            throw new ResourceNotFoundException("Empleado con ID " + idEmpleado + " no se ha encontrado para eliminar");
-        }
-        empleadoRepository.deleteById(idEmpleado);
+    public void desactivarEmpleado(Integer idEmpleado) {
+        Empleado empleado = empleadoRepository.findById(idEmpleado)
+                .orElseThrow(() -> new ResourceNotFoundException( "Empleado no encontrado"));
+        empleado.setActivo(false);
+        empleadoRepository.save(empleado);
     }
-
 
     private RespuestaEmpleadoDTO mapToRespuestaEmpleadoDTO(Empleado empleado) {
         return RespuestaEmpleadoDTO.builder()
@@ -140,6 +143,7 @@ public class EmpleadoService {
                 .idTurno(empleado.getTurno() != null ? empleado.getTurno().getIdTurno() : null)
                 .usuario(empleado.getCredencial() != null ? empleado.getCredencial().getUsuario() : null)
                 .nombreRol(empleado.getCredencial() != null && empleado.getCredencial().getRol() != null ? empleado.getCredencial().getRol().getNombreRol() : null)
+                .activo(empleado.isActivo())
                 .build();
 
     }

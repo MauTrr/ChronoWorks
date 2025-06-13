@@ -26,4 +26,6 @@ public class Empresa {
 
     @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private java.util.List<Campana> campanas;
+
+    private boolean activo = true;
 }

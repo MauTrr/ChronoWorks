@@ -22,4 +22,6 @@ public class EmpresaDTO {
 
     @Size(message = "El nombre del encargado de la empresa excede 50 caracteres")
     private String encargado;
+
+    private boolean activo;
 }

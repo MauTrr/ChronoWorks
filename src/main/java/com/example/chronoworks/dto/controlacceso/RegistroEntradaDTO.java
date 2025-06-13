@@ -12,7 +12,7 @@ public class RegistroEntradaDTO {
 
     @NotNull(message = "El ID del empleado no puede ser nulo")
     @Positive(message = "El ID del empleado debe ser un numero positivo")
-    private Integer empleadoID;
+    private Integer idEmpleado;
 
     private String observacionEntrada;
 }

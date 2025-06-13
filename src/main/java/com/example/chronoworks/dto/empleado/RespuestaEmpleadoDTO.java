@@ -18,4 +18,6 @@ public class RespuestaEmpleadoDTO {
     private Integer idTurno;
     private String usuario;
     private String nombreRol;
+    private Integer idRol;
+    private Boolean activo;
 }

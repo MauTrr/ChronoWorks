@@ -21,4 +21,6 @@ public class Tarea {
 
     @OneToMany(mappedBy = "tarea", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private  java.util.List<Asignacion> asignaciones;
+
+    private boolean activo = true;
 }

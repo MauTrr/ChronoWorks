@@ -16,13 +16,14 @@ import com.example.chronoworks.repository.EmpleadoRepository;
 import com.example.chronoworks.repository.TareaRepository;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class AsignacionService {
@@ -74,40 +75,40 @@ public class AsignacionService {
 
 
     @Transactional(readOnly = true)
-    public List<RespuestaAsignacionDTO> listarAsignaciones(FiltroAsignacionDTO filtro) {
-        return listarAsignacionesConFiltros(filtro, false);
+    public Page<RespuestaAsignacionDTO> listarAsignaciones(FiltroAsignacionDTO filtro, Pageable pageable) {
+        return listarAsignacionesConFiltros(filtro, false, pageable);
     }
 
     @Transactional(readOnly = true)
-    public List<RespuestaAsignacionDTO> listarAsignacionesActivas(FiltroAsignacionDTO filtro) {
-        return listarAsignacionesConFiltros(filtro, true);
+    public Page<RespuestaAsignacionDTO> listarAsignacionesActivas(FiltroAsignacionDTO filtro, Pageable pageable) {
+        return listarAsignacionesConFiltros(filtro, true, pageable);
     }
 
-    private List<RespuestaAsignacionDTO> listarAsignacionesConFiltros(FiltroAsignacionDTO filtro, boolean soloActivas) {
-        Specification<Asignacion> spec = crearSpecification(filtro, soloActivas);
-        List<Asignacion> asignaciones = asignacionRepository.findAll(spec);
-        return asignaciones.stream().map(this::mapToRespuestaAsignacionDTO).collect(Collectors.toList());
+    private Page<RespuestaAsignacionDTO> listarAsignacionesConFiltros(FiltroAsignacionDTO filtro, boolean soloActivas, Pageable pageable) {
+        Specification<Asignacion> spec = crearSpecificationAsignacion(filtro, soloActivas);
+        Page<Asignacion> asignacionesPage = asignacionRepository.findAll(spec, pageable);
+        return asignacionesPage.map(this::mapToRespuestaAsignacionDTO);
     }
 
-    private Specification<Asignacion> crearSpecification(FiltroAsignacionDTO filtro, boolean soloActivas) {
+    private Specification<Asignacion> crearSpecificationAsignacion(FiltroAsignacionDTO filtro, boolean soloActivas) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if(filtro.getNombreEmpleado()!= null && !filtro.getNombreEmpleado().trim().isEmpty()) {
-                Join<Asignacion, Empleado> empleadoJoin = root.join("empleado");
+                Join<Asignacion, Empleado> empleadoJoin = root.join("Empleado");
                 predicates.add(criteriaBuilder.like(criteriaBuilder.lower(empleadoJoin.get("nombre")),
                         "%" + filtro.getNombreEmpleado().toLowerCase() + "%"));
             }
 
             if(filtro.getApellidoEmpleado()!= null && !filtro.getApellidoEmpleado().trim().isEmpty()){
-                Join<Asignacion, Empleado> empleadoJoin  = root.join("empleado");
+                Join<Asignacion, Empleado> empleadoJoin  = root.join("Empleado");
                 predicates.add(criteriaBuilder.like(criteriaBuilder.lower(empleadoJoin.get("apellido")),
                         "%" + filtro.getApellidoEmpleado().toLowerCase() + "%"));
             }
 
             if(filtro.getNombreCampana()!= null && !filtro.getNombreCampana().trim().isEmpty()) {
-                Join<Asignacion, Campana> campanaJoin = root.join("campaña");
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(campanaJoin.get("nombre_campaña")),
+                Join<Asignacion, Campana> campanaJoin = root.join("Campana");
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(campanaJoin.get("nombreCampana")),
                         "%" + filtro.getNombreCampana().toLowerCase() + "%"));
             }
 
@@ -174,7 +175,7 @@ public class AsignacionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
 
         if(asignacion.getEstado()!= AsignacionEstado.EN_PROCESO) {
-            throw new IllegalStateException("Solo se pueden iniciar asignaciones en el estado ACTIVA");
+            throw new IllegalStateException("Solo se pueden finalizar asignaciones en el estado EN_PROCESO");
         }
 
         asignacion.setEstado(AsignacionEstado.FINALIZADA);
@@ -184,7 +185,7 @@ public class AsignacionService {
     @Transactional
     public RespuestaAsignacionDTO cancelarAsignacion(Integer idAsignacion) {
         Asignacion asignacion = asignacionRepository.findById(idAsignacion)
-                .orElseThrow(() -> new ResourceNotFoundException("Asignacion con ID " + idAsignacion + " no encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
 
         if(asignacion.getEstado() == AsignacionEstado.FINALIZADA) {
             throw new IllegalStateException("No se puede cancelar una asignacion ya finalizada");
@@ -199,7 +200,7 @@ public class AsignacionService {
     @Transactional
     public RespuestaAsignacionDTO archivarAsignacion(Integer idAsignacion) {
         Asignacion asignacion = asignacionRepository.findById(idAsignacion)
-                .orElseThrow(() -> new ResourceNotFoundException("Asignacion con ID " + idAsignacion + " no encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
 
         if(asignacion.getEstado()!= AsignacionEstado.FINALIZADA && asignacion.getEstado()!= AsignacionEstado.CANCELADA) {
             throw new IllegalStateException("Solo  se pueden archivar asignaciones finalizadas o canceladas");

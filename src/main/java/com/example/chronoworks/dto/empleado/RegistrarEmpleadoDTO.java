@@ -35,7 +35,7 @@ public class RegistrarEmpleadoDTO {
 
     @NotBlank(message = "La contraseña no puede estar vacia")
     @Size(min = 8, max = 25, message = "La contraseña debe tener entre 8 y 25 caracteres")
-    private String contraseña;
+    private String contrasena;
 
     @NotNull(message = "El ID de rol no puede estar vacio")
     private Integer idRol;

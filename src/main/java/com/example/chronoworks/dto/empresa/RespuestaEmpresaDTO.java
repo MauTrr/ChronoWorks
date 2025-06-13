@@ -12,4 +12,5 @@ public class RespuestaEmpresaDTO {
     private String telefono;
     private String sector;
     private String encargado;
+    private boolean activo;
 }

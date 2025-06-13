@@ -24,4 +24,8 @@ public class ActualizarEmpleadoDTO {
     private String telefono;
 
     private Integer idTurno;
+
+    private Integer idRol;
+
+    private boolean activo;
 }

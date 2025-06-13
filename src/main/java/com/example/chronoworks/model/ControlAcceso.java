@@ -3,6 +3,7 @@ package com.example.chronoworks.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -19,7 +20,7 @@ public class ControlAcceso {
 
     @Column(name = "fecha")
     private LocalDate fecha;
-    @Column(name = "hora_entrada", nullable = false, updatable = false)
+    @Column(name = "hora_entrada", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalTime horaEntrada;
     @Column(name = "hora_salida")
     private LocalTime horaSalida;
