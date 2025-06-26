@@ -1,0 +1,358 @@
+html, body {
+    height: 100%; /* Asegura que los elementos ocupen toda la altura del viewport */
+    margin: 0; /* Elimina los márgenes por defecto */
+    padding: 0; /* Elimina el padding por defecto */
+}
+
+.fondo {
+    min-height: 100%;
+    background-color: #918c8c;
+}
+.estilo-tabla {
+    overflow-x: auto;
+    width: 100%;
+    max-width: 1000px;
+    border-radius: 10px;
+    border: 2px solid #ffffff;
+    background-color: rgba(100, 178, 189, 0.877);
+    color: rgb(36, 34, 34);
+    font-family: sans-serif;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra para un diseño más moderno */
+}
+.estilo-tabla table {
+    border-top: hidden;
+    border-bottom: hidden;
+    border-right: hidden;
+    border-left: hidden;
+    border-collapse: collapse;
+    border-spacing: 0; /* Sin espacio entre celdas */
+    width: 100%;
+}
+.estilo-tabla tr{
+    background: linear-gradient(180deg,rgb(185, 178, 178) 70%, #878c8d 100%);
+}
+
+.estilo-tabla table th {
+    background: linear-gradient(180deg, #4caed4 0%, #5d8ea1 100%);
+    color: #000000;
+}
+
+.estilo-tabla table th,
+.estilo-tabla table td {
+    border: 2px solid #ffffff;
+    padding: 16px 32px;
+    text-align: left;
+}
+/* IDs (ID Acceso e ID Empleado) */
+.estilo-tabla th:nth-child(1), 
+.estilo-tabla td:nth-child(1) {
+    width: 10%;
+    max-width: 80px;
+    word-wrap: break-word; /* Permite dividir palabras largas */
+    text-align: center;
+    font-size: 0.8rem; /* Reduce el tamaño de la fuente */
+    word-wrap: break-word; /* Permite dividir las palabras largas */
+    word-break: break-word; /* Fuerza la división de palabras si no hay espacio */
+    padding: 8px; /* Reduce el padding para evitar desbordamiento */
+    line-height: 1.2; /* Ajusta el espaciado de línea para texto más compacto */
+}
+.estilo-tabla th:nth-child(2), 
+.estilo-tabla td:nth-child(2) {
+    width: 10%; /* Ancho proporcional */
+    max-width: 120px; /* Limita el ancho máximo */
+    text-align: center; /* Centra el texto */
+    font-size: 0.8rem; /* Reduce el tamaño de la fuente */
+    word-wrap: break-word; /* Permite dividir las palabras largas */
+    word-break: break-word; /* Fuerza la división de palabras si no hay espacio */
+    padding: 8px; /* Reduce el padding para evitar desbordamiento */
+    line-height: 1.2; /* Ajusta el espaciado de línea para texto más compacto */
+}
+
+/* Fecha, Hora Ingreso, Hora Salida */
+.estilo-tabla th:nth-child(3), 
+.estilo-tabla td:nth-child(3){
+    width: 10%; /* Ancho proporcional */
+    max-width: 120px; /* Limita el ancho máximo */
+    text-align: center; /* Centra el texto */
+    font-size: 0.8rem; /* Reduce el tamaño de la fuente */
+    word-wrap: break-word; /* Permite dividir las palabras largas */
+    word-break: break-word; /* Fuerza la división de palabras si no hay espacio */
+    padding: 8px; /* Reduce el padding para evitar desbordamiento */
+    line-height: 1.2; /* Ajusta el espaciado de línea para texto más compacto */
+ }
+.estilo-tabla th:nth-child(4), 
+.estilo-tabla td:nth-child(4) {
+    word-wrap: break-word;
+    text-align: center;
+    width: 18%;
+    max-width: 150px;
+    text-align: center;
+    font-size: 0.8rem; /* Reduce el tamaño de la fuente */
+    word-break: break-word; /* Fuerza la división de palabras si no hay espacio */
+    padding: 8px; /* Reduce el padding para evitar desbordamiento */
+    line-height: 1.2; /* Ajusta el espaciado de línea para texto más compacto */
+}
+.estilo-tabla th:nth-child(5), 
+.estilo-tabla td:nth-child(5) {
+    word-wrap: break-word;
+    text-align: center;
+    width: 10%;
+    max-width: 90px;
+    text-align: justify;
+    font-size: 0.8rem; /* Reduce el tamaño de la fuente */
+    word-break: break-word; /* Fuerza la división de palabras si no hay espacio */
+    padding: 8px; /* Reduce el padding para evitar desbordamiento */
+    line-height: 1.2; /* Ajusta el espaciado de línea para texto más compacto */
+}
+
+/* Observaciones */
+.estilo-tabla th:nth-child(6), 
+.estilo-tabla td:nth-child(6) {
+    width: 11%;
+    max-width: 120px;
+    word-wrap: break-word; /* Permite dividir palabras largas */
+    text-align: center;
+    font-size: 0.8rem; /* Reduce el tamaño de la fuente */
+    word-wrap: break-word; /* Permite dividir las palabras largas */
+    word-break: break-word; /* Fuerza la división de palabras si no hay espacio */
+    padding: 8px; /* Reduce el padding para evitar desbordamiento */
+    line-height: 1.2; /* Ajusta el espaciado de línea para texto más compacto */
+}
+
+/* Acciones */
+.estilo-tabla th:nth-child(7), 
+.estilo-tabla td:nth-child(7) {
+    width: 10%;
+    max-width: 80px;
+    word-wrap: break-word; /* Permite dividir palabras largas */
+    text-align: center;
+    font-size: 0.8rem; /* Reduce el tamaño de la fuente */
+    word-wrap: break-word; /* Permite dividir las palabras largas */
+    word-break: break-word; /* Fuerza la división de palabras si no hay espacio */
+    padding: 8px; /* Reduce el padding para evitar desbordamiento */
+    line-height: 1.2; /* Ajusta el espaciado de línea para texto más compacto */
+}
+.estilo-tabla th:nth-child(8), 
+.estilo-tabla td:nth-child(8) {
+    width: 12%;
+    max-width: 120px;
+    font-size: 0.8rem; /* Reduce el tamaño de la fuente */
+}
+.boton {
+    background-color: #4caed4;
+    border: 1px solid white;
+    color: white !important;
+    text-decoration: none;
+}
+
+.boton:hover {
+    background-color: #38cdff;
+    border: 1px solid white;
+}
+
+.alert-message {
+    color: #000000;
+    border: 2px solid white; /* Borde blanco */
+    padding: 15px; /* Espaciado interno */
+    margin-bottom: 1rem; /* Separación hacia abajo */
+    border-radius: 10px; /* Bordes redondeados */
+    max-width: 350px; /* Ancho máximo */
+    text-align: center; /* Alineación del texto */
+    font-weight: bold;
+    margin: auto;
+}
+.alert-registro{
+    background: linear-gradient(180deg, #8dd897 0%, #39e063 100%);
+    border-color: green;
+}
+.alert-actualizar{
+    background: linear-gradient(180deg, #d4b098 0%, #e6872f 100%);
+    border-color: orange;
+}
+.alert-eliminar{
+    background: linear-gradient(180deg, #fdbdbd 0%, #da6259 100%);
+    border-color: crimson;
+}
+.container {
+    width: 100%;
+    height: 50vh;
+    display: flex;
+    justify-content: center;
+    align-items: start;
+
+}
+
+.botoneliminar{
+    background-color:#4caed4;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 10px;
+    border: 1px solid white;
+    
+}
+
+.botoneliminar:hover {
+    background-color:  #5d8ea1;
+}
+.botoneditar{
+    background-color:#4caed4;
+    color: rgb(255, 255, 255);
+    border: none;
+    border-radius: 5px;
+    border-radius: 5px;
+    padding: 10px 10px;
+    border: 1px solid white;
+}
+
+.botoneditar:hover {
+    background-color: #5d8ea1;
+}
+.navbar-nav .dropdown-menu {
+    background: linear-gradient(180deg, #ffffff 0%, #d3c2c2 100%); /* Fondo oscuro para el dropdown */
+    border: 2px solid white; /* Borde blanco */
+    color: white;
+}
+.dropdown-item:hover {
+    background-color:#42a5f5; /* Color al pasar el mouse */
+    color: white; /* Texto blanco */
+
+}
+
+.botonsesion {
+    position: relative; /* Necesario para posicionar la línea */
+    color: white; /* Texto blanco */
+    font-size: 18px;
+    font-weight: 600;
+    text-decoration: none; /* Elimina el subrayado predeterminado */
+    font-size: 18px; /* Ajusta el tamaño de la fuente si es necesario */
+    padding: 5px 10px; /* Espaciado interno del botón */
+    transition: color 0.3s ease; /* Suaviza el cambio de color */
+}
+.botonsesion::after {
+    content: ""; /* Crea un pseudo-elemento para la línea */
+    position: absolute; /* Posiciona la línea debajo del texto */
+    left: 0;
+    bottom: 0; /* Ajusta la posición de la línea */
+    width: 0; /* Inicialmente la línea tiene un ancho de 0 */
+    height: 2px; /* Grosor de la línea */
+    background-color: white; /* Color de la línea */
+    transition: width 0.3s ease; /* Transición suave del ancho */
+}
+
+.botonsesion:hover {
+    color: rgb(27, 169, 235); /* Asegura que el texto permanezca blanco al hacer hover */
+}
+
+.botonsesion:hover::after {
+    width: 100%; /* Expande la línea al ancho completo del texto */
+}
+
+
+.botoninicio {
+    position: relative; /* Necesario para posicionar la línea */
+    color: white; /* Texto blanco */
+    font-size: 18px;
+    font-weight: 600;
+    text-decoration: none; /* Elimina el subrayado predeterminado */
+    font-size: 18px; /* Ajusta el tamaño de la fuente si es necesario */
+    padding: 5px 10px; /* Espaciado interno del botón */
+    transition: color 0.3s ease; /* Suaviza el cambio de color */
+}
+
+.botoninicio::after {
+    content: ""; /* Crea un pseudo-elemento para la línea */
+    position: absolute; /* Posiciona la línea debajo del texto */
+    left: 0;
+    bottom: 0; /* Ajusta la posición de la línea */
+    width: 0; /* Inicialmente la línea tiene un ancho de 0 */
+    height: 2px; /* Grosor de la línea */
+    background-color: white; /* Color de la línea */
+    transition: width 0.3s ease; /* Transición suave del ancho */
+}
+
+.botoninicio:hover {
+    color:rgb(27, 169, 235); /* Asegura que el texto permanezca blanco al hacer hover */
+}
+
+.botoninicio:hover::after {
+    width: 100%; /* Expande la línea al ancho completo del texto */
+}
+/* Ajustes generales para botones */
+.botones-acciones {
+    display: flex;
+    gap: 5px; /* Espaciado entre botones */
+}
+/* Texto inicial truncado */
+.observaciones-text {
+    max-width: 250px;
+    max-height: 3rem; /* Limita la altura del texto inicialmente */
+    overflow: hidden; /* Oculta el contenido extra */
+    white-space: nowrap; /* Evita que el texto se rompa en varias líneas */
+    text-overflow: ellipsis; /* Muestra el elipsis al final */
+    transition: max-height 0.3s ease; /* Transición para la expansión */
+}
+
+/* Cuando el texto está expandido */
+.observaciones-text[data-collapsed="false"] {
+    max-width: 250px;
+    max-height: none; /* Elimina la restricción de altura */
+    white-space: normal; /* Permite que el texto fluya normalmente */
+    overflow: visible; /* Muestra el texto adicional sin restricciones */
+}
+
+/* Extra text oculto inicialmente */
+.extra-text {
+    display: none; /* Oculta el texto adicional */
+}
+
+/* Muestra el texto extra cuando está expandido */
+.observaciones-text[data-collapsed="false"] .extra-text {
+    display: inline; /* Hace visible el texto adicional */
+}
+
+/* Botón "Ver más" */
+.ver-mas {
+    background-color: #4caed4;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin-top: 5px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background-color 0.3s ease;
+}
+
+.ver-mas:hover {
+    background-color: #38cdff;
+}
+/* Responsividad: Ocultar columnas en pantallas pequeñas */
+@media (max-width: 768px) {
+    .estilo-tabla table th:nth-child(7),
+    .estilo-tabla table td:nth-child(7) { /* Ocultar Acciones */
+        display: none;
+    }
+}
+
+@media (max-width: 500px) {
+    .estilo-tabla table th:nth-child(4),
+    .estilo-tabla table td:nth-child(4) { 
+        display: none;
+    }
+}
+@media (max-width: 768px) {
+    .estilo-tabla table th:nth-child(1),
+    .estilo-tabla table th:nth-child(2) {
+        font-size: 0.7rem; /* Reduce aún más el tamaño de la fuente */
+        max-width: 60px; /* Reduce el ancho máximo */
+    }
+}
+/* Ajustes responsivos */
+@media (max-width: 768px) {
+    .botones-acciones .botoneditar,
+    .botones-acciones .botoneliminar {
+        padding: 5px; /* Reduce el tamaño de los botones */
+        font-size: 0.8rem; /* Reduce el tamaño de fuente */
+    }
+}

@@ -1,0 +1,106 @@
+.fondo {
+    min-height: 100vh;
+    background-color: #d6cbcb;
+}
+.navbar-nav .dropdown-menu {
+    background: linear-gradient(180deg, #ffffff 0%, #d3c2c2 100%); /* Fondo oscuro para el dropdown */
+    border: 2px solid white; /* Borde blanco */
+    color: white;
+}
+.dropdown-item:hover {
+    background-color:#42a5f5; /* Color al pasar el mouse */
+    color: white; /* Texto blanco */
+
+}
+.navbar-brand{
+    cursor: default;
+}
+
+.botonsesion {
+    position: relative; /* Necesario para posicionar la línea */
+    color: white; /* Texto blanco */
+    font-size: 18px;
+    font-weight: 600;
+    text-decoration: none; /* Elimina el subrayado predeterminado */
+    font-size: 18px; /* Ajusta el tamaño de la fuente si es necesario */
+    padding: 5px 10px; /* Espaciado interno del botón */
+    transition: color 0.3s ease; /* Suaviza el cambio de color */
+}
+.botonsesion::after {
+    content: ""; /* Crea un pseudo-elemento para la línea */
+    position: absolute; /* Posiciona la línea debajo del texto */
+    left: 0;
+    bottom: 0; /* Ajusta la posición de la línea */
+    width: 0; /* Inicialmente la línea tiene un ancho de 0 */
+    height: 2px; /* Grosor de la línea */
+    background-color: white; /* Color de la línea */
+    transition: width 0.3s ease; /* Transición suave del ancho */
+}
+
+.botonsesion:hover {
+    color: rgb(27, 169, 235); /* Asegura que el texto permanezca blanco al hacer hover */
+}
+
+.botonsesion:hover::after {
+    width: 100%; /* Expande la línea al ancho completo del texto */
+}
+
+.tarjeta .boton{
+    margin-top: auto;
+    align-self: flex-start;
+    color:  #ffffff;
+    background-color: #42a5f5;
+    border: none;
+    text-decoration: none;
+    padding: 6px 8px;
+    border-radius: 8px;
+    transition: .3s ease;
+
+}
+.tarjeta .boton:hover{
+    background-color: #56ccf2;
+}
+
+.tarjeta{
+    border: 3px solid rgb(255, 255, 255);
+    background: linear-gradient(180deg, #2ab2e7 0%, #a09090 100%);
+    backdrop-filter: blur(15px);
+    box-shadow: 0px 8px 32px rgb(0, 0, 0, 0.3);
+    border-radius: 30px;
+    cursor: default;
+    transition: all 300ms ease;
+    overflow: hidden;
+    max-width: 18rem; 
+    min-height: 20rem;
+    height: 18rem; 
+    min-width: 18rem;
+}
+.tarjeta img {
+    border-bottom: 3px solid rgb(255, 255, 255);
+    height: auto; 
+    width: 100%; 
+    object-fit: contain; 
+    max-height: 10rem; 
+}
+.tarjeta:hover{
+    box-shadow: 5px 5px 20px rgb(0, 0, 0, 0.4);
+    transform: translateY(-3%);
+} 
+.tarjeta .card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    height: 100%;
+    padding: 1rem; 
+    position: relative;
+}
+.tarjeta .card-title {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem; 
+}
+.tarjeta .card-text {
+    flex-grow: 1; 
+    font-size: 0.9rem; 
+    overflow-wrap: break-word; 
+}

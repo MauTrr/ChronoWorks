@@ -1,0 +1,15 @@
+
+.navbar {
+    background: linear-gradient(90deg, #9e8d8d 0%, #646869 100%);
+    
+}
+
+.fondo_menu {
+    background: linear-gradient(90deg, #9e9292 0%, #676969 100%);
+    border-bottom: 2px solid white;
+}
+header {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+  }

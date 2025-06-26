@@ -1,0 +1,87 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.fondo {
+    min-height: 100vh;
+    background-color: #9e9e9e;
+}
+
+html {
+    scroll-padding-top: 76px; /* Cambia el valor según la altura de tu navbar */
+  }
+  
+.fondo_login {
+
+    background: linear-gradient(180deg, #3fa2db 70%, #a09090 100%);
+    min-height: 100vh;
+    padding-top: 50px;
+
+}
+
+.form-control {
+    background-color: transparent !important;
+    color: white !important;
+}
+
+::placeholder{
+    color: rgb(255, 253, 253) !important;
+}
+.form-control:focus {
+    border-color: gray;
+    outline: none;
+    box-shadow: none;
+    background-color: transparent !important;
+}
+.btn{
+    background-color: rgb(148, 135, 135);
+    border: none;
+    transition: background-color 0.3s ease;
+    color: white !important;
+}
+.btn:hover{
+background-color:#6c757d;
+}
+.login {
+
+    background-color: rgba(100, 186, 194, 0.075);
+    backdrop-filter: blur(15px);
+    box-shadow: 0px 8px 32px rgb(0, 0, 0, 0.3);
+    border: 1px solid white;
+    border-radius: 6px;
+    width: 25rem;
+    padding: 20px;
+    margin: auto;
+    margin-top: 10%;
+    align-items: center;
+}
+.itemnavbar {
+    position: relative; /* Necesario para posicionar la línea */
+    color: white; /* Texto blanco */
+    font-size: 18px;
+    font-weight: 600;
+    text-decoration: none; /* Elimina el subrayado predeterminado */
+    padding: 3px 6px; /* Espaciado interno del botón */
+    transition: color 0.3s ease; /* Suaviza el cambio de color */
+}
+.itemnavbar::after {
+    content: ""; /* Crea un pseudo-elemento para la línea */
+    position: absolute; /* Posiciona la línea debajo del texto */
+    left: 0;
+    bottom: 0; /* Ajusta la posición de la línea */
+    width: 0; /* Inicialmente la línea tiene un ancho de 0 */
+    height: 2px; /* Grosor de la línea */
+    background-color: white; /* Color de la línea */
+    transition: width 0.3s ease; /* Transición suave del ancho */
+}
+
+.itemnavbar:hover {
+    color: rgb(27, 169, 235); /* Asegura que el texto permanezca blanco al hacer hover */
+}
+
+.itemnavbar:hover::after {
+    width: 100%; /* Expande la línea al ancho completo del texto */
+}
+

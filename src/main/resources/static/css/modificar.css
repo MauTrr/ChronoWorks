@@ -1,0 +1,81 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.fondo {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #2ab2e7 0%, #a09090 100%);
+}
+
+
+.container {
+
+    background-color: rgba(100, 186, 194, 0.075);
+    backdrop-filter: blur(15px);
+    color: #000000;
+    border-radius: 15px;
+    box-shadow: 0px 8px 32px rgb(0, 0, 0, 0.3);
+    border: 3px solid white;
+    border-radius: 6px;
+    width: 40rem;
+    padding: 20px;
+    margin: auto;
+    align-items: center;
+
+}
+.botoninicio {
+    position: relative; /* Necesario para posicionar la línea */
+    color: white; /* Texto blanco */
+    text-decoration: none; /* Elimina el subrayado predeterminado */
+    font-size: 18px; /* Ajusta el tamaño de la fuente si es necesario */
+    padding: 5px 10px; /* Espaciado interno del botón */
+    transition: color 0.3s ease; /* Suaviza el cambio de color */
+}
+
+.botoninicio::after {
+    content: ""; /* Crea un pseudo-elemento para la línea */
+    position: absolute; /* Posiciona la línea debajo del texto */
+    left: 0;
+    bottom: 0; /* Ajusta la posición de la línea */
+    width: 0; /* Inicialmente la línea tiene un ancho de 0 */
+    height: 2px; /* Grosor de la línea */
+    background-color: white; /* Color de la línea */
+    transition: width 0.3s ease; /* Transición suave del ancho */
+}
+
+.botoninicio:hover {
+    color: white; /* Asegura que el texto permanezca blanco al hacer hover */
+}
+
+.botoninicio:hover::after {
+    width: 100%; /* Expande la línea al ancho completo del texto */
+}
+
+.form-control {
+    background-color: transparent !important;
+    color: white !important;
+}
+
+::placeholder {
+    color: rgb(255, 253, 253) !important;
+}
+
+.btn {
+    background-color:  #43b4e0;
+    border: none;
+    transition: background-color 0.3s ease;
+    color: white !important;
+}
+
+.btn:hover {
+    background-color: #38cdff;
+}
+
+.form-control:focus {
+    border-color: rgb(0, 0, 0);
+    outline: none;
+    box-shadow: none;
+    background-color: transparent !important;
+}

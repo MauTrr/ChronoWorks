@@ -1,0 +1,183 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    text-decoration: none;
+    list-style: none;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #000000;
+}
+/*Cabezero*/
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.header {
+    background-image: linear-gradient(
+        rgba(0, 0, 0, 0.488)
+        rgba(0, 0, 0, 0.497))
+        url('video principal.mp4');
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    background-size: cover;
+    width: 100%;
+    min-height: 50vh;
+    display: flex;
+    align-items: center;
+}
+
+.menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px; 
+}
+
+.logo {
+    color:#ffffff;
+    font-size: 25px;
+    font-weight: 800;
+}
+
+.menu .navbar {
+    display: flex;
+}
+
+.menu .navbar ul {
+    display: flex;
+}
+
+.menu .navbar ul li {
+    position: relative;
+}
+
+.menu .navbar ul li a {
+    padding: 0 20px;
+    font-size: 18px;
+    color: #ffffff; 
+    font-weight: 600;
+    position: relative;
+    text-decoration: none; 
+}
+
+.menu .navbar ul li a::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0; 
+    height: 2px; 
+    transition: width 0.3s ease;
+}
+
+.menu .navbar ul li a:hover::after {
+    width: 100%; 
+}
+
+#menu {
+    display: none;
+}
+
+.menu-icono {
+    width: 25px;
+}
+
+.menu label {
+    cursor: pointer;
+    display: none;
+}
+.header-content{
+    text-align: center;
+}
+.header-content h1{
+    line-height: 80px;
+    color: #ffffff;
+    text-transform: uppercase;
+}
+.header-content p{
+    font-size: 16px;
+    color: #ffffff;
+    padding: 0 250px;
+    margin-bottom: 25px;
+}
+/*Portafolio*/
+.portafolio{
+    padding: 50px 0;
+    background-color:#e1e2e6f5;
+    position: relative;
+}
+.portafolio h2{
+    text-align: center;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 80px;
+    color: #010101;
+    text-transform: uppercase;
+    margin-bottom: 15px;
+}
+.portafolio p{
+    font-size: 16px;
+    color: #000000;
+    padding: 0 10px;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.galeria-port {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+
+.imagen-port {
+    width: 20%;
+    height: 300px;
+    position: relative;
+    margin-bottom: 30px;
+    overflow: hidden;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.imagen-port img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hover-galeria {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #ca14147a;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.imagen-port:hover .hover-galeria {
+    opacity: 1;
+}
+
+.hover-galeria p {
+    font-size: 18px;
+}
+
+
+

@@ -1,0 +1,608 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  text-decoration: none;
+  list-style: none;
+}
+
+/*Cabezero*/
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+html {
+  scroll-padding-top: 76px;
+  /* Cambia el valor según la altura de tu navbar */
+}
+
+.itemnavbar {
+  position: relative;
+  /* Necesario para posicionar la línea */
+  color: white;
+  /* Texto blanco */
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration: none;
+  /* Elimina el subrayado predeterminado */
+  padding: 3px 6px;
+  /* Espaciado interno del botón */
+  transition: color 0.3s ease;
+  /* Suaviza el cambio de color */
+}
+
+.itemnavbar::after {
+  content: "";
+  /* Crea un pseudo-elemento para la línea */
+  position: absolute;
+  /* Posiciona la línea debajo del texto */
+  left: 0;
+  bottom: 0;
+  /* Ajusta la posición de la línea */
+  width: 0;
+  /* Inicialmente la línea tiene un ancho de 0 */
+  height: 2px;
+  /* Grosor de la línea */
+  background-color: white;
+  /* Color de la línea */
+  transition: width 0.3s ease;
+  /* Transición suave del ancho */
+}
+
+.itemnavbar:hover {
+  color: rgb(27, 169, 235);
+  /* Asegura que el texto permanezca blanco al hacer hover */
+}
+
+.itemnavbar:hover::after {
+  width: 100%;
+  /* Expande la línea al ancho completo del texto */
+}
+
+/* Contenedor principal para el video */
+.videoss {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  overflow: hidden;
+  /* Asegura que nada sobresalga del contenedor */
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.8));
+  /* Gradiente oscuro sobre el video */
+}
+
+/* Estilo del video */
+.background-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* El video llena el contenedor */
+  z-index: -1;
+  /* Detrás del contenido */
+  opacity: 1;
+  /* Totalmente visible */
+}
+
+/* Estilo del texto */
+.info {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: white;
+  z-index: 1;
+  /* Por encima del video */
+}
+
+.info h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  /* Sombra para legibilidad */
+  font-family: sans-serif;
+
+}
+
+.info p {
+  font-size: 1.5em;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Estilo de la onda en la parte inferior */
+.wave {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  top: 150px;
+  /* Para que se superponga ligeramente sobre el video */
+  z-index: 0;
+  /* Asegura que la onda no tape el contenido */
+}
+
+.Nosotros-cont {
+  display: flex;
+  background: linear-gradient(180deg,#228ecc 0%, #339fdd 100%);
+  padding: 10px;
+  height: 500px;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
+
+.contenedorsobrenosotros {
+  background-color: rgba(11, 170, 190, 0);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 4px 24px rgb(0, 0, 0, 0.3);
+  border: 1px solid white;
+  border-radius: 12px;
+  align-items: start;
+  height: 250px;
+  max-height: 300px;
+  max-width: 600px;
+  margin-right: 180px;
+  margin-left: 15px;
+  margin-bottom: 20px;
+  display: flex;
+  align-self: center;
+  justify-content: start;
+}
+
+.Sobre-nosotros {
+  font-size: 20px;
+  max-width: 550px;
+  margin: auto;
+  margin-top: 20px;
+  color: white;
+  justify-content: start;
+}
+
+.Sobre-nosotros h2 {
+  justify-content: start;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 5px;
+}
+
+img {
+  border-radius: 12px;
+}
+
+.logo {
+  display: flex;
+  width: 255px;
+  height: 255px;
+  border: 1px solid white;
+  box-shadow: 0 4px 24px rgb(0, 0, 0, 0.3);
+  border-radius: 12px;
+  align-self: center;
+  margin-left: 180px;
+  margin-right: 45px;
+  margin-bottom: 20px;
+}
+
+hr {
+  border: none;
+  height: 3px;
+  background-color: #ffffff;
+  width: 50%;
+  margin: 3px auto;
+}
+
+.Sobre-nosotros p {
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 500;
+  color: #000000;
+  text-align: center;
+  text-wrap: pretty;
+  margin-top: 10px;
+  margin-right: 8px;
+  margin-left: 8px;
+}
+
+/* Contenedor general */
+.vision-mision {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(180deg,#339fdd 0%, #319bd8 100%);
+  padding: 20px;
+  height: 500px;
+  border-top: 1px solid white;
+  border-bottom: 1px solid white;
+}
+
+/* Título principal */
+.titulo {
+  text-align: center;
+  font-size: 38px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 5px;
+  margin-top: 10px;
+}
+.vision-mision hr{
+  border: none;
+  height: 3px;
+  background-color: #ffffff;
+  width: 25%;
+  margin: 2px auto;
+}
+
+/* Contenedor para los bloques de visión y misión */
+.contenedor-vision-mision {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  /* Margen entre los contenedores */
+  max-width: 1200px;
+  /* Limita el ancho total */
+}
+
+.contenedor-vision {
+  background-color: rgba(11, 170, 190, 0);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 4px 24px rgb(0, 0, 0, 0.3);
+  border: 1px solid white;
+  border-radius: 12px;
+  align-items: center;
+  margin: auto;
+  margin-top: 20px;
+  width: 400px;
+  height: 300px;
+  max-width: 500px;
+  display: flex;
+  align-self: center;
+  justify-content: start;
+  flex-direction: column;
+}
+
+.contenedor-mision {
+  background-color: rgba(11, 170, 190, 0);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 4px 24px rgb(0, 0, 0, 0.3);
+  border: 1px solid white;
+  border-radius: 12px;
+  align-items: center;
+  margin: auto;
+  margin-top: 20px;
+  width: 400px;
+  height: 300px;
+  max-width: 500px;
+  display: flex;
+  align-self: center;
+  justify-content: start;
+  flex-direction: column;
+}
+
+.vision-titulo,
+.mision-titulo {
+  text-align: center;
+  font-size: 32px;
+  font-weight: 500;
+  color: #ffffff;
+  margin: 10px 0;
+}
+
+.contenedor-mision p {
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 500;
+  color: #000000;
+  text-align: center;
+  word-break: keep-all;
+  text-wrap: wrap;
+  text-wrap-style: auto;
+  margin-top: 20px;
+  margin-right: 8px;
+  margin-left: 8px;
+}
+
+.contenedor-vision p {
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 500;
+  color: #000000;
+  text-align: center;
+  word-break: keep-all;
+  text-wrap: wrap;
+  text-wrap-style: auto;
+  margin-top: 20px;
+  margin-right: 8px;
+  margin-left: 8px;
+}
+.servicios {
+  position: relative;
+  background: linear-gradient(180deg,#319bd8 0%, #3fa2db 100%);
+  border-bottom: 1px solid white;
+  padding: 20px;
+  height: 600px;
+  flex-direction: column;
+  align-items: center;
+}
+.servicios hr{
+  border: none;
+  height: 3px;
+  background-color: #ffffff;
+  width: 20%;
+  margin: 3px auto;
+}
+
+.servicios h2 {
+  text-align: center;
+  font-size: 38px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
+/* Centrar las imágenes dentro del carrusel */
+.carousel-inner {
+  margin-top: 20px;
+  display: flex;
+  align-items: start; /* Centra verticalmente */
+  justify-content: start; /* Centra horizontalmente */
+  height: 450px; /* Define una altura consistente */
+}
+
+/* Ajustar el diseño del caption debajo de la imagen */
+.carousel-caption {
+  position: static; /* Remueve el posicionamiento predeterminado dentro del carrusel */
+  margin-top: 10px; /* Añade espacio entre la imagen y el caption */
+  margin-bottom: 5px;
+  padding: 10px; /* Espacio interno dentro del caption */
+  background-color: transparent; /* Fondo blanco semitransparente */
+  border: 1px solid #ffffff; /* Borde negro de 1px */
+  border-radius: 6px; /* Esquinas redondeadas */
+  text-align: center; /* Centra el texto dentro del caption */
+  max-width: 400px; /* Asegura que el caption no sea más ancho que la imagen */
+  margin-left: auto;
+  margin-right: auto; /* Centra el caption horizontalmente */
+}
+
+/* Asegurar que las imágenes tengan tamaño adecuado */
+.carousel-item img {
+  margin: auto;
+  height: 300px;
+  width: 300px;
+  display: block;
+}
+
+/* Ajustar la distancia entre indicadores y contenido */
+.carousel-indicators {
+  position: absolute;
+  bottom: -50px; /* Ajusta la distancia de los indicadores */
+  left: 36%;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+/* Asegurar que las imágenes tengan un espacio visual correcto */
+.carousel-item {
+  position: relative; /* Necesario para los ajustes de centrado */
+}
+
+.contacto{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #3fa2db;
+  padding: 20px;
+  height: 600px;
+  border-bottom: 1px solid white;
+}
+.titulo-contacto{
+  text-align: center;
+  font-size: 38px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 5px;
+  margin-top: 10px;
+}
+.contacto hr {
+  border: none;
+  height: 3px;
+  background-color: #ffffff;
+  width: 20%;
+  margin: 3px auto;
+}
+.container {
+
+  background-color: rgba(100, 186, 194, 0.075);
+  backdrop-filter: blur(15px);
+  color: #000000;
+  border-radius: 15px;
+  box-shadow: 0px 8px 32px rgb(0, 0, 0, 0.3);
+  border: 2px solid white;
+  border-radius: 6px;
+  width: 40rem;
+  padding: 20px;
+  margin: auto;
+  margin-top: 20px;
+  align-items: center;
+
+}
+
+.form-control {
+  background-color: transparent !important;
+  color: white !important;
+}
+
+::placeholder {
+  color: rgb(255, 253, 253) !important;
+}
+
+.btn {
+  background-color: #ffffff;
+  border: none;
+  transition: background-color 0.3s ease;
+  color: rgb(0, 0, 0) !important;
+}
+
+.btn:hover {
+  background-color: #7d9faa;
+}
+.btn:active {
+  background-color: #7d9faa !important; 
+}
+
+.form-control:focus {
+  border-color: rgb(0, 0, 0);
+  outline: none;
+  box-shadow: none;
+  background-color: transparent !important;
+}
+.footer {
+  position: relative;
+  width: 100%;
+  background: linear-gradient(180deg, #3fa2db 70%, #a09090 100%);
+  min-height: 300px;
+  padding: 20px 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+
+}
+
+.redes {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin: 10px 5px;
+  flex-wrap: wrap;
+
+}
+
+.red-icono {
+  list-style: none;
+}
+
+.icono {
+  color: rgb(255, 255, 255);
+  font-size: 32px;
+  display: inline-block;
+  margin: 0 10px;
+  transition: 0.5s;
+}
+
+.icono:hover {
+  transform: translateY(-10px);
+  color: rgb(59, 59, 59);
+}
+
+.menu {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  align-items: center;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+
+.menu-icono {
+  position: relative;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 3px 6px;
+  transition: color 0.3s ease;
+}
+
+.menu-icono::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background-color: white;
+  transition: width 0.3s ease;
+}
+
+.menu-icono:hover {
+  color: rgb(59, 59, 59);
+}
+
+.menu-icono:hover::after {
+  width: 100%;
+}
+
+.texto {
+  color: rgb(255, 255, 255);
+  font-size: 20px;
+  margin-top: 15px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+
+/*Parte para dispositivos moviles*/
+
+@media (max-width: 768px) {
+  .header {
+    min-height: 40vh;
+  }
+
+  .menu .navbar ul {
+    flex-direction: column;
+    background-color: #251974;
+    position: absolute;
+    top: 50px;
+    width: 100%;
+    left: -100%;
+    transition: left 0.3s ease;
+  }
+
+  .menu .navbar ul.show {
+    left: 0;
+  }
+
+  .menu-icono {
+    display: block;
+    cursor: pointer;
+  }
+
+  .header-content h1 {
+    line-height: 50px;
+    font-size: 24px;
+  }
+
+  .header-content p {
+    padding: 0 50px;
+    font-size: 14px;
+  }
+
+  .Nosotros-cont,
+  .servicios {
+    padding: 50px 20px;
+  }
+
+  .Sobre-nosotros,
+  .servicios h2,
+  .content-foo {
+    max-width: 100%;
+  }
+
+  .imagen-port {
+    width: 45%;
+    height: 200px;
+  }
+
+  .contenedor-footer {
+    flex-direction: column;
+    text-align: center;
+  }
+} 

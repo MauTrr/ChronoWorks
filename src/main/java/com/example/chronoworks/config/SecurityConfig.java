@@ -5,8 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -17,25 +17,35 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf-> csrf.disable())
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // Archivos estáticos y HTML
+                        .requestMatchers(
+                                "/asignacion/**",
+                                "/css/**",
+                                "/js/**",
+                                "/img/**",
+                                "/**/*.html",
+                                "/favicon.ico"
+                        ).permitAll()
+
+                        // API pública o login
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
+
+                        // Rutas con roles
                         .requestMatchers("/api/Admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/Lider/**").hasRole("LIDER")
                         .requestMatchers("/api/Agente/**").hasRole("AGENTE")
+
+                        // Cualquier otra ruta requiere autenticación
                         .anyRequest().authenticated()
                 )
+                .httpBasic(Customizer.withDefaults()) // este activa el login HTTP
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .httpBasic((Customizer.withDefaults()));
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // CAMBIA ESTO
+                );
+
         return http.build();
     }
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
-
 }
