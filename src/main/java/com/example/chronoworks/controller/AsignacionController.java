@@ -13,8 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/asignaciones")
 public class AsignacionController {
@@ -30,7 +28,7 @@ public class AsignacionController {
         return new ResponseEntity<>(nuevaAsignacion, HttpStatus.CREATED);
     }
 
-    @PostMapping("/{idAsignacion}")
+    @GetMapping("/{idAsignacion}")
     public ResponseEntity<RespuestaAsignacionDTO> obtenerAsignacion(@PathVariable Integer idAsignacion) {
         RespuestaAsignacionDTO asignacion = asignacionService.obtenerAsignacion(idAsignacion);
         return ResponseEntity.ok(asignacion);
