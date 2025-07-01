@@ -19,33 +19,21 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Archivos estáticos y HTML
-                        .requestMatchers(
-                                "/asignacion/**",
-                                "/css/**",
-                                "/js/**",
-                                "/img/**",
-                                "/**/*.html",
-                                "/favicon.ico"
-                        ).permitAll()
-
-                        // API pública o login
-                        .requestMatchers("/api/auth/login").permitAll()
-                        .requestMatchers("/api/public/**").permitAll()
-
-                        // Rutas con roles
-                        .requestMatchers("/api/Admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/Lider/**").hasRole("LIDER")
-                        .requestMatchers("/api/Agente/**").hasRole("AGENTE")
-
-                        // Cualquier otra ruta requiere autenticación
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()  //
                 )
-                .httpBasic(Customizer.withDefaults()) // este activa el login HTTP
+                .httpBasic(Customizer.withDefaults()) //
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // CAMBIA ESTO
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 );
 
         return http.build();
     }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
+    }
+
+
+
 }

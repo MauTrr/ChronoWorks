@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/login.css">
+  <link rel="stylesheet" href="/css/header.css">
+  <script src="https://kit.fontawesome.com/8eb65f8551.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<header>
+  <div class="fondo_menu">
+    <div class="container-fluid">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+          <a class="navbar-brand">
+            <img src="/img/logo.png" alt="Logo" style="width:50px;" class="rounded-pill border border-2">
+          </a>
+          <a class="navbar-brand fw-semibold text-light me-auto">Chronoworks</a>
+          <a href="/index.html#inicio" class="itemnavbar">Inicio</a>
+          <a href="/index.html#Sobre-nosotros" class="itemnavbar">Sobre Nosotros</a>
+          <a href="/index.html#vision-mision" class="itemnavbar">Visión y Misión</a>
+          <a href="/index.html#servicios" class="itemnavbar">Servicios</a>
+          <a href="/index.html#contacto" class="itemnavbar">Contacto</a>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<div class="fondo_login">
+  <div class="login">
+    <div class="d-flex justify-content-center">
+      <img src="/img/logo.png" class="rounded-circle border border-2" alt="logo login" style="height: 7rem">
+    </div>
+    <div class="text-center fs-4 fw-semibold text-light my-2">Ingresa a Chronoworks</div>
+
+    <div id="mensajeError" class="alert d-none text-center fw-semibold" role="alert"></div>
+
+    <form id="loginForm">
+      <div class="input-group mt-4">
+        <div class="input-group-text bg-secondary">
+          <img src="/img/username.png" alt="username icon" style="height:1rem">
+        </div>
+        <input type="text" class="form-control" placeholder="Correo" name="usuario" required>
+      </div>
+      <div class="input-group mt-4">
+        <div class="input-group-text bg-secondary">
+          <img src="/img/password.png" alt="password icon" style="height:1rem">
+        </div>
+        <input type="password" class="form-control" placeholder="Contraseña" name="contrasena" id="contrasena" required>
+        <button type="button" class="input-group-text bg-secondary" onclick="mostrarContraseña('contrasena', 'mostrarcontraseña')">
+          <i id="mostrarcontraseña" class="fa-solid fa-eye changepassword"></i>
+        </button>
+      </div>
+      <button type="submit" class="btn btn-light fw-semibold w-100 mt-4 shadow-sm">Iniciar sesión</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('loginForm');
+  const mensajeError = document.getElementById('mensajeError');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const datos = {
+      usuario: form.usuario.value,
+      contrasena: form.contrasena.value
+    };
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const rol = data.rol.toUpperCase(); // ADMIN, LIDER, AGENTE
+
+        // Redirección según el rol
+        if (rol === 'ADMIN') window.location.href = '/vista/admin/index.html';
+        else if (rol === 'LIDER') window.location.href = '/vista/lider/index.html';
+        else if (rol === 'AGENTE') window.location.href = '/vista/agente/index.html';
+        else throw new Error('Rol desconocido');
+      } else {
+        const errorText = await response.text();
+        mostrarMensaje('danger', errorText || 'Usuario o contraseña incorrecta');
+      }
+    } catch (error) {
+      mostrarMensaje('danger', error.message);
+    }
+  });
+
+  function mostrarMensaje(tipo, texto) {
+    mensajeError.className = `alert alert-${tipo}`;
+    mensajeError.textContent = texto;
+    mensajeError.classList.remove('d-none');
+  }
+
+  function mostrarContraseña(idCampo, idIcono) {
+    const input = document.getElementById(idCampo);
+    const icon = document.getElementById(idIcono);
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash');
+    } else {
+      input.type = 'password';
+      icon.classList.remove('fa-eye-slash');
+      icon.classList.add('fa-eye');
+    }
+  }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/main.js"></script>
+</body>
+</html>

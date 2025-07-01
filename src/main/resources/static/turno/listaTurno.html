@@ -1,10 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+<html lang="es">
 
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lista Turnos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="../../css/listaturno.css" />
+    <link rel="stylesheet" href="../../css/header.css" />
+    <script src="https://kit.fontawesome.com/8eb65f8551.js" crossorigin="anonymous"></script>
+</head>
+
+<body class="fondo">
+<header>
+    <div class="fondo_menu">
+        <div class="container-fluid">
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+                <div class="container-fluid">
+                    <a class="navbar-brand">
+                        <img src="../../img/logo.png" alt="Logo" style="width:50px;" class="rounded-pill border border-2" />
+                    </a>
+                    <a class="navbar-brand fw-semibold text-light">Chronoworks</a>
+                    <a href="../../admin.html" class="botoninicio me-2">Inicio</a>
+                    <a href="../../logout.html" class="botonsesion">Cerrar Sesión</a>
+                </div>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<div class="container mt-3 text-center">
+    <h2 class="py-3 px-4 mx-auto shadow-sm"
+        style="background-color:rgb(185, 178, 178);color: black; max-width: 400px; border-radius: 15px; border: solid 2px white;">
+        Lista de Turnos
+    </h2>
+
+    <div class="mb-3 d-flex justify-content-center gap-3">
+        <a href="agregarTurno.html" class="btn btn-success">Agregar Turno</a>
+        <button class="btn btn-info">Generar Reporte</button>
+    </div>
+
+    <div class="table-responsive estilo-tabla">
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+            <tr>
+                <th>ID Turno</th>
+                <th>Hora Entrada</th>
+                <th>Hora Salida</th>
+                <th>Acciones</th>
+            </tr>
+            </thead>
+            <tbody id="tablaTurnos"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function cargarTurnos() {
+      fetch("/api/turnos")
+        .then(res => res.json())
+        .then(turnos => {
+          const cuerpoTabla = document.getElementById("tablaTurnos");
+          cuerpoTabla.innerHTML = "";
+          turnos.forEach(turno => {
+            const fila = document.createElement("tr");
+            fila.innerHTML = `
+              <td>${turno.id}</td>
+              <td>${turno.horaEntrada}</td>
+              <td>${turno.horaSalida}</td>
+              <td>
+                <a href="modificarTurno.html?id=${turno.id}" class="btn btn-sm btn-warning me-2">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </a>
+                <button class="btn btn-sm btn-danger" onclick="eliminarTurno(${turno.id})">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            `;
+            cuerpoTabla.appendChild(fila);
+          });
+        })
+        .catch(error => {
+          console.error("Error cargando turnos:", error);
+          alert("Error al cargar los turnos");
+        });
+    }
+
+    function eliminarTurno(id) {
+      if (!confirm("¿Desea eliminar este turno?")) return;
+
+      fetch(`/api/turnos/${id}`, { method: "DELETE" })
+        .then(res => {
+          if (res.ok) {
+            alert("Turno eliminado correctamente");
+            cargarTurnos();
+          } else {
+            alert("Error al eliminar turno");
+          }
+        })
+        .catch(err => {
+          alert("Fallo al conectarse con el servidor");
+          console.error(err);
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", cargarTurnos);
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

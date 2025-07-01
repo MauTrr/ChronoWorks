@@ -33,9 +33,9 @@
                                     Servicios 1
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="campanasDropdown">
-                                    <li><a class="dropdown-item" href="/vista/asignacion/listaasignacion.html">Asignación</a></li>
-                                    <li><a class="dropdown-item" href="/vista/campaña/listacampaña.html">Campaña</a></li>
-                                    <li><a class="dropdown-item" href="/vista/controlacceso/listacontrol.html">Control Acceso</a></li>
+                                    <li><a class="dropdown-item" href="asignacion/listaAsignacion.html">Asignación</a></li>
+                                    <li><a class="dropdown-item" href="campana/listarCampana.html">Campaña</a></li>
+                                    <li><a class="dropdown-item" href="controldeAcceso/listaControl.html">Control Acceso</a></li>
                                 </ul>
                             </li>
                             <li class="nav-item dropdown">
@@ -44,9 +44,9 @@
                                     Servicios 2
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="empleadosDropdown">
-                                    <li><a class="dropdown-item" href="/vista/empleados/listaempleados.html">Empleados</a></li>
-                                    <li><a class="dropdown-item" href="/vista/empresa/listaempresa.html">Empresa</a></li>
-                                    <li><a class="dropdown-item" href="/vista/roles/listaroles.html">Roles</a></li>
+                                    <li><a class="dropdown-item" href="empleado/listarEmpleado.html">Empleados</a></li>
+                                    <li><a class="dropdown-item" href="empresa/listaEmpresa.html">Empresa</a></li>
+                                    <li><a class="dropdown-item" href="roles/listaRoles.html">Roles</a></li>
                                 </ul>
                             </li>
                             <li class="nav-item dropdown">
@@ -55,9 +55,9 @@
                                     Servicios 3
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="contactoDropdown">
-                                    <li><a class="dropdown-item" href="/vista/tarea/listatarea.html">Tareas</a></li>
-                                    <li><a class="dropdown-item" href="/vista/credenciales/listacredenciales.html">Credenciales</a></li>
-                                    <li><a class="dropdown-item" href="/vista/turno/listaturno.html">Turnos</a></li>
+                                    <li><a class="dropdown-item" href="tarea/listaTarea.html">Tareas</a></li>
+                                    <li><a class="dropdown-item" href="credenciales/listaCredenciales.html">Credenciales</a></li>
+                                    <li><a class="dropdown-item" href="turno/listaTurno.html">Turnos</a></li>
                                 </ul>
                             </li>
                         </ul>
@@ -84,11 +84,101 @@
                         <div class="card-body">
                             <h4 class="card-title">ASIGNACIÓN</h4>
                             <p class="card-text">Gestiona las tareas asignadas a cada campaña.</p>
-                            <a href="/vista/asignacion/listaasignacion.html" class="boton">GESTIÓN</a>
+                            <a href="asignacion/listaAsignacion.html" class="boton">GESTIÓN</a>
                         </div>
                     </div>
                 </div>
                 <!-- Resto de tarjetas igual que en tu archivo PHP -->
+                <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
+                    <div class="card tarjeta">
+                        <img class="card-img-top" src="img/campaña.png" alt="Card image">
+                        <div class="card-body">
+                            <h4 class="card-title">CAMPAÑA</h4>
+                            <p class="card-text">Gestiona las campañas asociadas a las empresas.</p>
+                            <a href="campana/listarCampana.html" class="boton">GESTIÓN</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
+                    <div class="card tarjeta">
+                        <img class="card-img-top" src="img/control_acceso.png" alt="Card image">
+                        <div class="card-body">
+                            <h4 class="card-title">CONTROL DE ACCESO</h4>
+                            <p class="card-text">Gestiona el acceso de los empleados.</p>
+                            <a href="controldeAcceso/listaControl.html" class="boton">GESTIÓN</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
+                    <div class="card tarjeta">
+                        <img class="card-img-top" src="img/empleados.png" alt="Card image">
+                        <div class="card-body">
+                            <h4 class="card-title">EMPLEADOS</h4>
+                            <p class="card-text">Gestiona los empleados.</p>
+                            <a href="empleado/listarEmpleado.html" class="boton">GESTIÓN</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
+                    <div class="card tarjeta">
+                        <img class="card-img-top" src="img/empresa.png" alt="Card image">
+                        <div class="card-body">
+                            <h4 class="card-title">EMPRESA</h4>
+                            <p class="card-text">Gestiona las empresas.</p>
+                            <a href="empresa/listaEmpresa.html" class="boton">GESTIÓN</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
+                    <div class="card tarjeta">
+                        <img class="card-img-top" src="img/roles.png" alt="Card image">
+                        <div class="card-body">
+                            <h4 class="card-title">ROLES</h4>
+                            <p class="card-text">Gestiona los roles de las cuentas.</p>
+                            <a href="roles/listaRoles.html" class="boton">GESTIÓN</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
+                    <div class="card tarjeta">
+                        <img class="card-img-top" src="img/tarea.png" alt="Card image">
+                        <div class="card-body">
+                            <h4 class="card-title">TAREAS</h4>
+                            <p class="card-text">Gestiona las tareas de los empleados.</p>
+                            <a href="tarea/listaTarea.html" class="boton">GESTIÓN</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
+                    <div class="card tarjeta">
+                        <img class="card-img-top" src="img/credenciales.png" alt="Card image">
+                        <div class="card-body">
+                            <h4 class="card-title">CREDENCIALES</h4>
+                            <p class="card-text">Gestiona las cuentas de los empleados.</p>
+                            <a href="credenciales/listaCredenciales.html" class="boton">GESTIÓN</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
+                    <div class="card tarjeta">
+                        <img class="card-img-top" src="img/turnos.png" alt="Card image">
+                        <div class="card-body">
+                            <h4 class="card-title">TURNOS</h4>
+                            <p class="card-text">Gestiona los turnos laborales de los empleados.</p>
+                            <a href="turno/listaTurno.html" class="boton">GESTIÓN</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             </div>
         </div>
     </div>

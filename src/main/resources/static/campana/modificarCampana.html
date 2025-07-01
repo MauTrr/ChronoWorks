@@ -1,10 +1,126 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modificar Campaña</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/agregar.css">
+    <link rel="stylesheet" href="../../css/header.css">
+    <script src="https://kit.fontawesome.com/8eb65f8551.js" crossorigin="anonymous"></script>
 </head>
-<body>
 
+<body class="fondo">
+<header>
+    <div class="fondo_menu">
+        <div class="container-fluid">
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="#">
+                        <img src="../../img/logo.png" alt="Logo" style="width:50px;" class="rounded-pill border border-2">
+                    </a>
+                    <a class="navbar-brand fw-semibold text-light" href="#">Chronoworks</a>
+                    <a href="../../admin.html" class="botoninicio">Inicio</a>
+                </div>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<h2 class="text-center py-3 px-4 mx-auto shadow-sm"
+    style="color: black; max-width: 400px; margin-top: 2rem; margin-bottom: 2rem; border-radius: 15px; border: solid 2px; border-color: white;">
+    Modificar Campaña
+</h2>
+
+<div class="container">
+    <div class="col-12">
+        <form id="modificarCampanaForm">
+            <input type="hidden" id="idCampana" name="idCampana">
+            <div class="row mb-3">
+                <div class="col-5">
+                    <label for="idempresa" class="form-label">ID empresa:</label>
+                    <input type="number" class="form-control" id="idempresa" name="idempresa">
+                </div>
+                <div class="col-7">
+                    <label for="campana" class="form-label">Nombre de Campaña:</label>
+                    <input type="text" class="form-control" id="campana" name="campana">
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-5">
+                    <label for="descripcion" class="form-label">Descripción:</label>
+                    <textarea class="form-control" name="descripcion" id="descripcion" rows="4"></textarea>
+                </div>
+                <div class="col-7">
+                    <label for="fechainicio" class="form-label">Fecha de Inicio:</label>
+                    <input type="date" class="form-control mb-3" name="fechainicio" id="fechainicio">
+
+                    <label for="fechafin" class="form-label">Fecha de Fin:</label>
+                    <input type="date" class="form-control mb-3" name="fechafin" id="fechafin">
+
+                    <label for="estado" class="form-label">Estado:</label>
+                    <select class="form-control" id="estado" name="estado">
+                        <option value="">Selecciona un estado</option>
+                        <option value="ACTIVA">ACTIVA</option>
+                        <option value="INACTIVA">INACTIVA</option>
+                        <option value="FINALIZADA">FINALIZADA</option>
+                    </select>
+                </div>
+            </div>
+            <div class="d-flex justify-content-center">
+                <button type="submit" class="btn btn-warning shadow py-2 px-4 fw-bold">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById('modificarCampanaForm');
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+
+    if (id) {
+      fetch(`/api/campanas/${id}`)
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('idCampana').value = data.idCampana;
+          document.getElementById('idempresa').value = data.idEmpresa;
+          document.getElementById('campana').value = data.nombreCampana;
+          document.getElementById('descripcion').value = data.descripcion;
+          document.getElementById('fechainicio').value = data.fechaInicio;
+          document.getElementById('fechafin').value = data.fechaFin;
+          document.getElementById('estado').value = data.estado;
+        });
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const campana = {
+        idCampana: document.getElementById('idCampana').value,
+        idEmpresa: document.getElementById('idempresa').value,
+        nombreCampana: document.getElementById('campana').value,
+        descripcion: document.getElementById('descripcion').value,
+        fechaInicio: document.getElementById('fechainicio').value,
+        fechaFin: document.getElementById('fechafin').value,
+        estado: document.getElementById('estado').value
+      };
+
+      fetch(`/api/campanas/${campana.idCampana}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(campana)
+      }).then(response => {
+        if (response.ok) {
+          alert("Campaña actualizada correctamente");
+          window.location.href = "listarCampana.html";
+        } else {
+          alert("Error al actualizar la campaña");
+        }
+      });
+    });
+</script>
 </body>
 </html>
