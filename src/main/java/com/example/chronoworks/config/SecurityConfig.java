@@ -19,21 +19,38 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()  //
-                )
-                .httpBasic(Customizer.withDefaults()) //
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        // Permitir acceso a los archivos HTML y estáticos
+                        .requestMatchers(
+                                "/admin.html",
+                                "/lider.html",
+                                "/index.html",
+                                "/agente.html",
+                                "/login.html",
+                                "/access-denied.html",
+                                "/css/**",
+                                "/js/**",
+                                "/img/**",
+                                "/favicon.ico"
+                        ).permitAll()
+
+                        // Permitir login y endpoints públicos
+                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/public/**").permitAll()
+
+                        // Requiere roles específicos
+                        .requestMatchers("/api/Admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/Lider/**").hasRole("LIDER")
+                        .requestMatchers("/api/Agente/**").hasRole("AGENTE")
+
+                        // Todo lo demás necesita autenticación
+                        .anyRequest().authenticated()
                 );
 
         return http.build();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-        return authConfig.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
     }
-
-
-
 }

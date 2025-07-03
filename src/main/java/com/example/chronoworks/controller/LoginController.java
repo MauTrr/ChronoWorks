@@ -1,20 +1,18 @@
 package com.example.chronoworks.controller;
 
 import com.example.chronoworks.dto.login.RequestLoginDTO;
-import com.example.chronoworks.model.Empleado;
+import com.example.chronoworks.model.Credencial;
 import com.example.chronoworks.security.CustomUserDetailsService;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/api/auth")
 public class LoginController {
 
     private final AuthenticationManager authenticationManager;
@@ -23,7 +21,7 @@ public class LoginController {
     public LoginController(AuthenticationManager authenticationManager,
                            CustomUserDetailsService userDetailsService) {
         this.authenticationManager = authenticationManager;
-        this.userDetailsService  = userDetailsService;
+        this.userDetailsService = userDetailsService;
     }
 
     @PostMapping("/login")
@@ -35,10 +33,20 @@ public class LoginController {
                             request.getContrasena()
                     )
             );
-            UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsuario());
-            return ResponseEntity.ok(userDetails);
+
+            // Obtener datos completos del usuario
+            Credencial credencial = userDetailsService.getCredencialByUsuario(request.getUsuario());
+
+            return ResponseEntity.ok().body(
+                    new Object() {
+                        public final String usuario = credencial.getUsuario();
+                        public final String rol = credencial.getRol().getNombreRol();
+                        public final Integer idEmpleado = credencial.getEmpleado().getIdEmpleado();
+                    }
+            );
+
         } catch (BadCredentialsException e) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales invalidas");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales inválidas");
         }
     }
 }

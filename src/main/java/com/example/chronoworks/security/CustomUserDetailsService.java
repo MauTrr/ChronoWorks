@@ -23,15 +23,12 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String usuario) throws UsernameNotFoundException {
-        // Buscar la credencial por el nombre del usuario
         Credencial credencial = credencialRepository.findByUsuario(usuario)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
 
-        //Construccion de la lista de roles
         Rol rol = credencial.getRol();
         GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + rol.getNombreRol().toUpperCase());
 
-        //Devuelve un objeto UserDetails
         return new org.springframework.security.core.userdetails.User(
                 credencial.getUsuario(),
                 credencial.getContrasena(),
@@ -39,4 +36,9 @@ public class CustomUserDetailsService implements UserDetailsService {
         );
     }
 
+
+    public Credencial getCredencialByUsuario(String usuario) {
+        return credencialRepository.findByUsuario(usuario)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+    }
 }

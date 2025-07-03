@@ -84,9 +84,9 @@
         const rol = data.rol.toUpperCase(); // ADMIN, LIDER, AGENTE
 
         // Redirección según el rol
-        if (rol === 'ADMIN') window.location.href = '/vista/admin/index.html';
-        else if (rol === 'LIDER') window.location.href = '/vista/lider/index.html';
-        else if (rol === 'AGENTE') window.location.href = '/vista/agente/index.html';
+        if (rol === 'ADMIN') window.location.href = '/static/admin/index.html';
+        else if (rol === 'LIDER') window.location.href = '/static/lider/index.html';
+        else if (rol === 'AGENTE') window.location.href = '/static/agente/index.html';
         else throw new Error('Rol desconocido');
       } else {
         const errorText = await response.text();
