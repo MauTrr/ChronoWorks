@@ -22,6 +22,7 @@ public class SecurityConfig {
                         // Permitir acceso a los archivos HTML y estáticos
                         .requestMatchers(
                                 "/admin.html",
+                                "/agregarAsignacion.html",
                                 "/lider.html",
                                 "/index.html",
                                 "/agente.html",
