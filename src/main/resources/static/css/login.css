@@ -85,3 +85,15 @@ background-color:#6c757d;
     width: 100%; /* Expande la línea al ancho completo del texto */
 }
 
+.d-none {
+  display: none !important;
+}
+
+#spinner {
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+#mensajeError {
+  transition: all 0.3s ease;
+}

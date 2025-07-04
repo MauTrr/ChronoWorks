@@ -27,7 +27,11 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
 
         Rol rol = credencial.getRol();
-        GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + rol.getNombreRol().toUpperCase());
+        String authorityString = "ROLE_" + rol.getNombreRol().toUpperCase();
+
+        System.out.println("Rol cargado para usuario " + usuario + ": " + authorityString);
+
+        GrantedAuthority authority = new SimpleGrantedAuthority(authorityString);
 
         return new org.springframework.security.core.userdetails.User(
                 credencial.getUsuario(),

@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Login</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/css/login.css">
@@ -37,84 +40,133 @@
     </div>
     <div class="text-center fs-4 fw-semibold text-light my-2">Ingresa a Chronoworks</div>
 
-    <div id="mensajeError" class="alert d-none text-center fw-semibold" role="alert"></div>
+    <!-- Mensaje de error (oculto inicialmente) -->
+    <div id="mensajeError" class="alert alert-danger d-none text-center fw-semibold" role="alert"></div>
 
     <form id="loginForm">
       <div class="input-group mt-4">
         <div class="input-group-text bg-secondary">
           <img src="/img/username.png" alt="username icon" style="height:1rem">
         </div>
-        <input type="text" class="form-control" placeholder="Correo" name="usuario" required>
+        <input type="text" class="form-control" placeholder="Usuario" name="usuario" id="usuario" required>
       </div>
       <div class="input-group mt-4">
         <div class="input-group-text bg-secondary">
           <img src="/img/password.png" alt="password icon" style="height:1rem">
         </div>
         <input type="password" class="form-control" placeholder="Contraseña" name="contrasena" id="contrasena" required>
-        <button type="button" class="input-group-text bg-secondary" onclick="mostrarContraseña('contrasena', 'mostrarcontraseña')">
-          <i id="mostrarcontraseña" class="fa-solid fa-eye changepassword"></i>
+        <button type="button" class="input-group-text bg-secondary" onclick="mostrarContraseña()">
+          <i id="iconoOjo" class="fa-solid fa-eye"></i>
         </button>
       </div>
-      <button type="submit" class="btn btn-light fw-semibold w-100 mt-4 shadow-sm">Iniciar sesión</button>
+      <button type="submit" class="btn btn-light fw-semibold w-100 mt-4 shadow-sm" id="btnLogin">
+        <span id="textoBoton">Iniciar sesión</span>
+        <span id="spinner" class="spinner-border spinner-border-sm d-none"></span>
+      </button>
     </form>
   </div>
 </div>
 
 <script>
-  const form = document.getElementById('loginForm');
-  const mensajeError = document.getElementById('mensajeError');
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+      const form = e.target;
+      const btnLogin = document.getElementById('btnLogin');
+      const spinner = document.getElementById('spinner');
+      const textoBoton = document.getElementById('textoBoton');
+      const mensajeError = document.getElementById('mensajeError');
+      const usuario = form.usuario.value.trim();
+      const contrasena = form.contrasena.value.trim();
 
-    const datos = {
-      usuario: form.usuario.value,
-      contrasena: form.contrasena.value
-    };
-
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(datos)
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const rol = data.rol.toUpperCase(); // ADMIN, LIDER, AGENTE
-
-        // Redirección según el rol
-        if (rol === 'ADMIN') window.location.href = '/static/admin/index.html';
-        else if (rol === 'LIDER') window.location.href = '/static/lider/index.html';
-        else if (rol === 'AGENTE') window.location.href = '/static/agente/index.html';
-        else throw new Error('Rol desconocido');
-      } else {
-        const errorText = await response.text();
-        mostrarMensaje('danger', errorText || 'Usuario o contraseña incorrecta');
+      // Validación básica
+      if (!usuario || !contrasena) {
+          mensajeError.textContent = 'Usuario y contraseña son requeridos';
+          mensajeError.classList.remove('d-none');
+          return;
       }
-    } catch (error) {
-      mostrarMensaje('danger', error.message);
-    }
+
+      // Configuración visual
+      btnLogin.disabled = true;
+      textoBoton.textContent = "Procesando...";
+      spinner.classList.remove('d-none');
+      mensajeError.classList.add('d-none');
+
+      try {
+          const response = await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json'
+              },
+              body: JSON.stringify({
+                  usuario: usuario,
+                  contrasena: contrasena
+              }),
+              credentials: 'include' // ¡IMPORTANTE! Para mantener la sesión
+          });
+
+          // Verificar tipo de contenido
+          const contentType = response.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+              const errorText = await response.text();
+              throw new Error(response.status === 401 ? 'Credenciales incorrectas' : 'Error del servidor');
+          }
+
+          const data = await response.json();
+
+          // Manejar respuesta exitosa
+          if (response.ok && data.success) {
+              // Usar la URL de redirección proporcionada por el servidor o determinar según el rol
+              const redirectUrl = data.redirectUrl || getRedirectUrl(data.rol || data.roleWithPrefix);
+              window.location.href = redirectUrl;
+              return;
+          }
+
+          // Manejar error
+          throw new Error(data.message || 'Error de autenticación');
+
+      } catch (error) {
+          console.error('Error en login:', error);
+          mensajeError.textContent = error.message;
+          mensajeError.classList.remove('d-none');
+
+          // Opcional: Limpiar campos en caso de error
+          form.contrasena.value = '';
+      } finally {
+          btnLogin.disabled = false;
+          textoBoton.textContent = "Iniciar sesión";
+          spinner.classList.add('d-none');
+      }
   });
 
-  function mostrarMensaje(tipo, texto) {
-    mensajeError.className = `alert alert-${tipo}`;
-    mensajeError.textContent = texto;
-    mensajeError.classList.remove('d-none');
+  // Función auxiliar para determinar la URL de redirección
+  function getRedirectUrl(role) {
+      const normalizedRole = (role || '').toString().replace('ROLE_', '').toUpperCase();
+
+      switch(normalizedRole) {
+          case 'ADMIN':
+              return '/admin';
+          case 'LIDER':
+              return '/lider';
+          case 'AGENTE':
+              return '/agente';
+          default:
+              return '/';
+      }
   }
 
-  function mostrarContraseña(idCampo, idIcono) {
-    const input = document.getElementById(idCampo);
-    const icon = document.getElementById(idIcono);
-    if (input.type === 'password') {
-      input.type = 'text';
-      icon.classList.remove('fa-eye');
-      icon.classList.add('fa-eye-slash');
-    } else {
-      input.type = 'password';
-      icon.classList.remove('fa-eye-slash');
-      icon.classList.add('fa-eye');
-    }
+  // Función para mostrar/ocultar contraseña (si la necesitas)
+  function mostrarContraseña() {
+      const input = document.getElementById('contrasena');
+      const icono = document.getElementById('iconoOjo');
+      if (input.type === 'password') {
+          input.type = 'text';
+          icono.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+          input.type = 'password';
+          icono.classList.replace('fa-eye-slash', 'fa-eye');
+      }
   }
 </script>
 
