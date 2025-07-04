@@ -42,9 +42,31 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form.disable()) // Deshabilitar form login tradicional
-                .logout(logout -> logout.disable())
+                .logout(logout -> {
+                    logout.logoutUrl("/api/auth/logout");
+                    logout.logoutSuccessHandler((request, response, authentication) -> {
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"success\": true}");
+                    });
+                    logout.deleteCookies("JSESSIONID");
+                    logout.invalidateHttpSession(true);
+                    logout.permitAll();
+                })
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
+                        .invalidSessionUrl("/login.html")
+                        .maximumSessions(1)
+                        .maxSessionsPreventsLogin(false)
+                        .expiredUrl("/login.html?session=expired")
+                )
+                .headers(headers -> headers
+                        .cacheControl(cache -> cache.disable())
+                        .frameOptions(frame -> frame.deny())
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000)
+                                .preload(true)
+                        )
                 )
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((request, response, authException) -> {

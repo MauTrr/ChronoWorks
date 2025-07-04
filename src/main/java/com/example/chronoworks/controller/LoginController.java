@@ -70,6 +70,32 @@ public class LoginController {
         }
     }
 
+
+    @GetMapping("/validate")
+    public ResponseEntity<?> validateSession() {
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/current-role")
+    public ResponseEntity<?> getCurrentRole(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElse("ROLE_USER");
+
+        return ResponseEntity.ok().body(Map.of(
+                "role", role,
+                "normalizedRole", role.replace("ROLE_", ""),
+                "isAdmin", role.equals("ROLE_ADMIN"),
+                "isLider", role.equals("ROLE_LIDER"),
+                "isAgente", role.equals("ROLE_AGENTE")
+        ));
+    }
+
     private String getRedirectUrl(Authentication authentication) {
         String role = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
