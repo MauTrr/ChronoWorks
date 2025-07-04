@@ -21,7 +21,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // Permitir acceso a los archivos HTML y estáticos
-                        .requestMatchers("/login.html", "/css/**", "/js/**", "/img/**", "/favicon.ico").permitAll()
+                        .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/img/**", "/favicon.ico").permitAll()
+                        .requestMatchers( "/login.html").permitAll()
                         .requestMatchers("/api/auth/validate").authenticated()
 
                         .requestMatchers("/api/public/**").permitAll()
