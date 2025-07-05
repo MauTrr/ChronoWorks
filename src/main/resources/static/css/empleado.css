@@ -1,0 +1,255 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+/*Padding para que no se vea tan ancho*/
+.container-fluid-custom {
+    padding-left: 3rem;  /* 48px */
+    padding-right: 3rem;
+}
+/* Diseño de Boton propio*/
+.btn-custom {
+    background-color: #23A7C1;
+    border-color: #176e7f;
+    color: #ffffff;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-custom::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    transition: all 0.3s;
+}
+
+.btn-custom:hover{
+    background-color: #176e7f;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.btn-custom:active::after {
+    background: rgba(0,0,0,0.1);
+}
+
+/* Estilo principal para la tabla */
+.table-custom {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Estilo para las celdas del encabezado */
+.table-custom thead th {
+    background-color: #23A7C1;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 12px 15px;
+    border-bottom: 2px solid #ffffff;
+    text-align: left;
+}
+
+/* Estilo para las celdas del cuerpo */
+.table-custom tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #23A7C1;
+    vertical-align: middle;
+}
+
+/* Efecto hover para filas */
+.table-custom tbody tr:hover {
+    background-color: #f1f3f5;
+}
+
+/* Bordes redondeados para la tabla */
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+}
+
+.botonsesion {
+    position: relative; /* Necesario para posicionar la línea */
+    color: white; /* Texto blanco */
+    font-size: 18px;
+    font-weight: 600;
+    text-decoration: none; /* Elimina el subrayado predeterminado */
+    font-size: 18px; /* Ajusta el tamaño de la fuente si es necesario */
+    padding: 5px 10px; /* Espaciado interno del botón */
+    transition: color 0.3s ease; /* Suaviza el cambio de color */
+}
+.botonsesion::after {
+    content: ""; /* Crea un pseudo-elemento para la línea */
+    position: absolute; /* Posiciona la línea debajo del texto */
+    left: 0;
+    bottom: 0; /* Ajusta la posición de la línea */
+    width: 0; /* Inicialmente la línea tiene un ancho de 0 */
+    height: 2px; /* Grosor de la línea */
+    background-color: white; /* Color de la línea */
+    transition: width 0.3s ease; /* Transición suave del ancho */
+}
+
+.botonsesion:hover {
+    color: rgb(27, 169, 235); /* Asegura que el texto permanezca blanco al hacer hover */
+}
+
+.botonsesion:hover::after {
+    width: 100%; /* Expande la línea al ancho completo del texto */
+}
+
+
+.botoninicio {
+    position: relative; /* Necesario para posicionar la línea */
+    color: white; /* Texto blanco */
+    font-size: 18px;
+    font-weight: 600;
+    text-decoration: none; /* Elimina el subrayado predeterminado */
+    font-size: 18px; /* Ajusta el tamaño de la fuente si es necesario */
+    padding: 5px 10px; /* Espaciado interno del botón */
+    transition: color 0.3s ease; /* Suaviza el cambio de color */
+}
+
+.botoninicio::after {
+    content: ""; /* Crea un pseudo-elemento para la línea */
+    position: absolute; /* Posiciona la línea debajo del texto */
+    left: 0;
+    bottom: 0; /* Ajusta la posición de la línea */
+    width: 0; /* Inicialmente la línea tiene un ancho de 0 */
+    height: 2px; /* Grosor de la línea */
+    background-color: white; /* Color de la línea */
+    transition: width 0.3s ease; /* Transición suave del ancho */
+}
+
+.botoninicio:hover {
+    color:rgb(27, 169, 235); /* Asegura que el texto permanezca blanco al hacer hover */
+}
+
+.botoninicio:hover::after {
+    width: 100%; /* Expande la línea al ancho completo del texto */
+}
+/* Ajustes generales para botones */
+.botones-acciones {
+    display: flex;
+    gap: 5px; /* Espaciado entre botones */
+}
+
+/*Diseño para la paginación*/
+/* Estilo general de la paginación */
+.pagination {
+    display: flex;
+    gap: 6px;
+}
+
+/* Estilo para todos los items de paginación */
+.pagination .page-item {
+    margin: 0;
+}
+
+/* Estilo para los enlaces */
+.pagination .page-link {
+    color: #495057;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 6px 12px;
+    min-width: 38px;
+    text-align: center;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Estilo hover */
+.pagination .page-link:hover {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #23A7C1;
+}
+
+/* Estilo para el item activo */
+.pagination .page-item.active .page-link {
+    background-color: #23A7C1;
+    border-color: #23A7C1;
+    color: white;
+}
+
+/* Estilo para los botones de navegación (Previous/Next) */
+.pagination .page-item:first-child .page-link,
+.pagination .page-item:last-child .page-link {
+    padding: 6px 12px;
+}
+
+/* Estilo para los puntos suspensivos (si los necesitas) */
+.pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+}
+
+/* Estilo para la información de paginación */
+.pagination-info {
+    font-size: 0.875rem;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+/* Encabezado del modal personalizado */
+.modal-custom.modal-header {
+    background-color: #112F3B !important;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 18px;
+    border-bottom: none !important;
+    padding: 1.2rem 2rem !important;
+    border-radius: 0.3rem 0.3rem 0 0 !important;
+}
+
+/* Título del modal */
+.modal-custom .modal-title {
+    color: #ffffff;
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+/* Botón de cerrar personalizado */
+.modal-custom .btn-close {
+    filter: invert(1) brightness(100%) !important;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+    background-size: 1.1rem;
+    padding: 0.5rem;
+}
+
+.modal-custom .btn-close:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Pie del modal personalizado */
+.modal-footer {
+    border-top: 1px solid #e9ecef;
+    padding: 1rem 2rem;
+}
+
+/* Botón personalizado */
+.btn-custom {
+    background-color: #23A7C1;
+    color: white;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-custom:hover {
+    background-color: #1c8da3;
+    transform: translateY(-1px);
+}

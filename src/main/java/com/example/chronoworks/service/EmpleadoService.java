@@ -2,6 +2,7 @@ package com.example.chronoworks.service;
 
 
 import com.example.chronoworks.dto.empleado.ActualizarEmpleadoDTO;
+import com.example.chronoworks.dto.empleado.FiltroEmpleadoDTO;
 import com.example.chronoworks.dto.empleado.RegistrarEmpleadoDTO;
 import com.example.chronoworks.dto.empleado.RespuestaEmpleadoDTO;
 import com.example.chronoworks.exception.BadRequestException;
@@ -14,11 +15,19 @@ import com.example.chronoworks.repository.CredencialRepository;
 import com.example.chronoworks.repository.EmpleadoRepository;
 import com.example.chronoworks.repository.RolRepository;
 import com.example.chronoworks.repository.TurnoRepository;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class EmpleadoService {
@@ -64,6 +73,7 @@ public class EmpleadoService {
         empleado.setCorreo(dto.getCorreo());
         empleado.setTelefono(dto.getTelefono());
         empleado.setTurno(turno);
+        empleado.setFechaIngreso(LocalDateTime.now());
 
         //Crear credencial
         Credencial credencial = new Credencial();
@@ -90,8 +100,44 @@ public class EmpleadoService {
     }
 
     @Transactional(readOnly = true)
-    public Page<RespuestaEmpleadoDTO> listarEmpleados(Pageable pageable) {
-        return empleadoRepository.findByActivoTrue(pageable).map(this::mapToRespuestaEmpleadoDTO);
+    public Page<RespuestaEmpleadoDTO> listarEmpleados(FiltroEmpleadoDTO filtro, Pageable pageable) {
+        Specification<Empleado> spec = crearSpecificationEmpleado(filtro);
+        Page<Empleado> empleadosPage = empleadoRepository.findAll(spec, pageable);
+        return empleadosPage.map(this::mapToRespuestaEmpleadoDTO);
+    }
+
+    private Specification<Empleado> crearSpecificationEmpleado(FiltroEmpleadoDTO filtro) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Filtro por texto (nombre, apellido, email, etc)
+            if (filtro.getSearch() != null && !filtro.getSearch().trim().isEmpty()) {
+                String searchTerm = "%" + filtro.getSearch().toLowerCase() + "%";
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("nombre")), searchTerm),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("apellido")), searchTerm),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("correo")), searchTerm)
+                ));
+            }
+
+            // Filtro por rol
+            if (filtro.getNombreRol() != null && !filtro.getNombreRol().trim().isEmpty()) {
+                Join<Empleado, Credencial> credencialJoin = root.join("credencial", JoinType.INNER);
+                Join<Credencial, Rol> rolJoin = credencialJoin.join("rol", JoinType.INNER);
+
+                predicates.add(criteriaBuilder.equal(
+                        criteriaBuilder.lower(rolJoin.get("nombreRol")),
+                        filtro.getNombreRol().toLowerCase()
+                ));
+            }
+
+            // Filtro por estado activo
+            if (filtro.getActivo() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("activo"), filtro.getActivo()));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
     }
 
     @Transactional

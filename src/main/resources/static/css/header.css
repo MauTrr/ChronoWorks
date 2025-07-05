@@ -1,11 +1,9 @@
-
 .navbar {
-    background: linear-gradient(90deg, #9e8d8d 0%, #646869 100%);
-    
+    background-color: #112F3B;
 }
 
 .fondo_menu {
-    background: linear-gradient(90deg, #9e9292 0%, #676969 100%);
+    background-color: #112F3B;
     border-bottom: 2px solid white;
 }
 header {
