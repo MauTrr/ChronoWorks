@@ -25,4 +25,7 @@ public class EmpresaDTO {
 
     @Size(max = 50)
     private String lider;
+
+    private Boolean activo = true; // por defecto activa
+
 }

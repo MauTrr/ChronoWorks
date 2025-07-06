@@ -40,25 +40,42 @@ public class CampanaController {
     public ResponseEntity<Page<RespuestaCampanaDTO>> listarCampanas(
             @ModelAttribute FiltroCampanaDTO filtro,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue =  "10") int size,
-            @RequestParam(defaultValue = "nombreCampaña") String sort) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "nombreCampana") String sort) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
         return ResponseEntity.ok(campanaService.listarCampanas(filtro, pageable));
+    }
+
+    // Nuevo endpoint que devuelve lista plana para HTML con fetch()
+    @GetMapping("/todas")
+    public ResponseEntity<List<RespuestaCampanaDTO>> listarTodasCampanas() {
+        Page<RespuestaCampanaDTO> page = campanaService.listarCampanas(new FiltroCampanaDTO(), Pageable.unpaged());
+        return ResponseEntity.ok(page.getContent());
     }
 
     @GetMapping("/activas")
     public ResponseEntity<Page<RespuestaCampanaDTO>> listarCampanasActivas(
             @ModelAttribute FiltroCampanaDTO filtro,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue =  "10") int size) {
+            @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(campanaService.listarCampanasActivas(filtro, pageable));
     }
 
-    @GetMapping("/{idCampana}/actualizar")
-    public ResponseEntity<RespuestaCampanaDTO> actualizarCampana(@PathVariable Integer idCampana, @Valid @RequestBody CampanaDTO dto) {
+    // Actualizar campaña (PUT)
+    @PutMapping("/{idCampana}")
+    public ResponseEntity<RespuestaCampanaDTO> actualizarCampana(
+            @PathVariable Integer idCampana,
+            @Valid @RequestBody CampanaDTO dto) {
         RespuestaCampanaDTO campanaActualizada = campanaService.actualizarCampana(idCampana, dto);
         return ResponseEntity.ok(campanaActualizada);
+    }
+
+    // Eliminar campaña (DELETE)
+    @DeleteMapping("/{idCampana}")
+    public ResponseEntity<Void> eliminarCampana(@PathVariable Integer idCampana) {
+        campanaService.cancelarCampana(idCampana); // o .eliminarCampana si lo prefieres
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{idCampana}/iniciar")

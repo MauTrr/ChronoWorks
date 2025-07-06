@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Campañas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/empleado.css">
+    <link rel="stylesheet" href="/css/header.css">
+    <script src="https://kit.fontawesome.com/8eb65f8551.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+<header>
+    <div class="fondo_menu">
+        <div class="container-fluid">
+            <nav class="navbar navbar-expand-lg">
+                <div class="container-fluid d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <a class="navbar-brand p-0 me-2"><img src="/img/logo.png" alt="Logo" style="width:40px;" class="rounded-pill border border-2" /></a>
+                        <a class="navbar-brand fw-semibold text-light">Gestión de Campañas</a>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="#" class="nav-link botoninicio me-2">Inicio</a>
+                        <a href="/logout" class="botonsesion">Cerrar Sesión</a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<div class="container-fluid mt-4">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex gap-3">
+                    <input type="text" id="searchNombre" class="form-control" placeholder="Buscar Campaña..." style="width: 250px">
+                    <input type="text" id="searchEmpresa" class="form-control" placeholder="Buscar Empresa..." style="width: 200px">
+                    <select id="estadoFilter" class="form-select" style="width: 150px">
+                        <option value="">Todos</option>
+                        <option value="ACTIVA">Activa</option>
+                        <option value="EN_PROCESO">En Proceso</option>
+                        <option value="FINALIZADA">Finalizada</option>
+                        <option value="CANCELADA">Cancelada</option>
+                        <option value="ARCHIVADA">Archivada</option>
+                    </select>
+                </div>
+                <button class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#campanaModal">
+                    <i class="fas fa-plus"></i> Nueva Campaña
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom table-striped table-hover">
+            <thead class="sticky-top bg-light">
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Empresa</th>
+                <th>Descripción</th>
+                <th>Inicio</th>
+                <th>Fin</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+            </thead>
+            <tbody id="tablaCampanas"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="campanaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header modal-custom">
+                <h5 class="modal-title">Registrar / Editar Campaña</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="campanaForm">
+                    <input type="hidden" name="idCampana">
+                    <div class="row g-3">
+                        <div class="col-md-6"><input type="text" name="nombreCampana" class="form-control" placeholder="Nombre Campaña" required></div>
+                        <div class="col-md-6"><input type="text" name="descripcion" class="form-control" placeholder="Descripción"></div>
+                        <div class="col-md-6"><input type="date" name="fechaInicio" class="form-control" required></div>
+                        <div class="col-md-6"><input type="date" name="fechaFin" class="form-control" required></div>
+                        <div class="col-md-6">
+                            <select name="estado" class="form-select" required>
+                                <option value="ACTIVA">Activa</option>
+                                <option value="EN_PROCESO">En Proceso</option>
+                                <option value="FINALIZADA">Finalizada</option>
+                                <option value="CANCELADA">Cancelada</option>
+                                <option value="ARCHIVADA">Archivada</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <select name="idEmpresa" class="form-select" required id="selectEmpresa">
+                                <option value="">Seleccione empresa…</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-custom" onclick="guardarCampana()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentPage = 0;
+    const pageSize = 10;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarCampanas();
+        cargarEmpresas();
+        document.getElementById('searchNombre').addEventListener('input', cargarCampanas);
+        document.getElementById('searchEmpresa').addEventListener('input', cargarCampanas);
+        document.getElementById('estadoFilter').addEventListener('change', cargarCampanas);
+    });
+
+    async function cargarCampanas() {
+        const nombre = document.getElementById('searchNombre').value.trim();
+        const empresa = document.getElementById('searchEmpresa').value.trim();
+        const estado = document.getElementById('estadoFilter').value;
+
+        const params = new URLSearchParams({ page: currentPage, size: pageSize });
+        if (nombre) params.append('nombreCampana', nombre);
+        if (empresa) params.append('nombreEmpresa', empresa);
+        if (estado) params.append('estado', estado);
+
+        const res = await fetch(`/api/campanas?${params}`);
+        const page = await res.json();
+        const campanas = page.content || [];
+
+        document.getElementById('tablaCampanas').innerHTML = campanas.map(c => `
+            <tr>
+                <td>${c.idCampana}</td>
+                <td>${c.nombreCampana}</td>
+                <td>${c.nombreEmpresa}</td>
+                <td>${c.descripcion || ''}</td>
+                <td>${c.fechaInicio}</td>
+                <td>${c.fechaFin}</td>
+                <td><span class="badge bg-primary">${c.estado}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick='abrirModal(${JSON.stringify(c)})'>
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick='eliminarCampana(${c.idCampana})'>
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function cargarEmpresas() {
+        const res = await fetch('/api/empresa?page=0&size=1000');
+        const data = await res.json();
+        const empresas = data.content || [];
+
+        const select = document.getElementById('selectEmpresa');
+        select.innerHTML = '<option value="">Seleccione empresa…</option>';
+
+        empresas.forEach(e => {
+            const opt = document.createElement('option');
+            opt.value = e.idEmpresa;
+            opt.textContent = e.nombreEmpresa;
+            select.appendChild(opt);
+        });
+    }
+
+    function abrirModal(campana = {}) {
+        const form = document.getElementById('campanaForm');
+
+        form.idCampana.value     = campana.idCampana || '';
+        form.nombreCampana.value = campana.nombreCampana || '';
+        form.descripcion.value   = campana.descripcion || '';
+        form.fechaInicio.value   = campana.fechaInicio || '';
+        form.fechaFin.value      = campana.fechaFin || '';
+        form.estado.value        = campana.estado || 'ACTIVA';
+        form.idEmpresa.value     = campana.idEmpresa || '';
+
+        new bootstrap.Modal('#campanaModal').show();
+    }
+
+    async function guardarCampana() {
+        const form = document.getElementById('campanaForm');
+        const empresaId = form.idEmpresa.value;
+        if (!empresaId) {
+            alert("Por favor seleccione una empresa.");
+            return;
+        }
+
+        const dto = {
+            nombreCampana : form.nombreCampana.value.trim(),
+            descripcion   : form.descripcion.value.trim(),
+            fechaInicio   : form.fechaInicio.value,
+            fechaFin      : form.fechaFin.value,
+            idEmpresa     : parseInt(empresaId, 10),
+            estado        : form.estado.value
+        };
+        if (form.idCampana.value) dto.idCampana = parseInt(form.idCampana.value, 10);
+
+        const url = dto.idCampana
+            ? `/api/campanas/${dto.idCampana}/actualizar`
+            : '/api/campanas';
+        const method = dto.idCampana ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dto)
+        });
+
+        if (res.ok) {
+            bootstrap.Modal.getInstance('#campanaModal').hide();
+            cargarCampanas();
+        } else {
+            const err = await res.text();
+            alert('Error al guardar campaña:\n' + err);
+        }
+    }
+
+    async function eliminarCampana(id) {
+        if (!confirm('¿Eliminar esta campaña?')) return;
+        const res = await fetch(`/api/campanas/${id}`, { method: 'DELETE' });
+        if (res.ok) cargarCampanas();
+        else alert('Error al eliminar');
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+</html>

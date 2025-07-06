@@ -81,7 +81,7 @@ public class EmpresaService {
 
     private RespuestaEmpresaDTO mapToDTO(Empresa e) {
         return RespuestaEmpresaDTO.builder()
-                .id(e.getIdEmpresa())
+                .idEmpresa(e.getIdEmpresa())
                 .nombreEmpresa(e.getNombreEmpresa())
                 .nitEmpresa(e.getNitEmpresa())
                 .direccion(e.getDireccion())
