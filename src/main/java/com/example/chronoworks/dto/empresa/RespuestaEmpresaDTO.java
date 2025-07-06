@@ -6,11 +6,13 @@ import lombok.Data;
 @Data
 @Builder
 public class RespuestaEmpresaDTO {
-    private Integer idEmpresa;
+    private Integer id;
     private String nombreEmpresa;
-    private String  direccion;
+    private String nitEmpresa;
+    private String direccion;
     private String telefono;
     private String sector;
-    private String encargado;
+    private String lider;
     private boolean activo;
 }
+

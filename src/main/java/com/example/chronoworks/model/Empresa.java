@@ -4,28 +4,21 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "empresa")
+@Table(name = "empresas")
 @Data
 public class Empresa {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_empresa")
     private Integer idEmpresa;
 
-    @Column(name = "nombre_empresa")
     private String nombreEmpresa;
-    @Column(name = "direccion")
+    private String nitEmpresa;
     private String direccion;
-    @Column(name = "telefono")
     private String telefono;
-    @Column(name = "sector")
     private String sector;
-    @Column(name = "encargado")
-    private String encargado;
+    private String lider;
+    private boolean activo = true;
 
     @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private java.util.List<Campana> campanas;
-
-    private boolean activo = true;
 }

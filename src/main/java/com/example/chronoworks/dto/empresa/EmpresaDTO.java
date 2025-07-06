@@ -6,22 +6,23 @@ import lombok.Data;
 
 @Data
 public class EmpresaDTO {
-
     @NotBlank(message = "El nombre de la empresa no puede estar vacio")
-    @Size(message = "El nombre de la empresa excede 50 caracteres")
+    @Size(max = 50)
     private String nombreEmpresa;
 
-    @Size(message = "La direccion de la empresa excede 25 caracteres")
+    @NotBlank(message = "El NIT de la empresa no puede estar vacio")
+    @Size(max = 25)
+    private String nitEmpresa;
+
+    @Size(max = 50)
     private String direccion;
 
-    @Size(message = "El telefono de la empresa excede 15 caracteres")
+    @Size(max = 15)
     private String telefono;
 
-    @Size(message = "El sector excede 25 caracteres")
+    @Size(max = 25)
     private String sector;
 
-    @Size(message = "El nombre del encargado de la empresa excede 50 caracteres")
-    private String encargado;
-
-    private boolean activo;
+    @Size(max = 50)
+    private String lider;
 }

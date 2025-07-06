@@ -8,6 +8,7 @@ import com.example.chronoworks.model.Empresa;
 import com.example.chronoworks.repository.EmpresaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,68 +23,72 @@ public class EmpresaService {
     @Transactional
     public RespuestaEmpresaDTO registrarEmpresa(EmpresaDTO dto) {
         if (empresaRepository.findByNombreEmpresa(dto.getNombreEmpresa()).isPresent()) {
-            throw new BadRequestException("La empresa ya esta registrada");
+            throw new BadRequestException("La empresa ya está registrada");
         }
-
-        Empresa nuevaEmpresa = new Empresa();
-        nuevaEmpresa.setNombreEmpresa(dto.getNombreEmpresa());
-        nuevaEmpresa.setDireccion(dto.getDireccion());
-        nuevaEmpresa.setTelefono(dto.getTelefono());
-        nuevaEmpresa.setSector(dto.getSector());
-        nuevaEmpresa.setEncargado(dto.getEncargado());
-
-        Empresa empresaGuardada = empresaRepository.save(nuevaEmpresa);
-        return mapToRespuestaEmpresaDTO(empresaGuardada);
+        Empresa empresa = new Empresa();
+        empresa.setNombreEmpresa(dto.getNombreEmpresa());
+        empresa.setNitEmpresa(dto.getNitEmpresa());
+        empresa.setDireccion(dto.getDireccion());
+        empresa.setTelefono(dto.getTelefono());
+        empresa.setSector(dto.getSector());
+        empresa.setLider(dto.getLider());
+        empresa.setActivo(true);
+        return mapToDTO(empresaRepository.save(empresa));
     }
 
     @Transactional(readOnly = true)
-    public RespuestaEmpresaDTO obtenerEmpresa(Integer idEmpresa) {
-        Empresa empresa = empresaRepository.findById(idEmpresa)
-                .orElseThrow(() -> new ResourceNotFoundException ("Empresa no encontrada."));
-        return mapToRespuestaEmpresaDTO(empresa);
-    }
+    public Page<RespuestaEmpresaDTO> listarEmpresas(Pageable pageable, String nombre, String sector, Boolean activo) {
+        Specification<Empresa> spec = Specification.where(null);
 
-    @Transactional(readOnly = true)
-    public Page<RespuestaEmpresaDTO> listarEmpresas(Pageable pageable) {
-        return empresaRepository.findByActivoTrue(pageable).map(this::mapToRespuestaEmpresaDTO);
-    }
-
-    @Transactional
-    public RespuestaEmpresaDTO actualizarEmpresa(Integer idEmpresa, EmpresaDTO dto) {
-        Empresa empresaExistente = empresaRepository.findById(idEmpresa)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada."));
-
-        if (dto.getNombreEmpresa() != null && !dto.getNombreEmpresa().equals(empresaExistente.getNombreEmpresa())){
-            if (empresaRepository.findByNombreEmpresa(dto.getNombreEmpresa()).isPresent()) {
-                throw new BadRequestException("El nuevo nombre de empresa ya esta en uso");
-            }
-            empresaExistente.setNombreEmpresa(dto.getNombreEmpresa());
+        if (nombre != null) {
+            spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("nombreEmpresa")), "%" + nombre.toLowerCase() + "%"));
         }
-        if (dto.getDireccion()!= null) empresaExistente.setDireccion(dto.getDireccion());
-        if (dto.getTelefono()!= null) empresaExistente.setTelefono(dto.getTelefono());
-        if (dto.getSector()!= null) empresaExistente.setSector(dto.getSector());
-        if (dto.getEncargado()!= null) empresaExistente.setEncargado(dto.getEncargado());
+        if (sector != null) {
+            spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("sector")), "%" + sector.toLowerCase() + "%"));
+        }
+        if (activo != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("activo"), activo));
+        }
 
-        Empresa empresaActualizada = empresaRepository.save(empresaExistente);
-        return mapToRespuestaEmpresaDTO(empresaActualizada);
+        return empresaRepository.findAll(spec, pageable).map(this::mapToDTO);
     }
 
     @Transactional
-    public void desactivarEmpresa(Integer idEmpresa) {
-        Empresa empresa = empresaRepository.findById(idEmpresa)
-                        .orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada"));
+    public RespuestaEmpresaDTO actualizarEmpresa(Integer id, EmpresaDTO dto) {
+        Empresa empresa = empresaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada"));
+
+        empresa.setNombreEmpresa(dto.getNombreEmpresa());
+        empresa.setNitEmpresa(dto.getNitEmpresa());
+        empresa.setDireccion(dto.getDireccion());
+        empresa.setTelefono(dto.getTelefono());
+        empresa.setSector(dto.getSector());
+        empresa.setLider(dto.getLider());
+        return mapToDTO(empresaRepository.save(empresa));
+    }
+
+    @Transactional
+    public void eliminarEmpresa(Integer id) {
+        Empresa empresa = empresaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada"));
         empresa.setActivo(false);
         empresaRepository.save(empresa);
     }
 
-    private  RespuestaEmpresaDTO mapToRespuestaEmpresaDTO(Empresa empresa) {
+    @Transactional(readOnly = true)
+    public RespuestaEmpresaDTO obtenerEmpresa(Integer id) {
+        Empresa empresa = empresaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada"));
+        return mapToDTO(empresa);
+    }
+
+    private RespuestaEmpresaDTO mapToDTO(Empresa e) {
         return RespuestaEmpresaDTO.builder()
-                .idEmpresa(empresa.getIdEmpresa())
-                .nombreEmpresa(empresa.getNombreEmpresa())
-                .direccion(empresa.getDireccion())
-                .telefono(empresa.getTelefono())
-                .sector(empresa.getSector())
-                .encargado(empresa.getEncargado())
+                .id(e.getIdEmpresa())
+                .nombreEmpresa(e.getNombreEmpresa())
+                .nitEmpresa(e.getNitEmpresa())
+                .direccion(e.getDireccion())
+                .telefono(e.getTelefono())
+                .sector(e.getSector())
+                .lider(e.getLider())
+                .activo(e.isActivo())
                 .build();
     }
 }

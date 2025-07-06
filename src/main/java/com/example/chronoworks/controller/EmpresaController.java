@@ -7,7 +7,6 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/empresa")
 public class EmpresaController {
+
     private final EmpresaService empresaService;
 
     public EmpresaController(EmpresaService empresaService) {
@@ -24,38 +24,35 @@ public class EmpresaController {
 
     @PostMapping
     public ResponseEntity<RespuestaEmpresaDTO> registrarEmpresa(@Valid @RequestBody EmpresaDTO dto) {
-        RespuestaEmpresaDTO nuevaEmpresa = empresaService.registrarEmpresa(dto);
-        return new ResponseEntity<>(nuevaEmpresa, HttpStatus.CREATED);
-    }
-
-    @GetMapping("/{idEmpresa}")
-    public ResponseEntity<RespuestaEmpresaDTO> obtenerEmpresa(@PathVariable Integer idEmpresa) {
-        RespuestaEmpresaDTO empresa = empresaService.obtenerEmpresa(idEmpresa);
-        return ResponseEntity.ok(empresa);
+        return new ResponseEntity<>(empresaService.registrarEmpresa(dto), HttpStatus.CREATED);
     }
 
     @GetMapping
-    public ResponseEntity<Page<RespuestaEmpresaDTO>> listarEmpresas (
+    public ResponseEntity<Page<RespuestaEmpresaDTO>> listarEmpresas(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "idEmpresa") String sort,
-            @RequestParam(required = false, defaultValue = "asc") String direction) {
-        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
-        return ResponseEntity.ok(empresaService.listarEmpresas(pageable));
+            @RequestParam(required = false) String nombreEmpresa,
+            @RequestParam(required = false) String sector,
+            @RequestParam(required = false) Boolean activo) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(empresaService.listarEmpresas(pageable, nombreEmpresa, sector, activo));
     }
 
-    @PutMapping("/{idEmpresa}/actualizar")
-    public ResponseEntity<RespuestaEmpresaDTO> actualizarEmpresa(@PathVariable Integer idEmpresa, @Valid @RequestBody EmpresaDTO dto) {
-        RespuestaEmpresaDTO empresaActualizada = empresaService.actualizarEmpresa(idEmpresa, dto);
-        return ResponseEntity.ok(empresaActualizada);
+    @GetMapping("/{id}")
+    public ResponseEntity<RespuestaEmpresaDTO> obtenerEmpresa(@PathVariable Integer id) {
+        return ResponseEntity.ok(empresaService.obtenerEmpresa(id));
     }
 
-    @PatchMapping("/{idEmpresa}/desactivar")
+    @PutMapping("/{id}/actualizar")
+    public ResponseEntity<RespuestaEmpresaDTO> actualizarEmpresa(@PathVariable Integer id, @Valid @RequestBody EmpresaDTO dto) {
+        return ResponseEntity.ok(empresaService.actualizarEmpresa(id, dto));
+    }
+
+    @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<RespuestaEmpresaDTO> desactivarEmpresa(@PathVariable Integer idEmpresa) {
-        empresaService.desactivarEmpresa(idEmpresa);
+    public ResponseEntity<Void> eliminarEmpresa(@PathVariable Integer id) {
+        empresaService.eliminarEmpresa(id);
         return ResponseEntity.noContent().build();
     }
-
 }
