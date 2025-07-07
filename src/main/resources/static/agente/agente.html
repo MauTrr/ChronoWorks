@@ -27,41 +27,18 @@
                     aria-expanded="false" aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-              <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" id="campanasDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Servicios 1
-                  </a>
-                  <ul class="dropdown-menu" aria-labelledby="campanasDropdown">
-                    <li><a class="dropdown-item" href="/vista/turno/listaturno.html">Mis Turnos</a></li>
-                    <li><a class="dropdown-item" href="/vista/campaña/listacampaña.html">Campañas Activas</a></li>
-                    <li><a class="dropdown-item" href="/vista/tarea/listatarea.html">Mis Tareas</a></li>
-                  </ul>
-                </li>
-                <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" id="campanasDropdown2" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Servicios 2
-                  </a>
-                  <ul class="dropdown-menu" aria-labelledby="campanasDropdown2">
-                    <li><a class="dropdown-item" href="/vista/roles/listaroles.html">Mi Rol</a></li>
-                    <li><a class="dropdown-item" href="/vista/credenciales/listacredenciales.html">Mi Cuenta</a></li>
-                    <li><a class="dropdown-item" href="/vista/controlacceso/listacontrol.html">Mis Accesos</a></li>
-                  </ul>
-                </li>
-              </ul>
+
+            <h3 class="text-center py-1 px-1 mx-auto mt-2 shadow-sm"
+                style="background: linear-gradient(180deg, #cbe5f0 0%, #a09090 100%);color: black; max-width: 400px; margin-top: 2rem; margin-bottom: 1rem; border-radius: 15px; border: solid 3px; border-color: white;">
+              ¡Bienvenido, Agente!
+            </h3>
+
               <a href="/logout" class="botonsesion">Cerrar Sesión</a>
             </div>
-          </div>
         </nav>
       </div>
     </div>
   </header>
-
-  <h2 class="text-center py-3 px-3 mx-auto mt-3 shadow-sm"
-      style="background: linear-gradient(180deg, #cbe5f0 0%, #a09090 100%);color: black; max-width: 400px; margin-top: 2rem; margin-bottom: 1rem; border-radius: 15px; border: solid 3px; border-color: white;">
-    ¡Bienvenido, Agente!
-  </h2>
 
   <div class="fondo-cards">
     <div class="container mt-5">
@@ -80,17 +57,6 @@
 
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
           <div class="card tarjeta">
-            <img class="card-img-top" src="/img/campaña.png" alt="Card image">
-            <div class="card-body">
-              <h4 class="card-title">CAMPAÑAS ACTIVAS</h4>
-              <p class="card-text">Consulta campañas disponibles.</p>
-              <a href="/campana/listacampana.html" class="boton">GESTIÓN</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
-          <div class="card tarjeta">
             <img class="card-img-top" src="/img/tarea.png" alt="Card image">
             <div class="card-body">
               <h4 class="card-title">MIS TAREAS</h4>
@@ -101,26 +67,6 @@
         </div>
 
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
-          <div class="card tarjeta">
-            <img class="card-img-top" src="/img/roles.png" alt="Card image">
-            <div class="card-body">
-              <h4 class="card-title">MI ROL</h4>
-              <p class="card-text">Visualiza tu rol dentro del sistema.</p>
-              <a href="/roles/listaroles.html" class="boton">GESTIÓN</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
-          <div class="card tarjeta">
-            <img class="card-img-top" src="/img/credenciales.png" alt="Card image">
-            <div class="card-body">
-              <h4 class="card-title">MI CUENTA</h4>
-              <p class="card-text">Gestiona tu información personal.</p>
-              <a href="/credenciales/listacredenciales.html" class="boton">GESTIÓN</a>
-            </div>
-          </div>
-        </div>
 
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
           <div class="card tarjeta">
@@ -128,7 +74,7 @@
             <div class="card-body">
               <h4 class="card-title">MIS ACCESOS</h4>
               <p class="card-text">Consulta tus ingresos y salidas.</p>
-              <a href="/controlacceso/listacontrol.html" class="boton">GESTIÓN</a>
+              <a href="/controldeAcceso/listacontrol.html" class="boton">GESTIÓN</a>
             </div>
           </div>
         </div>

@@ -21,7 +21,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // Permitir acceso a los archivos HTML y estáticos
-                        .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/img/**", "/favicon.ico").permitAll()
+                        .requestMatchers("/", "/index.html", "/css/*", "/js/", "/img/*", "/favicon.ico").permitAll()
                         .requestMatchers( "/login.html").permitAll()
                         .requestMatchers("/api/auth/validate").authenticated()
 
@@ -36,8 +36,8 @@ public class SecurityConfig {
                         // Requiere roles específicos
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/Admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/Lider/**").hasRole("LIDER")
-                        .requestMatchers("/api/Agente/**").hasRole("AGENTE")
+                        .requestMatchers("/api/lider/**").hasRole("LIDER")
+                        .requestMatchers("/api/agente/**").hasRole("AGENTE")
 
                         // Todo lo demás necesita autenticación
                         .anyRequest().authenticated()
