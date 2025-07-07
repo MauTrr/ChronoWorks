@@ -29,41 +29,11 @@
                     aria-expanded="false" aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
             </button>
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" id="campanasDropdown"
-                   role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  Servicios 1
-                </a>
-                <ul class="dropdown-menu" aria-labelledby="campanasDropdown">
-                  <li><a class="dropdown-item" href="../asignacion/listaAsignacion.html">Asignación</a></li>
-                  <li><a class="dropdown-item" href="../campana/listarCampana.html">Campaña</a></li>
-                  <li><a class="dropdown-item" href="../controldeAcceso/listaControl.html">Control Acceso</a></li>
-                </ul>
-              </li>
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" id="empleadosDropdown"
-                   role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  Servicios 2
-                </a>
-                <ul class="dropdown-menu" aria-labelledby="empleadosDropdown">
-                  <li><a class="dropdown-item" href="../empleado/listarEmpleado.html">Empleados</a></li>
-                  <li><a class="dropdown-item" href="../empresa/Empresa.html">Empresa</a></li>
-                  <li><a class="dropdown-item" href="../roles/listaRoles.html">Roles</a></li>
-                </ul>
-              </li>
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" id="contactoDropdown"
-                   role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  Servicios 3
-                </a>
-                <ul class="dropdown-menu" aria-labelledby="contactoDropdown">
-                  <li><a class="dropdown-item" href="../tarea/listaTarea.html">Tareas</a></li>
-                  <li><a class="dropdown-item" href="../credenciales/listaCredenciales.html">Credenciales</a></li>
-                  <li><a class="dropdown-item" href="../turno/listaTurno.html">Turnos</a></li>
-                </ul>
-              </li>
-            </ul>
+
+            <h3 class="text-center py-1 px-1 mx-auto mt-2"
+                style="background: linear-gradient(180deg, #cbe5f0 0%, #a09090 100%);color: black; max-width: 400px; margin-top: 2rem; margin-bottom: 1rem; border-radius: 15px; border: solid 3px; border-color: white;">
+              ¡Bienvenido, Administrador!
+            </h3>
             <a href="/static/logout" class="botonsesion">Cerrar Sesión</a>
           </div>
         </nav>
@@ -71,10 +41,7 @@
     </div>
   </header>
 
-  <h2 class="text-center py-3 px-3 mx-auto mt-4 shadow-sm"
-      style="background: linear-gradient(180deg, #cbe5f0 0%, #a09090 100%);color: black; max-width: 400px; margin-top: 2rem; margin-bottom: 1rem; border-radius: 15px; border: solid 3px; border-color: white;">
-    ¡Bienvenido, Administrador!
-  </h2>
+
 
   <div class="fondo-cards">
     <div class="container mt-5">
@@ -114,6 +81,7 @@
         </div>
       </div>
 
+      <!-- Segunda fila con EMPLEADOS, EMPRESA y TAREAS -->
       <div class="row">
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
           <div class="card tarjeta">
@@ -125,6 +93,7 @@
             </div>
           </div>
         </div>
+
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
           <div class="card tarjeta">
             <img class="card-img-top" src="../img/empresa.png" alt="Card image">
@@ -136,7 +105,6 @@
           </div>
         </div>
 
-      <div class="row">
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
           <div class="card tarjeta">
             <img class="card-img-top" src="../img/tarea.png" alt="Card image">
@@ -147,16 +115,9 @@
             </div>
           </div>
         </div>
-
       </div>
-    </div>
-  </div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<script>
+
+      <script>
   document.addEventListener('DOMContentLoaded', async () => {
     try {
         console.log('[1/3]Verificando autenticación...');
