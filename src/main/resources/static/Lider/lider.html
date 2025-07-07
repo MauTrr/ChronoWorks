@@ -80,7 +80,111 @@
         </div>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        console.log('[1/3] Verificando autenticación...');
 
+        // 1. Verificar autenticación
+        const authCheck = await fetch('/api/auth/validate', {
+            credentials: 'include',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!authCheck.ok) {
+            console.warn('[Auth] Autenticación fallida');
+            await gracefulLogout();
+            return;
+        }
+
+        // 2. Verificar rol
+        const roleCheck = await fetch('/api/auth/current-role', {
+            credentials: 'include',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        const { role, normalizedRole } = await roleCheck.json();
+        console.log(`[Role] Rol detectado: ${role} (${normalizedRole})`);
+
+        if (normalizedRole !== 'LIDER') {
+            console.warn(`[Role] Acceso denegado. Se requiere rol LÍDER`);
+            await gracefulLogout();
+            return;
+        }
+
+        console.log('[Access] Acceso concedido como líder');
+        initializeLeaderApp();
+
+    } catch (error) {
+        console.error('Error en verificación:', error);
+        await gracefulLogout();
+    }
+});
+
+async function gracefulLogout() {
+    try {
+        console.log('[Logout] Cerrando sesión...');
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include'
+        });
+    } catch (error) {
+        console.error('[Logout] Error:', error);
+    } finally {
+        window.location.replace('/login.html');
+    }
+}
+
+function initializeLeaderApp() {
+    console.log('[App] Inicializando aplicación de líder...');
+
+    // 1. Mostrar contenido
+    document.body.style.display = 'block';
+
+    // 2. Configurar logout
+    document.querySelector('.botonsesion')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await gracefulLogout();
+    });
+
+    // 3. Cargar datos específicos de líder
+    loadLeaderData();
+
+    // ... resto de lógica para líderes
+}
+
+async function loadLeaderData() {
+    try {
+        const response = await fetch('/api/lider/dashboard', {
+            credentials: 'include',
+            headers: { 'Cache-Control': 'no-cache' }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            updateLeaderUI(data);
+        }
+    } catch (error) {
+        console.error('Error cargando datos:', error);
+    }
+}
+
+function updateLeaderUI(data) {
+    // Actualizar interfaz con datos de líder
+    console.log('Datos de líder:', data);
+}
+
+// Protección contra caché
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        console.log('[Cache] Recargando desde caché...');
+        location.reload();
+    }
+});
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/main.js"></script>
 </body>
