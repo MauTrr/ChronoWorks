@@ -14,14 +14,14 @@ public class VistaController {
 
     // Muestra la vista principal del Líder
     @GetMapping("/lider")
-    public String mostrarVistaLider() {
-        return "lider";
+    public String lider() {
+        return "forward:/lider/lider.html";
     }
 
     // Muestra la vista principal del Agente
     @GetMapping("/agente")
-    public String mostrarVistaAgente() {
-        return "agente";
+    public String agente() {
+        return "forward:/agente/agente.html";
     }
 
     @GetMapping("/login")

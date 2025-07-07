@@ -1,5 +1,7 @@
 package com.example.chronoworks.config;
 
+import com.example.chronoworks.filter.AuthValidationFilter;
+import com.example.chronoworks.service.EmpleadoService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -10,10 +12,17 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final EmpleadoService empleadoService;
+
+    public SecurityConfig(EmpleadoService empleadoService) {
+        this.empleadoService = empleadoService;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -77,7 +86,8 @@ public class SecurityConfig {
                                 response.sendRedirect("/login.html");
                             }
                         })
-                );
+                )
+                .addFilterBefore(new AuthValidationFilter(empleadoService), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

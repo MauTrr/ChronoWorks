@@ -28,6 +28,7 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class EmpleadoService {
@@ -177,6 +178,11 @@ public class EmpleadoService {
                 .orElseThrow(() -> new ResourceNotFoundException( "Empleado no encontrado"));
         empleado.setActivo(false);
         empleadoRepository.save(empleado);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Empleado> findByUsuario(String usuario) {
+        return empleadoRepository.findByCredencialUsuario(usuario);
     }
 
     private RespuestaEmpleadoDTO mapToRespuestaEmpleadoDTO(Empleado empleado) {

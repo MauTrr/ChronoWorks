@@ -1,8 +1,10 @@
 package com.example.chronoworks.security;
 
 import com.example.chronoworks.model.Credencial;
+import com.example.chronoworks.model.Empleado;
 import com.example.chronoworks.model.Rol;
 import com.example.chronoworks.repository.CredencialRepository;
+import com.example.chronoworks.service.EmpleadoService;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -16,9 +18,11 @@ import java.util.Collections;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final CredencialRepository credencialRepository;
+    private final EmpleadoService empleadoService;
 
-    public CustomUserDetailsService(CredencialRepository credencialRepository) {
+    public CustomUserDetailsService(CredencialRepository credencialRepository, EmpleadoService empleadoService) {
         this.credencialRepository = credencialRepository;
+        this.empleadoService = empleadoService;
     }
 
     @Override
@@ -29,13 +33,18 @@ public class CustomUserDetailsService implements UserDetailsService {
         Rol rol = credencial.getRol();
         String authorityString = "ROLE_" + rol.getNombreRol().toUpperCase();
 
-        System.out.println("Rol cargado para usuario " + usuario + ": " + authorityString);
-
         GrantedAuthority authority = new SimpleGrantedAuthority(authorityString);
+
+        Empleado empleado = empleadoService.findByUsuario(usuario)
+                .orElseThrow(() -> new UsernameNotFoundException("Empleado no encontrado"));
 
         return new org.springframework.security.core.userdetails.User(
                 credencial.getUsuario(),
                 credencial.getContrasena(),
+                empleado.isActivo(),
+                true,
+                true,
+                true,
                 Collections.singletonList(authority)
         );
     }

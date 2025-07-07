@@ -1,5 +1,6 @@
 package com.example.chronoworks.filter;
 
+import com.example.chronoworks.service.EmpleadoService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,15 +16,32 @@ import java.io.IOException;
 @Component
 public class AuthValidationFilter extends OncePerRequestFilter {
 
+    private final EmpleadoService empleadoService;
+
+    public AuthValidationFilter(EmpleadoService empleadoService) {
+        this.empleadoService = empleadoService;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
-        throws ServletException, IOException {
+            throws ServletException, IOException {
 
-        if (isProtectedPage(request) && !isAuthenticated(request)) {
-            response.sendRedirect("/login.html");
-            return;
+        if (isProtectedPage(request)) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (!isAuthenticated(authentication)) {
+                response.sendRedirect("/login.html");
+                return;
+            }
+
+            // Verificar si el usuario está activo
+            if (authentication != null && !isUserActive(authentication)) {
+                SecurityContextHolder.clearContext();
+                response.sendRedirect("/login.html?error=account_inactive");
+                return;
+            }
         }
 
         filterChain.doFilter(request, response);
@@ -35,8 +53,15 @@ public class AuthValidationFilter extends OncePerRequestFilter {
                 request.getRequestURI().startsWith("/agente");
     }
 
-    private boolean isAuthenticated(HttpServletRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return  authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken);
+    private boolean isAuthenticated(Authentication authentication) {
+        return authentication != null &&
+                authentication.isAuthenticated() &&
+                !(authentication instanceof AnonymousAuthenticationToken);
+    }
+
+    private boolean isUserActive(Authentication authentication) {
+        return empleadoService.findByUsuario(authentication.getName())
+                .map(empleado -> empleado.isActivo())
+                .orElse(false);
     }
 }

@@ -1,8 +1,10 @@
 package com.example.chronoworks.repository;
 
+import com.example.chronoworks.model.Credencial;
 import com.example.chronoworks.model.Empleado;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -15,5 +17,5 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Integer>, Jp
 
     Optional<Empleado> findByCorreo(String correo);
 
-    Page<Empleado> findByActivoTrue(Pageable pageable);
+    Optional<Empleado> findByCredencialUsuario(String usuario);
 }
