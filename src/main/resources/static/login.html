@@ -36,36 +36,56 @@
 <div class="fondo_login">
   <div class="login">
     <div class="d-flex justify-content-center">
-      <img src="/img/logo.png" class="rounded-circle border border-2" alt="logo login" style="height: 7rem">
+      <img src="/img/logo.png" class="rounded-circle border border-custom" alt="logo login" style="height: 7rem">
     </div>
-    <div class="text-center fs-4 fw-semibold text-light my-2">Ingresa a Chronoworks</div>
+    <div class="text-center fs-4 fw-semibold text-dark my-2">Ingresa a Chronoworks</div>
 
     <!-- Mensaje de error (oculto inicialmente) -->
     <div id="mensajeError" class="alert alert-danger d-none text-center fw-semibold" role="alert"></div>
 
     <form id="loginForm">
       <div class="input-group mt-4">
-        <div class="input-group-text bg-secondary">
-          <img src="/img/username.png" alt="username icon" style="height:1rem">
+        <div class="input-group-text bg-custom">
+          <i class="fas fa-user text-white"></i>
         </div>
         <input type="text" class="form-control" placeholder="Usuario" name="usuario" id="usuario" required>
       </div>
       <div class="input-group mt-4">
-        <div class="input-group-text bg-secondary">
-          <img src="/img/password.png" alt="password icon" style="height:1rem">
+        <div class="input-group-text bg-custom">
+          <i class="fas fa-lock text-white"></i>
         </div>
         <input type="password" class="form-control" placeholder="Contraseña" name="contrasena" id="contrasena" required>
-        <button type="button" class="input-group-text bg-secondary" onclick="mostrarContraseña()">
-          <i id="iconoOjo" class="fa-solid fa-eye"></i>
+        <button type="button" class="input-group-text bg-custom" onclick="mostrarContraseña()">
+          <i id="iconoOjo" class="fas fa-eye text-white"></i>
         </button>
       </div>
-      <button type="submit" class="btn btn-light fw-semibold w-100 mt-4 shadow-sm" id="btnLogin">
+      <button type="submit" class="btn-custom btn-light fw-semibold w-100 mt-4 shadow-sm" id="btnLogin">
         <span id="textoBoton">Iniciar sesión</span>
         <span id="spinner" class="spinner-border spinner-border-sm d-none"></span>
       </button>
     </form>
   </div>
 </div>
+<footer class="footer">
+  <ul class="menu">
+    <li class="item-menu">
+      <a href="#Sobre-nosotros" class="menu-icono"> Sobre Nosotros </a>
+    </li>
+    <li class="item-menu">
+      <a href="#vision-mision" class="menu-icono"> Visión y Misión </a>
+    </li>
+    <li class="item-menu">
+      <a href="#servicios" class="menu-icono"> Servicios </a>
+    </li>
+    <li class="item-menu">
+      <a href="#contacto" class="menu-icono"> Contáctanos </a>
+    </li>
+    <li class="item-menu">
+      <a href="/login" class="menu-icono"> Inicia Sesión </a>
+    </li>
+  </ul>
+  <p class="texto"> ©2024 | Todos los derechos reservados </p>
+</footer>
 
 <script>
   document.getElementById('loginForm').addEventListener('submit', async function(e) {

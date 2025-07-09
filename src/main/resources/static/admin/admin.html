@@ -14,26 +14,19 @@
 </head>
 
 <body>
-<div class="fondo">
+<div class="wrapper">
   <header>
     <div class="fondo_menu">
       <div class="container-fluid">
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
           <div class="container-fluid">
-            <a class="navbar-brand">
-              <img src="/img/logo.png" alt="Logo" style="width:50px;" class="rounded-pill border border-2">
-            </a>
-            <a class="navbar-brand fw-semibold text-light">Chronoworks</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <h3 class="text-center py-1 px-1 mx-auto mt-2"
-                style="background: linear-gradient(180deg, #cbe5f0 0%, #a09090 100%);color: black; max-width: 400px; margin-top: 2rem; margin-bottom: 1rem; border-radius: 15px; border: solid 3px; border-color: white;">
-              ¡Bienvenido, Administrador!
-            </h3>
+            <div>
+              <a class="navbar-brand">
+                <img src="/img/logo.png" alt="Logo" style="width:50px;" class="rounded-pill border border-2">
+              </a>
+              <a class="navbar-brand fw-semibold text-light">Chronoworks</a>
+            </div>
+            <a class="navbar-brand fw-semibold text-light">¡Bienvenido, Administrador!</a>
             <a href="/static/logout" class="botonsesion">Cerrar Sesión</a>
           </div>
         </nav>
@@ -41,82 +34,77 @@
     </div>
   </header>
 
-
-
-  <div class="fondo-cards">
+  <div class="content">
     <div class="container mt-5">
       <div class="row">
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
-          <div class="card tarjeta">
+          <a href="../asignacion/listaAsignacion.html" class="card tarjeta">
             <img class="card-img-top" src="/img/asignacion.png" alt="Card image">
             <div class="card-body">
               <h4 class="card-title">ASIGNACIÓN</h4>
               <p class="card-text">Gestiona las tareas asignadas a cada campaña.</p>
-              <a href="../asignacion/listaAsignacion.html" class="boton">GESTIÓN</a>
             </div>
-          </div>
+          </a>
         </div>
 
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
-          <div class="card tarjeta">
-            <img class="card-img-top" src="../img/campaña.png" alt="Card image">
+          <a href="../campana/Campana.html"  class="card tarjeta">
+            <img class="card-img-top" src="/img/campaña.png" alt="Card image">
             <div class="card-body">
               <h4 class="card-title">CAMPAÑA</h4>
               <p class="card-text">Gestiona las campañas asociadas a las empresas.</p>
-              <a href="../campana/Campana.html" class="boton">GESTIÓN</a>
             </div>
-          </div>
+          </a>
         </div>
 
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
-          <div class="card tarjeta">
-            <img class="card-img-top" src="../img/control_acceso.png" alt="Card image">
+          <a href="../controldeAcceso/listaControl.html"  class="card tarjeta">
+            <img class="card-img-top" src="/img/control_acceso.png" alt="Card image">
             <div class="card-body">
-              <h4 class="card-title">CONTROL DE ACCESO</h4>
+              <h4 class="card-title">ACCESO</h4>
               <p class="card-text">Gestiona el acceso de los empleados.</p>
-              <a href="../controldeAcceso/listaControl.html" class="boton">GESTIÓN</a>
             </div>
-          </div>
+          </a>
         </div>
       </div>
 
       <!-- Segunda fila con EMPLEADOS, EMPRESA y TAREAS -->
       <div class="row">
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
-          <div class="card tarjeta">
-            <img class="card-img-top" src="../img/empleados.png" alt="Card image">
+          <a href="../empleado/empleado.html"  class="card tarjeta">
+            <img class="card-img-top" src="/img/empleados.png" alt="Card image">
             <div class="card-body">
               <h4 class="card-title">EMPLEADOS</h4>
               <p class="card-text">Gestiona los empleados.</p>
-              <a href="../empleado/empleado.html" class="boton">GESTIÓN</a>
             </div>
-          </div>
+          </a>
         </div>
 
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
-          <div class="card tarjeta">
-            <img class="card-img-top" src="../img/empresa.png" alt="Card image">
+          <a href="../empresa/Empresa.html"  class="card tarjeta">
+            <img class="card-img-top" src="/img/empresa.png" alt="Card image">
             <div class="card-body">
               <h4 class="card-title">EMPRESA</h4>
               <p class="card-text">Gestiona las empresas.</p>
-              <a href="../empresa/Empresa.html" class="boton">GESTIÓN</a>
             </div>
-          </div>
+          </a>
         </div>
 
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
-          <div class="card tarjeta">
-            <img class="card-img-top" src="../img/tarea.png" alt="Card image">
+          <a href="../tarea/listaTarea.html"  class="card tarjeta">
+            <img class="card-img-top" src="/img/tarea.png" alt="Card image">
             <div class="card-body">
               <h4 class="card-title">TAREAS</h4>
               <p class="card-text">Gestiona las tareas de los empleados.</p>
-              <a href="../tarea/listaTarea.html" class="boton">GESTIÓN</a>
             </div>
-          </div>
+          </a>
         </div>
       </div>
     </div>
   </div>
+  <footer class="footer mt-auto py-3">
+    <p class="text-center texto">©2024 | Todos los derechos reservados</p>
+  </footer>
 </div>
 
 <script>

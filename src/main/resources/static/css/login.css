@@ -4,89 +4,146 @@
     box-sizing: border-box;
 }
 
+html {
+    scroll-padding-top: 76px;
+}
+
+.d-none {
+  display: none !important;
+}
+
 .fondo {
     min-height: 100vh;
     background-color: #9e9e9e;
 }
 
-html {
-    scroll-padding-top: 76px; /* Cambia el valor según la altura de tu navbar */
-  }
-  
-.fondo_login {
+/* =======================
+           NAVBAR
+   ======================= */
 
-    background: linear-gradient(180deg, #3fa2db 70%, #a09090 100%);
+.itemnavbar {
+    position: relative;
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 3px 6px;
+    transition: color 0.3s ease;
+}
+.itemnavbar::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 2px;
+    background-color: white;
+    transition: width 0.3s ease;
+}
+
+.itemnavbar:hover {
+    color: rgb(27, 169, 235);
+}
+
+.itemnavbar:hover::after {
+    width: 100%;
+}
+
+/* =======================
+           LOGIN
+   ======================= */
+
+.fondo_login {
+    background: #edf3f4;
     min-height: 100vh;
     padding-top: 50px;
-
 }
 
-.form-control {
-    background-color: transparent !important;
-    color: white !important;
-}
-
-::placeholder{
-    color: rgb(255, 253, 253) !important;
-}
-.form-control:focus {
-    border-color: gray;
-    outline: none;
-    box-shadow: none;
-    background-color: transparent !important;
-}
-.btn{
-    background-color: rgb(148, 135, 135);
-    border: none;
-    transition: background-color 0.3s ease;
-    color: white !important;
-}
-.btn:hover{
-background-color:#6c757d;
-}
 .login {
-
-    background-color: rgba(100, 186, 194, 0.075);
-    backdrop-filter: blur(15px);
-    box-shadow: 0px 8px 32px rgb(0, 0, 0, 0.3);
-    border: 1px solid white;
-    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     width: 25rem;
-    padding: 20px;
+    padding: 30px;
     margin: auto;
     margin-top: 10%;
     align-items: center;
 }
-.itemnavbar {
-    position: relative; /* Necesario para posicionar la línea */
-    color: white; /* Texto blanco */
-    font-size: 18px;
-    font-weight: 600;
-    text-decoration: none; /* Elimina el subrayado predeterminado */
-    padding: 3px 6px; /* Espaciado interno del botón */
-    transition: color 0.3s ease; /* Suaviza el cambio de color */
+
+/* Logo */
+.login img {
+    height: 7rem;
+    border: 2px solid;
 }
-.itemnavbar::after {
-    content: ""; /* Crea un pseudo-elemento para la línea */
-    position: absolute; /* Posiciona la línea debajo del texto */
+
+.border-custom {
+  border-color: #23A7C1 !important;
+  transition: border-color 0.3s ease;
+}
+
+.border-custom:hover {
+  border-color: #1C7E9C !important;
+}
+
+/* Campos del formulario*/
+.form-control {
+    background-color: transparent !important;
+    color: #333 !important;
+    border: 1px solid #23A7C1;
+}
+
+.form-control:focus {
+    border-color: gray;
+    outline: none;
+    box-shadow: none;
+}
+
+::placeholder{
+    color: 23A7C1 !important;
+    opacity: 0.8;
+}
+
+.bg-custom {
+    background-color: #23A7C1 !important;
+    border: 1px solid #23A7C1 !important;
+}
+
+.bg-custom .text-white,
+.bg-custom i {
+  color: white !important;
+}
+
+/* Boton */
+.btn-custom {
+    background-color: #23A7C1;
+    border-radius: 12px;
+    color: #ffffff;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-custom::after {
+    content: "";
+    position: absolute;
+    top: 0;
     left: 0;
-    bottom: 0; /* Ajusta la posición de la línea */
-    width: 0; /* Inicialmente la línea tiene un ancho de 0 */
-    height: 2px; /* Grosor de la línea */
-    background-color: white; /* Color de la línea */
-    transition: width 0.3s ease; /* Transición suave del ancho */
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    transition: all 0.3s;
 }
 
-.itemnavbar:hover {
-    color: rgb(27, 169, 235); /* Asegura que el texto permanezca blanco al hacer hover */
+.btn-custom:hover{
+    background-color: #176e7f;
+    color: #ffffff;
+    transform: translateY(-1px);
 }
 
-.itemnavbar:hover::after {
-    width: 100%; /* Expande la línea al ancho completo del texto */
-}
-
-.d-none {
-  display: none !important;
+.btn-custom:active::after {
+    background: rgba(0,0,0,0.1);
 }
 
 #spinner {
@@ -96,4 +153,127 @@ background-color:#6c757d;
 
 #mensajeError {
   transition: all 0.3s ease;
+}
+
+/* =======================
+           FOOTER
+   ======================= */
+
+.footer {
+  position: relative;
+  width: 100%;
+  background: #112F3B;
+  min-height: 150px;
+  padding: 15px 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+
+}
+
+.menu {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  align-items: center;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+
+.menu-icono {
+  position: relative;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 2px 4px;
+  transition: color 0.3s ease;
+  margin: 0 5px;
+}
+
+.menu-icono::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background-color: white;
+  transition: width 0.3s ease;
+}
+
+.menu-icono:hover {
+  color: rgb(59, 59, 59);
+}
+
+.menu-icono:hover::after {
+  width: 100%;
+}
+
+.texto {
+  color: rgb(255, 255, 255);
+  font-size: 14px;
+  margin-top: 15px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+
+/*Parte para dispositivos moviles*/
+
+@media (max-width: 768px) {
+  .header {
+    min-height: 40vh;
+  }
+
+  .menu .navbar ul {
+    flex-direction: column;
+    background-color: #251974;
+    position: absolute;
+    top: 50px;
+    width: 100%;
+    left: -100%;
+    transition: left 0.3s ease;
+  }
+
+  .menu .navbar ul.show {
+    left: 0;
+  }
+
+  .menu-icono {
+    display: block;
+    cursor: pointer;
+  }
+
+  .header-content h1 {
+    line-height: 50px;
+    font-size: 24px;
+  }
+
+  .header-content p {
+    padding: 0 50px;
+    font-size: 14px;
+  }
+
+  .Nosotros-cont,
+  .servicios {
+    padding: 50px 20px;
+  }
+
+  .card-style,
+  .servicios h2,
+  .content-foo {
+    max-width: 100%;
+  }
+
+  .imagen-port {
+    width: 45%;
+    height: 200px;
+  }
+
+  .contenedor-footer {
+    flex-direction: column;
+    text-align: center;
+  }
 }

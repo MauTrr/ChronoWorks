@@ -1,7 +1,30 @@
-.fondo {
-    min-height: 100vh;
-    background-color: #d6cbcb;
+/* =======================
+           GENERALES
+   ======================= */
+body, html {
+    height: 100%;
+    margin: 0;
 }
+
+.wrapper {
+    min-height: 100vh;
+    background-color: #edf3f4;
+    display: flex;
+    flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  padding-bottom: 20px;
+}
+
+.navbar-brand{
+    cursor: default;
+}
+
+/* ==============================
+            NAVEGACION
+   ============================== */
 .navbar-nav .dropdown-menu {
     background: linear-gradient(180deg, #ffffff 0%, #d3c2c2 100%); /* Fondo oscuro para el dropdown */
     border: 2px solid white; /* Borde blanco */
@@ -11,9 +34,6 @@
     background-color:#42a5f5; /* Color al pasar el mouse */
     color: white; /* Texto blanco */
 
-}
-.navbar-brand{
-    cursor: default;
 }
 
 .botonsesion {
@@ -45,62 +65,85 @@
     width: 100%; /* Expande la línea al ancho completo del texto */
 }
 
-.tarjeta .boton{
-    margin-top: auto;
-    align-self: flex-start;
-    color:  #ffffff;
-    background-color: #42a5f5;
-    border: none;
-    text-decoration: none;
-    padding: 6px 8px;
-    border-radius: 8px;
-    transition: .3s ease;
 
-}
-.tarjeta .boton:hover{
-    background-color: #56ccf2;
+/* ==============================
+             TARJETAS
+   ============================== */
+
+.tarjeta {
+  background-color: #23A7C1;
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  display: block;
+  text-decoration: none;
+  color: black;
+  position: relative;
+  overflow: hidden;
+  max-width: 18rem;
+  min-height: 20rem;
+  height: 18rem;
+  min-width: 18rem;
 }
 
-.tarjeta{
-    border: 3px solid rgb(255, 255, 255);
-    background: linear-gradient(180deg, #2ab2e7 0%, #a09090 100%);
-    backdrop-filter: blur(15px);
-    box-shadow: 0px 8px 32px rgb(0, 0, 0, 0.3);
-    border-radius: 30px;
-    cursor: default;
-    transition: all 300ms ease;
-    overflow: hidden;
-    max-width: 18rem; 
-    min-height: 20rem;
-    height: 18rem; 
-    min-width: 18rem;
+.tarjeta:hover {
+  box-shadow: 0px 10px 20px rgb(0, 0, 0, 0.2);
+  transform: translateY(-5px);
+  cursor: pointer;
 }
+
+/* Imagen de la tarjeta */
 .tarjeta img {
-    border-bottom: 3px solid rgb(255, 255, 255);
-    height: auto; 
-    width: 100%; 
-    object-fit: contain; 
-    max-height: 10rem; 
+  padding: 15px 5px;
+  height: auto;
+  width: 100%;
+  object-fit: contain;
+  max-height: 10rem;
 }
-.tarjeta:hover{
-    box-shadow: 5px 5px 20px rgb(0, 0, 0, 0.4);
-    transform: translateY(-3%);
-} 
+
+/* Cuerpo de la tarjeta */
 .tarjeta .card-body {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: stretch;
-    height: 100%;
-    padding: 1rem; 
-    position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  height: 100%;
+  padding: 1rem;
+  position: relative;
 }
+
 .tarjeta .card-title {
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem; 
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
 }
+
 .tarjeta .card-text {
-    flex-grow: 1; 
-    font-size: 0.9rem; 
-    overflow-wrap: break-word; 
+  flex-grow: 1;
+  font-size: 1.1rem;
+  overflow-wrap: break-word;
+}
+
+/* =======================
+           FOOTER
+   ======================= */
+
+.footer {
+  width: 100%;
+  background: #112F3B;
+  padding: 15px 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  margin-top: auto;
+}
+
+.texto {
+  color: rgb(255, 255, 255);
+  font-size: 14px;
+  margin: 10px 0;
+  text-align: center;
 }
