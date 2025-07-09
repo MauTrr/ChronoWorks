@@ -47,9 +47,16 @@
                         <option value="ARCHIVADA">Archivada</option>
                     </select>
                 </div>
-                <button class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#campanaModal">
-                    <i class="fas fa-plus"></i> Nueva Campaña
-                </button>
+                <div class="d-flex gap-3">
+                    <!-- Botón para generar reporte Excel -->
+                    <button id="generarReporteBtn" class="btn btn-custom">
+                        <i class="fas fa-file-excel"></i> Generar Reporte
+                    </button>
+                    <!-- Botón para nueva campaña -->
+                    <button class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#campanaModal">
+                        <i class="fas fa-plus"></i> Nueva Campaña
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -116,7 +123,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-custom" onclick="guardarCampana()">Guardar</button>
+                <button type="button" class="btn btn-custom" onclick="guardarCampana()" id="guardarCampanasBtn">Guardar</button>
             </div>
         </div>
     </div>
@@ -143,7 +150,9 @@
             cargarCampanas();
         });
 
-       document.getElementedById('guardarCampanasBtn').addEventListener('click', guardarCampana);
+       document.getElementById('guardarCampanasBtn').addEventListener('click', guardarCampana);
+
+       document.getElementById('generarReporteBtn').addEventListener('click', generarReporteExcel);
     });
 
 // ==================== CARGAR DATOS ====================
@@ -160,7 +169,7 @@
                 page: currentPage,
                 size: pageSize,
                 sort: 'nombreCampana',
-                ...Object.fromEntries(Object.entries(filtro).filter(([_, v]) => v !== '' && v !== undefined)
+                ...Object.fromEntries(Object.entries(filtro).filter(([_, v]) => v !== '' && v !== undefined))
             });
 
             const response = await fetch(`/api/campanas?${params.toString()}`);
@@ -268,6 +277,66 @@
         };
         return classes[estado] || 'bg-light text-dark';
     }
+
+// ==================== REPORTE EXCEL ====================
+async function generarReporteExcel() {
+    try {
+        // Mostrar loading en el botón
+        const btnExcel = document.getElementById('generarReporteBtn');
+        const originalHtml = btnExcel.innerHTML;
+        btnExcel.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+        btnExcel.disabled = true;
+
+        // Usar los mismos filtros que en cargarCampanas()
+        const filtro = {
+            nombreCampana: document.getElementById('searchNombre').value.trim(),
+            nombreEmpresa: document.getElementById('searchEmpresa').value.trim(),
+            estado: document.getElementById('estadoFilter').value,
+            excluirArchivadas: document.getElementById('estadoFilter').value === ''
+        };
+
+        // Construir URL con filtros
+        const params = new URLSearchParams({
+            ...Object.fromEntries(Object.entries(filtro).filter(([_, v]) => v !== '' && v !== undefined))
+        });
+
+        // Hacer la petición al endpoint de Excel
+        const response = await fetch(`/api/campanas/reporte-excel?${params.toString()}`);
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        // Crear y descargar el archivo
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reporte_campanas_${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        // Notificación de éxito
+        Swal.fire({
+            icon: 'success',
+            title: 'Reporte generado',
+            text: 'El archivo Excel se ha descargado correctamente',
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+    } catch (error) {
+        console.error("Error al generar reporte Excel:", error);
+        Swal.fire('Error', 'No se pudo generar el reporte: ' + error.message, 'error');
+    } finally {
+        // Restaurar el botón a su estado original
+        const btnExcel = document.getElementById('generarReporteBtn');
+        btnExcel.innerHTML = originalHtml;
+        btnExcel.disabled = false;
+    }
+}
 
 // ==================== PAGINACIÓN ====================
     function actualizarPaginacion() {

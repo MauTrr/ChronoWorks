@@ -13,14 +13,19 @@ import com.example.chronoworks.repository.CampanaRepository;
 import com.example.chronoworks.repository.EmpresaRepository;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CampanaService {
@@ -183,6 +188,71 @@ public class CampanaService {
 
         campana.setEstado(CampanaEstado.ARCHIVADA);
         return mapToRespuestaCampanaDTO(campanaRepository.save(campana));
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] generarReporteExcelCampanas(FiltroCampanaDTO filtro) throws IOException {
+        Page<Campana> campanaPage = campanaRepository.findAll(
+                crearSpecificationCampana(filtro, false),
+                Pageable.unpaged()
+        );
+        List<Campana> campanas = campanaPage.getContent();
+
+        try(Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Reporte Campañas");
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+
+            String[] headers = {
+                    "Nombre Campaña",
+                    "Descripción",
+                    "Fecha Inicio",
+                    "Fecha Fin",
+                    "Estado",
+                    "Empresa",
+                    "Asignaciones"
+            };
+
+            Row headerRow = sheet.createRow(0);
+            for(int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            int rowNum = 1;
+            for (Campana campana : campanas) {
+                Row row = sheet.createRow(rowNum++);
+
+                row.createCell(0).setCellValue(campana.getNombreCampana());
+                row.createCell(1).setCellValue(campana.getDescripcion() != null ? campana.getDescripcion() : "");
+                row.createCell(2).setCellValue(campana.getFechaInicio().toString());
+                row.createCell(3).setCellValue(campana.getFechaFin().toString());
+                row.createCell(4).setCellValue(campana.getEstado().toString());
+                row.createCell(5).setCellValue(campana.getEmpresa() != null ? campana.getEmpresa().getNombreEmpresa() : "Sin empresa");
+
+                if (campana.getAsignaciones() != null && !campana.getAsignaciones().isEmpty()) {
+                    String asignaciones = campana.getAsignaciones().stream()
+                            .map(asignacion -> {
+                                return asignacion.getEmpleado() != null ? asignacion.getEmpleado().getNombre() : "Empleado no asignado";
+                            })
+                            .collect(Collectors.joining(", "));
+                    row.createCell(6).setCellValue(asignaciones);
+                } else {
+                    row.createCell(6).setCellValue("Sin asignaciones");
+                }
+            }
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            workbook.write(outputStream);
+            return outputStream.toByteArray();
+        }
     }
 
     private RespuestaCampanaDTO mapToRespuestaCampanaDTO(Campana campana) {
