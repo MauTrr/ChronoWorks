@@ -20,6 +20,8 @@ import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.List;
+
 
 @Service
 public class ControlAccesoService {
@@ -121,8 +123,17 @@ public class ControlAccesoService {
                 .horaSalida(controlAcceso.getHoraSalida())
                 .observacionEntrada(controlAcceso.getObservacionEntrada())
                 .observacionSalida(controlAcceso.getObservacionSalida())
+                .fecha(controlAcceso.getFecha())
                 .build();
     }
+
+    public List<RespuestaRegistroDTO> listarTodos() {
+        List<ControlAcceso> registros = controlAccesoRepository.findAll();
+        return registros.stream()
+                .map(this::mapToRespuestaRegistroDTO)
+                .toList();
+    }
+
 
 
 }

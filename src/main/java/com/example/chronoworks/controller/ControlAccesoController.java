@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -61,6 +61,12 @@ public class ControlAccesoController {
         Page<RespuestaRegistroDTO> historial = controlAccesoService.obtenerHistorial(idEmpleado, pageable);
         return ResponseEntity.ok(historial);
     }
+
+    @GetMapping
+    public ResponseEntity<List<RespuestaRegistroDTO>> listarTodosLosRegistros() {
+        return ResponseEntity.ok(controlAccesoService.listarTodos());
+    }
+
 
 
 }
