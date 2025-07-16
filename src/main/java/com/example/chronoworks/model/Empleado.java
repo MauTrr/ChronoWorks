@@ -1,6 +1,7 @@
 package com.example.chronoworks.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -22,6 +23,7 @@ public class Empleado {
     @Column(name = "correo", unique = true, nullable = false)
     private String correo;
     @Column(name = "telefono", nullable = false)
+    @Pattern(regexp = "^\\d{10}$")
     private String telefono;
     @Column(name = "fecha_ingreso", nullable = false)
     private LocalDateTime fechaIngreso;

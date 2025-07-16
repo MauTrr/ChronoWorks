@@ -6,6 +6,7 @@ import com.example.chronoworks.dto.empleado.FiltroEmpleadoDTO;
 import com.example.chronoworks.dto.empleado.RegistrarEmpleadoDTO;
 import com.example.chronoworks.dto.empleado.RespuestaEmpleadoDTO;
 import com.example.chronoworks.exception.BadRequestException;
+import com.example.chronoworks.exception.IllegalStateException;
 import com.example.chronoworks.exception.ResourceNotFoundException;
 import com.example.chronoworks.model.Credencial;
 import com.example.chronoworks.model.Empleado;
@@ -56,6 +57,9 @@ public class EmpleadoService {
         //Aca estan las validaciones para el registro de empleados
         if(empleadoRepository.findByCorreo(dto.getCorreo()).isPresent()) {
             throw new BadRequestException("El correo electrónico ya esta registrado");
+        }
+        if(!dto.getTelefono().matches("^[0-9]{10}$")){
+            throw new IllegalStateException("Formato de telefono invalido");
         }
         if(credencialRepository.findByUsuario(dto.getUsuario()).isPresent()) {
             throw new BadRequestException("El nombre de usuario ya esta en uso");

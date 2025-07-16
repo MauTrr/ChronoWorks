@@ -1,9 +1,6 @@
 package com.example.chronoworks.dto.empleado;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -26,7 +23,7 @@ public class RegistrarEmpleadoDTO {
     private String correo;
 
     @NotBlank(message = "El numero de telefono no puede estar vacio")
-    @Size(max = 10, message = "El numero de telefono no puede exceder 10 caracteres")
+    @Pattern(regexp = "^[0-9]{10}$", message = "El numero de telefono no puede exceder 10 caracteres")
     private String telefono;
 
     @NotNull(message = "El ID de turno no puede estar vacio")
