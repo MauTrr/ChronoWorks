@@ -12,7 +12,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/empleados")
@@ -24,9 +30,32 @@ public class EmpleadoController {
     }
 
     @PostMapping
-    public ResponseEntity<RespuestaEmpleadoDTO> crearEmpleado(@Valid @RequestBody RegistrarEmpleadoDTO dto) {
-        RespuestaEmpleadoDTO nuevoEmpleado = empleadoService.crearEmpleado(dto);
-        return new ResponseEntity<>(nuevoEmpleado, HttpStatus.CREATED);
+    public ResponseEntity<?> crearEmpleado(@Valid @RequestBody RegistrarEmpleadoDTO dto, BindingResult result) {
+        if(result.hasErrors()) {
+            Map<String, String> errores = result.getFieldErrors().stream()
+                    .collect(Collectors.toMap(
+                            FieldError::getField,
+                            error -> Optional.ofNullable(error.getDefaultMessage())
+                                    .orElse("Error de Validación")
+                    ));
+
+            return ResponseEntity.badRequest().body(Map.of(
+                    "type", "VALIDATION_ERROR",
+                    "error", errores,
+                    "timestamp", System.currentTimeMillis()
+            ));
+        }
+
+        try {
+            RespuestaEmpleadoDTO nuevoEmpleado = empleadoService.crearEmpleado(dto);
+            return new ResponseEntity<>(nuevoEmpleado, HttpStatus.CREATED);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "type", "BUSINESS_ERROR",
+                    "error", e.getMessage(),
+                    "timestamp", System.currentTimeMillis()
+            ));
+        }
     }
 
     @GetMapping("/{idEmpleado}")
