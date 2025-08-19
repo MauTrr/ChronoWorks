@@ -24,7 +24,7 @@ public class EmpresaDTO {
     private String sector;
 
     @Size(max = 50)
-    private String lider;
+    private String representante;
 
     private Boolean activo = true; // por defecto activa
 

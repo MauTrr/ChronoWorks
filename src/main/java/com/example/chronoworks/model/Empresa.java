@@ -16,7 +16,7 @@ public class Empresa {
     private String direccion;
     private String telefono;
     private String sector;
-    private String lider;
+    private String representante;
     private boolean activo = true;
 
     @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

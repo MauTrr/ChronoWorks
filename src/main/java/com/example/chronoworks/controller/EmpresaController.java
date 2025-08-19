@@ -1,6 +1,8 @@
 package com.example.chronoworks.controller;
 
+import com.example.chronoworks.dto.empleado.RespuestaEmpleadoDTO;
 import com.example.chronoworks.dto.empresa.EmpresaDTO;
+import com.example.chronoworks.dto.empresa.FiltroEmpresaDTO;
 import com.example.chronoworks.dto.empresa.RespuestaEmpresaDTO;
 import com.example.chronoworks.service.EmpresaService;
 import jakarta.validation.Valid;
@@ -27,6 +29,11 @@ public class EmpresaController {
         return new ResponseEntity<>(empresaService.registrarEmpresa(dto), HttpStatus.CREATED);
     }
 
+    @GetMapping("/{idEmpresa}")
+    public ResponseEntity<RespuestaEmpresaDTO> obtenerEmpresa(@PathVariable Integer idEmpresa) {
+        return ResponseEntity.ok(empresaService.obtenerEmpresa(idEmpresa));
+    }
+
     @GetMapping
     public ResponseEntity<Page<RespuestaEmpresaDTO>> listarEmpresas(
             @RequestParam(defaultValue = "0") int page,
@@ -34,25 +41,28 @@ public class EmpresaController {
             @RequestParam(required = false) String nombreEmpresa,
             @RequestParam(required = false) String sector,
             @RequestParam(required = false) Boolean activo) {
+        if (page < 0) page = 0;
+        if (size < 1) size = 10;
 
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(empresaService.listarEmpresas(pageable, nombreEmpresa, sector, activo));
+        FiltroEmpresaDTO filtro = new FiltroEmpresaDTO();
+        filtro.setNombreEmpresa(nombreEmpresa);
+        filtro.setSector(sector);
+        filtro.setActivo(activo);
+        return ResponseEntity.ok(empresaService.listarEmpresas(filtro, pageable));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<RespuestaEmpresaDTO> obtenerEmpresa(@PathVariable Integer id) {
-        return ResponseEntity.ok(empresaService.obtenerEmpresa(id));
+
+    @PutMapping("/{idEmpresa}/actualizar")
+    public ResponseEntity<RespuestaEmpresaDTO> actualizarEmpresa(@PathVariable Integer idEmpresa, @Valid @RequestBody EmpresaDTO dto) {
+        RespuestaEmpresaDTO empresaActualizada = empresaService.actualizarEmpresa(idEmpresa, dto);
+        return ResponseEntity.ok(empresaActualizada);
     }
 
-    @PutMapping("/{id}/actualizar")
-    public ResponseEntity<RespuestaEmpresaDTO> actualizarEmpresa(@PathVariable Integer id, @Valid @RequestBody EmpresaDTO dto) {
-        return ResponseEntity.ok(empresaService.actualizarEmpresa(id, dto));
-    }
-
-    @DeleteMapping("/{id}")
+    @PatchMapping("/{idEmpresa}/desactivar")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> eliminarEmpresa(@PathVariable Integer id) {
-        empresaService.eliminarEmpresa(id);
+    public ResponseEntity<Void> desactivarEmpresa(@PathVariable Integer idEmpresa) {
+        empresaService.desactivarEmpresa(idEmpresa);
         return ResponseEntity.noContent().build();
     }
 }

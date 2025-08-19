@@ -22,8 +22,8 @@ public class Asignacion {
     private String observaciones;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "estado", nullable = false)
-    private AsignacionEstado estado;
+    @Column(name = "estado_asignacion")
+    private AsignacionEstado estado = AsignacionEstado.ACTIVA;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tarea", nullable = false)
@@ -36,4 +36,7 @@ public class Asignacion {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_empleado", nullable = false)
     private Empleado empleado;
+
+    @Column(name = "es_lider")
+    private Boolean esLider;
 }

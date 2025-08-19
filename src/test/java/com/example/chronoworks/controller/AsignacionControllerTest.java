@@ -1,6 +1,6 @@
 package com.example.chronoworks.controller;
 
-import com.example.chronoworks.dto.asignacion.AsignacionDTO;
+import com.example.chronoworks.dto.asignacion.AsignacionCreacionDTO;
 import com.example.chronoworks.dto.asignacion.FiltroAsignacionDTO;
 import com.example.chronoworks.dto.asignacion.RespuestaAsignacionDTO;
 import com.example.chronoworks.model.enums.AsignacionEstado;
@@ -52,8 +52,8 @@ public class AsignacionControllerTest {
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
-    private AsignacionDTO crearAsignacionDTOValido() {
-        AsignacionDTO dto = new AsignacionDTO();
+    private AsignacionCreacionDTO crearAsignacionDTOValido() {
+        AsignacionCreacionDTO dto = new AsignacionCreacionDTO();
         dto.setFecha(LocalDateTime.now().minusHours(1)); // Fecha en pasado
         dto.setObservaciones("Observaciones de prueba");
         dto.setEstado(AsignacionEstado.ACTIVA); // Asume que existe este enum
@@ -65,10 +65,10 @@ public class AsignacionControllerTest {
 
     @Test
     void crearAsignacion() throws Exception {
-        AsignacionDTO dto = crearAsignacionDTOValido();
+        AsignacionCreacionDTO dto = crearAsignacionDTOValido();
         RespuestaAsignacionDTO respuesta = Mockito.mock(RespuestaAsignacionDTO.class);
 
-        when(asignacionService.crearAsignacion(any(AsignacionDTO.class))).thenReturn(respuesta);
+        when(asignacionService.crearAsignacion(any(AsignacionCreacionDTO.class))).thenReturn(respuesta);
 
         mockMvc.perform(post("/api/asignaciones")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -164,10 +164,10 @@ public class AsignacionControllerTest {
 
     @Test
     void actualizarAsignacion() throws Exception {
-        AsignacionDTO dto = crearAsignacionDTOValido();
+        AsignacionCreacionDTO dto = crearAsignacionDTOValido();
         RespuestaAsignacionDTO respuesta = Mockito.mock(RespuestaAsignacionDTO.class);
 
-        when(asignacionService.actualizarAsignacion(anyInt(), any(AsignacionDTO.class))).thenReturn(respuesta);
+        when(asignacionService.actualizarAsignacion(anyInt(), any(AsignacionCreacionDTO.class))).thenReturn(respuesta);
 
         mockMvc.perform(put("/api/asignaciones/1/actualizar")
                 .contentType(MediaType.APPLICATION_JSON)

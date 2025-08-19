@@ -1,16 +1,17 @@
 package com.example.chronoworks.service;
 
+import com.example.chronoworks.dto.asignacion.AsignacionConsultaDTO;
+import com.example.chronoworks.dto.campana.AsignacionCampanaDTO;
 import com.example.chronoworks.dto.campana.CampanaDTO;
 import com.example.chronoworks.dto.campana.FiltroCampanaDTO;
 import com.example.chronoworks.dto.campana.RespuestaCampanaDTO;
 import com.example.chronoworks.exception.BadRequestException;
 import com.example.chronoworks.exception.IllegalStateException;
 import com.example.chronoworks.exception.ResourceNotFoundException;
-import com.example.chronoworks.model.Campana;
-import com.example.chronoworks.model.Empresa;
+import com.example.chronoworks.model.*;
+import com.example.chronoworks.model.enums.AsignacionEstado;
 import com.example.chronoworks.model.enums.CampanaEstado;
-import com.example.chronoworks.repository.CampanaRepository;
-import com.example.chronoworks.repository.EmpresaRepository;
+import com.example.chronoworks.repository.*;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import org.apache.poi.ss.usermodel.*;
@@ -23,8 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,15 +35,24 @@ public class CampanaService {
 
     private final CampanaRepository campanaRepository;
     private final EmpresaRepository empresaRepository;
+    private final EmpleadoRepository empleadoRepository;
+    private final AsignacionRepository asignacionRepository;
+    private final RolRepository rolRepository;
 
     public CampanaService(CampanaRepository campanaRepository,
-                          EmpresaRepository empresaRepository) {
+                          EmpresaRepository empresaRepository,
+                          EmpleadoRepository empleadoRepository,
+                          AsignacionRepository asignacionRepository,
+                          RolRepository rolRepository) {
         this.campanaRepository = campanaRepository;
         this.empresaRepository = empresaRepository;
+        this.empleadoRepository = empleadoRepository;
+        this.asignacionRepository = asignacionRepository;
+        this.rolRepository = rolRepository;
     }
 
     @Transactional
-    public RespuestaCampanaDTO crearCampana(CampanaDTO dto) {
+    public RespuestaCampanaDTO crearCampana(CampanaDTO dto, List<AsignacionCampanaDTO> asignacionesDTO) {
         if (campanaRepository.findByNombreCampana(dto.getNombreCampana()).isPresent()) {
             throw new BadRequestException("El nombre de la campaña ya está en uso");
         }
@@ -57,7 +69,45 @@ public class CampanaService {
         nuevaCampana.setEstado(CampanaEstado.ACTIVA);
 
         Campana campanaGuardada = campanaRepository.save(nuevaCampana);
+
+        procesarAsignaciones(campanaGuardada, asignacionesDTO, empresa);
+
         return mapToRespuestaCampanaDTO(campanaGuardada);
+    }
+
+    private void procesarAsignaciones(Campana campana, List<AsignacionCampanaDTO> asignacionesDTO, Empresa empresa) {
+        long cuentaLideres = asignacionesDTO.stream().filter(AsignacionCampanaDTO::getEsLider).count();
+
+        if (cuentaLideres != 1) {
+            throw new BadRequestException("Debe haber exactamente un lider por campaña");
+        }
+
+        Rol rolLider = rolRepository.findByNombreRolAndEmpresa("LIDER", empresa.getIdEmpresa())
+                .orElseThrow(() -> new ResourceNotFoundException("Rol Líder no configurado"));
+
+        Rol rolAgente = rolRepository.findByNombreRolAndEmpresa("AGENTE", empresa.getIdEmpresa())
+                .orElseThrow(() -> new ResourceNotFoundException("Rol Agente no configurado"));
+
+        for (AsignacionCampanaDTO asignacionDTO : asignacionesDTO) {
+            Empleado empleado = empleadoRepository.findById(asignacionDTO.getIdEmpleado())
+                    .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado"));
+
+            if (asignacionDTO.getEsLider() && !empleado.getRoles().contains(rolLider)) {
+                throw new BadRequestException("El empleado no tiene rol de Líder");
+            }
+
+            if (asignacionDTO.getEsLider() && !empleado.getRoles().contains(rolAgente)) {
+                throw new BadRequestException("El empleado no tiene rol de Agente");
+            }
+
+            Asignacion asignacion = new Asignacion();
+            asignacion.setCampana(campana);
+            asignacion.setEmpleado(empleado);
+            asignacion.setEsLider(asignacionDTO.getEsLider());
+            asignacion.setEstado(AsignacionEstado.ACTIVA);
+            asignacion.setFecha(LocalDateTime.now());
+            asignacionRepository.save(asignacion);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -99,8 +149,10 @@ public class CampanaService {
                         "%" + filtro.getNombreEmpresa().toLowerCase() + "%"));
             }
 
-            if (filtro.getEstado() != null) {
-                predicates.add(cb.equal(root.get("estado"), filtro.getEstado()));
+            if (filtro.getEstados() != null && !filtro.getEstados().isEmpty()) {
+                predicates.add(root.get("estado").in(filtro.getEstados()));
+            } else if (Boolean.TRUE.equals(filtro.getExcluirArchivadas())) {
+                predicates.add(cb.notEqual(root.get("estado"), CampanaEstado.ARCHIVADA));
             }
 
             if (soloActivas) {
@@ -113,7 +165,11 @@ public class CampanaService {
     }
 
     @Transactional
-    public RespuestaCampanaDTO actualizarCampana(Integer idCampana, CampanaDTO dto) {
+    public RespuestaCampanaDTO actualizarCampana(
+            Integer idCampana,
+            CampanaDTO dto,
+            List<AsignacionCampanaDTO> asignacionesDTO) {
+
         Campana campanaExistente = campanaRepository.findById(idCampana)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaña no encontrada."));
 
@@ -134,60 +190,81 @@ public class CampanaService {
         }
 
         Campana campanaActualizada = campanaRepository.save(campanaExistente);
+
+        if (asignacionesDTO != null && !asignacionesDTO.isEmpty()) {
+            asignacionRepository.deleteByCampanaIdCampana(idCampana);
+
+            procesarAsignaciones(campanaActualizada, asignacionesDTO, campanaActualizada.getEmpresa());
+        }
         return mapToRespuestaCampanaDTO(campanaActualizada);
     }
 
+
+
     @Transactional
-    public RespuestaCampanaDTO iniciarCampana(Integer idCampana) {
+    public RespuestaCampanaDTO cambiarEstado(Integer idCampana, CampanaEstado nuevoEstado, boolean liberarEmpleados) {
         Campana campana = campanaRepository.findById(idCampana)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaña no encontrada."));
 
-        if (campana.getEstado() != CampanaEstado.ACTIVA) {
-            throw new IllegalStateException("Solo se pueden iniciar campañas en el estado ACTIVA");
+        validarTransicionEstado(campana.getEstado(), nuevoEstado);
+
+        if (liberarEmpleados && (nuevoEstado == CampanaEstado.FINALIZADA || nuevoEstado == CampanaEstado.CANCELADA)) {
+            liberarEmpleadosDeCampana(idCampana);
         }
 
-        campana.setEstado(CampanaEstado.EN_PROCESO);
+        campana.setEstado(nuevoEstado);
         return mapToRespuestaCampanaDTO(campanaRepository.save(campana));
     }
 
-    @Transactional
-    public RespuestaCampanaDTO finalizarCampana(Integer idCampana) {
-        Campana campana = campanaRepository.findById(idCampana)
-                .orElseThrow(() -> new ResourceNotFoundException("Campaña no encontrada."));
-
-        if (campana.getEstado() != CampanaEstado.EN_PROCESO) {
-            throw new IllegalStateException("Solo se pueden finalizar campañas en el estado EN_PROCESO");
+    private void validarTransicionEstado(CampanaEstado estadoActual, CampanaEstado nuevoEstado) {
+        switch (estadoActual) {
+            case ACTIVA:
+                if (nuevoEstado != CampanaEstado.EN_PROCESO) {
+                    throw new IllegalStateException("Solo se puede cambiar de ACTIVA a EN_PROCESO");
+                }
+                break;
+            case EN_PROCESO:
+                if (nuevoEstado != CampanaEstado.FINALIZADA && nuevoEstado != CampanaEstado.CANCELADA) {
+                    throw new IllegalStateException("Solo se puede finalizar o cancelar una campaña EN_PROCESO");
+                }
+                break;
+            case FINALIZADA:
+            case CANCELADA:
+                if (nuevoEstado != CampanaEstado.ARCHIVADA) {
+                    throw new IllegalStateException("Solo se puede archivar una campaña FINALIZADA o CANCELADA");
+                }
+                break;
+            case ARCHIVADA:
+                throw new IllegalStateException("No se puede cambiar el estado de una campaña ARCHIVADA");
         }
-
-        campana.setEstado(CampanaEstado.FINALIZADA);
-        return mapToRespuestaCampanaDTO(campanaRepository.save(campana));
     }
 
-    @Transactional
-    public RespuestaCampanaDTO cancelarCampana(Integer idCampana) {
-        Campana campana = campanaRepository.findById(idCampana)
-                .orElseThrow(() -> new ResourceNotFoundException("Campaña no encontrada."));
-
-        if (campana.getEstado() == CampanaEstado.FINALIZADA) {
-            throw new IllegalStateException("No se puede cancelar una campaña ya finalizada");
-        }
-
-        campana.setEstado(CampanaEstado.CANCELADA);
-        return mapToRespuestaCampanaDTO(campanaRepository.save(campana));
+    private void liberarEmpleadosDeCampana(Integer idCampana) {
+        List<Asignacion> asignaciones = asignacionRepository.findByCampanaId(idCampana);
+        asignaciones.forEach(asignacion -> {
+            asignacion.setEstado(AsignacionEstado.LIBERADA);
+            asignacionRepository.save(asignacion);
+        });
     }
 
-    @Transactional
-    public RespuestaCampanaDTO archivarCampana(Integer idCampana) {
-        Campana campana = campanaRepository.findById(idCampana)
-                .orElseThrow(() -> new ResourceNotFoundException("Campaña no encontrada."));
+    @Transactional(readOnly = true)
+    public List<AsignacionConsultaDTO> obtenerAsignaciones(Integer idCampana) {
+        List<Asignacion> asignaciones = asignacionRepository.findAgentesByCampanaId(idCampana);
+        return asignaciones.stream()
+                .map(this::convertirAsignacionADTO)
+                .collect(Collectors.toList());
+    }
 
-        if (campana.getEstado() != CampanaEstado.FINALIZADA &&
-                campana.getEstado() != CampanaEstado.CANCELADA) {
-            throw new IllegalStateException("Solo se pueden archivar campañas finalizadas o canceladas");
-        }
-
-        campana.setEstado(CampanaEstado.ARCHIVADA);
-        return mapToRespuestaCampanaDTO(campanaRepository.save(campana));
+    private AsignacionConsultaDTO convertirAsignacionADTO(Asignacion asignacion) {
+        AsignacionConsultaDTO dto = new AsignacionConsultaDTO();
+        dto.setIdAsignacion(asignacion.getIdAsignacion());
+        dto.setIdEmpleado(asignacion.getEmpleado().getIdEmpleado());
+        dto.setNombreEmpleado(asignacion.getEmpleado().getNombre());
+        dto.setApellidoEmpleado(asignacion.getEmpleado().getApellido());
+        dto.setEsLider(asignacion.getEsLider());
+        dto.setEstadoAsignacion(asignacion.getEstado().name());
+        dto.setFechaAsignacion(asignacion.getFecha());
+        return dto;
     }
 
     @Transactional(readOnly = true)
@@ -256,7 +333,7 @@ public class CampanaService {
     }
 
     private RespuestaCampanaDTO mapToRespuestaCampanaDTO(Campana campana) {
-        return RespuestaCampanaDTO.builder()
+        RespuestaCampanaDTO dto = RespuestaCampanaDTO.builder()
                 .idCampana(campana.getIdCampana())
                 .nombreCampana(campana.getNombreCampana())
                 .descripcion(campana.getDescripcion())
@@ -266,5 +343,23 @@ public class CampanaService {
                 .nombreEmpresa(campana.getEmpresa() != null ? campana.getEmpresa().getNombreEmpresa() : null)
                 .estado(campana.getEstado())
                 .build();
+
+        Optional<Asignacion> liderAsignacion = asignacionRepository.findLiderByCampanaId(campana.getIdCampana());
+        liderAsignacion.ifPresent(asignacion -> {
+            dto.setIdLider(asignacion.getEmpleado().getIdEmpleado());
+            dto.setNombreLider(asignacion.getEmpleado().getNombre() + " " + asignacion.getEmpleado().getApellido());
+        });
+
+        List<Asignacion> agentesAsignaciones = asignacionRepository.findAgentesByCampanaId(campana.getIdCampana());
+        if (!agentesAsignaciones.isEmpty()) {
+            dto.setIdsAgentes(agentesAsignaciones.stream()
+                    .map(a -> a.getEmpleado().getIdEmpleado())
+                    .collect(Collectors.toList()));
+
+            dto.setNombresAgentes(agentesAsignaciones.stream()
+                    .map(a -> a.getEmpleado().getNombre() + " " + a.getEmpleado().getApellido())
+                    .collect(Collectors.joining(", ")));
+        }
+        return dto;
     }
 }

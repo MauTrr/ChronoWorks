@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class AsignacionDTO {
+public class AsignacionCreacionDTO {
     @NotNull(message = "La fecha de asignacion no puede ser nula")
     @PastOrPresent(message = "La fecha de asignacion no puede ser futura")
     private LocalDateTime fecha;

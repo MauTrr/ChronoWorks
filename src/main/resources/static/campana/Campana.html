@@ -89,11 +89,11 @@
 </div>
 
 <!-- Modal -->
-<div class="modal fade" id="campanaModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="campanaModal" tabindex="-1" aria-hidden ="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header modal-custom">
-                <h5 class="modal-title">Registrar / Editar Campaña</h5>
+                <h5 class="modal-title">Registrar Campaña</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -119,6 +119,32 @@
                             </select>
                         </div>
                     </div>
+                    <div class="mb-3 mt-3">
+                        <label class="form-label">Asignaciones</label>
+                        <div class="border p-3 rounded">
+                            <div class="mb-3">
+                                <label class="form-label">Líder de la campaña</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="inputLider" readonly placeholder="Seleccionar Líder">
+                                    <button class="btn btn-custom" type="button" onclick="abrirModalSeleccion('lider')">
+                                        <i class="fas fa-user-tie"></i> Seleccionar
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="form-label">Agentes</label>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span id="contadorAgentes">0 agentes seleccionados</span>
+                                    <button class="btn btn-custom" type="button" onclick="abrirModalSeleccion('agentes')">
+                                        <i class="fas fa-users"></i>Seleccionar
+                                    </button>
+                                </div>
+                                <div id="listaAgentes" class="d-flex flex-wrap gap-2">
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -129,384 +155,44 @@
     </div>
 </div>
 
-<script>
-    let currentPage = 0;
-    const pageSize = 10;
-    let totalPages = 1;
+<div class="modal fade" id="modalSeleccion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalSeleccionTitulo">Seleccionar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="buscarEmpleados" placeholder="Buscar Empleados..." oninput="filtrarEmpleadosModal()">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaEmpleados">
 
-    document.addEventListener('DOMContentLoaded', () => {
-        cargarCampanas();
-        cargarEmpresas();
-        document.getElementById('searchNombre').addEventListener('input', () => {
-            currentPage = 0;
-            cargarCampanas();
-        });
-        document.getElementById('searchEmpresa').addEventListener('input', () => {
-            currentPage = 0;
-            cargarCampanas();
-        });
-        document.getElementById('estadoFilter').addEventListener('change', () => {
-            currentPage = 0;
-            cargarCampanas();
-        });
-
-       document.getElementById('guardarCampanasBtn').addEventListener('click', guardarCampana);
-
-       document.getElementById('generarReporteBtn').addEventListener('click', generarReporteExcel);
-    });
-
-// ==================== CARGAR DATOS ====================
-    async function cargarCampanas() {
-        try {
-            const filtro = {
-                nombreCampana: document.getElementById('searchNombre').value.trim(),
-                nombreEmpresa: document.getElementById('searchEmpresa').value.trim(),
-                estado: document.getElementById('estadoFilter').value,
-                excluirArchivadas: document.getElementById('estadoFilter').value === '' // Excluir archivadas por defecto si no hay filtro
-            };
-
-            const params = new URLSearchParams({
-                page: currentPage,
-                size: pageSize,
-                sort: 'nombreCampana',
-                ...Object.fromEntries(Object.entries(filtro).filter(([_, v]) => v !== '' && v !== undefined))
-            });
-
-            const response = await fetch(`/api/campanas?${params.toString()}`);
-            if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-
-            const data = await response.json();
-            const campanas = data.content || [];
-            totalPages = data.totalPages || 1;
-
-            renderizarCampanas(campanas);
-            actualizarPaginacion();
-
-        } catch (error) {
-            console.error("Error al cargar campañas:", error);
-            Swal.fire('Error', 'No se pudieron cargar las campañas', 'error');
-        }
-    }
-
-    async function cargarEmpresas() {
-        try {
-            const response = await fetch('/api/empresa?page=0&size=1000');
-            const data = await response.json();
-            const empresas = data.content || [];
-
-            // Llenar filtro de empresas
-            const searchEmpresa = document.getElementById('searchEmpresa');
-            searchEmpresa.innerHTML = '<option value="">Todas las empresas</option>';
-            empresas.forEach(e => {
-                const option = document.createElement('option');
-                option.value = e.nombreEmpresa;
-                option.textContent = e.nombreEmpresa;
-                searchEmpresa.appendChild(option);
-            });
-
-            // Llenar selector en modal
-            const selectEmpresa = document.getElementById('selectEmpresa');
-            selectEmpresa.innerHTML = '<option value="">Seleccione empresa...</option>';
-            empresas.forEach(e => {
-                const option = document.createElement('option');
-                option.value = e.idEmpresa;
-                option.textContent = e.nombreEmpresa;
-                selectEmpresa.appendChild(option);
-            });
-
-        } catch (error) {
-            console.error("Error al cargar empresas:", error);
-            Swal.fire('Error', 'No se pudieron cargar las empresas', 'error');
-        }
-    }
-
-// ==================== RENDERIZADO ====================
-    function renderizarCampanas(campanas) {
-        const tbody = document.getElementById('tablaCampanas');
-        tbody.innerHTML = '';
-
-        if (!campanas || campanas.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center">No se encontraron campañas</td></tr>';
-            return;
-        }
-
-        campanas.forEach(c => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${c.idCampana}</td>
-                <td>${c.nombreCampana}</td>
-                <td>${c.nombreEmpresa}</td>
-                <td>${c.descripcion || '-'}</td>
-                <td>${c.fechaInicio}</td>
-                <td>${c.fechaFin}</td>
-                <td>
-                    <span class="badge ${getBadgeClass(c.estado)}">
-                        ${c.estado}
-                    </span>
-                </td>
-                <td class="text-nowrap">
-                    <button class="btn btn-sm btn-primary editar-btn" data-id="${c.idCampana}">
-                        <i class="fa-solid fa-pen-to-square"></i>
-                    </button>
-                    ${c.estado !== 'ARCHIVADA' ? `
-                    <button class="btn btn-sm btn-danger archivar-btn" data-id="${c.idCampana}">
-                        <i class="fa-solid fa-box-archive"></i>
-                    </button>` : ''}
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        // Event listeners para botones dinámicos
-        document.querySelectorAll('.editar-btn').forEach(btn => {
-            btn.addEventListener('click', () => abrirModalEdicion(btn.dataset.id));
-        });
-
-        document.querySelectorAll('.archivar-btn').forEach(btn => {
-            btn.addEventListener('click', () => archivarCampana(btn.dataset.id));
-        });
-    }
-
-    function getBadgeClass(estado) {
-        const classes = {
-            'ACTIVA': 'bg-success',
-            'EN_PROCESO': 'bg-primary',
-            'FINALIZADA': 'bg-info',
-            'CANCELADA': 'bg-warning',
-            'ARCHIVADA': 'bg-secondary'
-        };
-        return classes[estado] || 'bg-light text-dark';
-    }
-
-// ==================== REPORTE EXCEL ====================
-async function generarReporteExcel() {
-    try {
-        // Mostrar loading en el botón
-        const btnExcel = document.getElementById('generarReporteBtn');
-        const originalHtml = btnExcel.innerHTML;
-        btnExcel.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
-        btnExcel.disabled = true;
-
-        // Usar los mismos filtros que en cargarCampanas()
-        const filtro = {
-            nombreCampana: document.getElementById('searchNombre').value.trim(),
-            nombreEmpresa: document.getElementById('searchEmpresa').value.trim(),
-            estado: document.getElementById('estadoFilter').value,
-            excluirArchivadas: document.getElementById('estadoFilter').value === ''
-        };
-
-        // Construir URL con filtros
-        const params = new URLSearchParams({
-            ...Object.fromEntries(Object.entries(filtro).filter(([_, v]) => v !== '' && v !== undefined))
-        });
-
-        // Hacer la petición al endpoint de Excel
-        const response = await fetch(`/api/campanas/reporte-excel?${params.toString()}`);
-
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-
-        // Crear y descargar el archivo
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `reporte_campanas_${new Date().toISOString().split('T')[0]}.xlsx`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-
-        // Notificación de éxito
-        Swal.fire({
-            icon: 'success',
-            title: 'Reporte generado',
-            text: 'El archivo Excel se ha descargado correctamente',
-            timer: 2000,
-            showConfirmButton: false
-        });
-
-    } catch (error) {
-        console.error("Error al generar reporte Excel:", error);
-        Swal.fire('Error', 'No se pudo generar el reporte: ' + error.message, 'error');
-    } finally {
-        // Restaurar el botón a su estado original
-        const btnExcel = document.getElementById('generarReporteBtn');
-        btnExcel.innerHTML = originalHtml;
-        btnExcel.disabled = false;
-    }
-}
-
-// ==================== PAGINACIÓN ====================
-    function actualizarPaginacion() {
-    const pagination = document.getElementById('pagination');
-    pagination.innerHTML = '';
-
-    // Info de paginación
-    document.getElementById('paginationInfo').textContent =
-        `Mostrando página ${currentPage + 1} de ${totalPages}`;
-
-    // Botón Anterior
-    const prevLi = document.createElement('li');
-    prevLi.className = `page-item ${currentPage === 0 ? 'disabled' : ''}`;
-    prevLi.innerHTML = `<a class="page-link" href="#">Anterior</a>`;
-    prevLi.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (currentPage > 0) {
-            currentPage--;
-            cargarCampanas();
-        }
-    });
-    pagination.appendChild(prevLi);
-
-    // Números de página
-    const startPage = Math.max(0, currentPage - 2);
-    const endPage = Math.min(totalPages - 1, currentPage + 2);
-
-    for (let i = startPage; i <= endPage; i++) {
-        const pageLi = document.createElement('li');
-        pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
-        pageLi.innerHTML = `<a class="page-link" href="#">${i + 1}</a>`;
-        pageLi.addEventListener('click', (e) => {
-            e.preventDefault();
-            currentPage = i;
-            cargarCampanas();
-        });
-        pagination.appendChild(pageLi);
-    }
-
-    // Botón Siguiente
-    const nextLi = document.createElement('li');
-    nextLi.className = `page-item ${currentPage >= totalPages - 1 ? 'disabled' : ''}`;
-    nextLi.innerHTML = `<a class="page-link" href="#">Siguiente</a>`;
-    nextLi.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (currentPage < totalPages - 1) {
-            currentPage++;
-            cargarCampanas();
-        }
-    });
-    pagination.appendChild(nextLi);
-}
-
-// ==================== MODALES ====================
-    function abrirModal(campana = {}) {
-        const form = document.getElementById('campanaForm');
-
-        form.idCampana.value     = campana.idCampana || '';
-        form.nombreCampana.value = campana.nombreCampana || '';
-        form.descripcion.value   = campana.descripcion || '';
-        form.fechaInicio.value   = campana.fechaInicio || '';
-        form.fechaFin.value      = campana.fechaFin || '';
-        form.estado.value        = campana.estado || 'ACTIVA';
-        form.idEmpresa.value     = campana.idEmpresa || '';
-
-        new bootstrap.Modal('#campanaModal').show();
-    }
-
-// ==================== MODALES ====================
-    async function abrirModalEdicion(idCampana) {
-        try {
-            const response = await fetch(`/api/campanas/${idCampana}`);
-            if (!response.ok) throw new Error('Campaña no encontrada');
-
-            const campana = await response.json();
-            const form = document.getElementById('campanaForm');
-
-            // Llenar formulario
-            form.idCampana.value = campana.idCampana || '';
-            form.nombreCampana.value = campana.nombreCampana || '';
-            form.descripcion.value = campana.descripcion || '';
-            form.fechaInicio.value = campana.fechaInicio || '';
-            form.fechaFin.value = campana.fechaFin || '';
-            form.estado.value = campana.estado || 'ACTIVA';
-            form.idEmpresa.value = campana.idEmpresa || '';
-
-            // Mostrar modal
-            new bootstrap.Modal('#campanaModal').show();
-
-        } catch (error) {
-            console.error("Error al abrir modal:", error);
-            Swal.fire('Error', 'No se pudo cargar la campaña para edición', 'error');
-        }
-    }
-
-    async function guardarCampana() {
-        try {
-            const form = document.getElementById('campanaForm');
-            const dto = {
-                nombreCampana: form.nombreCampana.value.trim(),
-                descripcion: form.descripcion.value.trim(),
-                fechaInicio: form.fechaInicio.value,
-                fechaFin: form.fechaFin.value,
-                idEmpresa: parseInt(form.idEmpresa.value),
-                estado: form.estado.value
-            };
-
-            if (form.idCampana.value) dto.idCampana = parseInt(form.idCampana.value);
-
-            const method = dto.idCampana ? 'PUT' : 'POST';
-            const url = dto.idCampana
-                ? `/api/campanas/${dto.idCampana}`
-                : '/api/campanas';
-
-            const response = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dto)
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Error al guardar');
-            }
-
-            // Cerrar modal y recargar
-            bootstrap.Modal.getInstance('#campanaModal').hide();
-            cargarCampanas();
-            Swal.fire('Éxito', 'Campaña guardada correctamente', 'success');
-
-        } catch (error) {
-            console.error("Error al guardar:", error);
-            Swal.fire('Error', error.message, 'error');
-        }
-    }
-
-
-// ==================== SOFT DELETE (ARCHIVADO) ====================
-    async function archivarCampana(idCampana) {
-        try {
-            const result = await Swal.fire({
-                title: '¿Archivar campaña?',
-                text: "La campaña se marcará como archivada y no aparecerá en los listados por defecto",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, archivar',
-                cancelButtonText: 'Cancelar'
-            });
-
-            if (!result.isConfirmed) return;
-
-            const response = await fetch(`/api/campanas/${idCampana}/archivar`, {
-                method: 'PUT'
-            });
-
-            if (!response.ok) throw new Error('Error al archivar');
-
-            cargarCampanas();
-            Swal.fire('Éxito', 'Campaña archivada correctamente', 'success');
-
-        } catch (error) {
-            console.error("Error al archivar:", error);
-            Swal.fire('Error', 'No se pudo archivar la campaña', 'error');
-        }
-    }
-</script>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-custom" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-custom" id="btnConfirmarSeleccion">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/main.js"></script>
 <script src="/js/header.js"></script>
+<script src="/js/campana.js"></script>
 </body>
 </html>
 </html>

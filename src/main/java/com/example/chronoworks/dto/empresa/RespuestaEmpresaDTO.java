@@ -12,7 +12,7 @@
         private String direccion;
         private String telefono;
         private String sector;
-        private String lider;
+        private String representante;
         private boolean activo;
     }
 

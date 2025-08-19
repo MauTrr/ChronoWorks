@@ -36,5 +36,4 @@ public class Campana {
     @OneToMany(mappedBy = "campana", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private java.util.List<Asignacion> asignaciones;
 
-
 }

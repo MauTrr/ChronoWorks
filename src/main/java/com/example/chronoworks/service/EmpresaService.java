@@ -1,16 +1,28 @@
 package com.example.chronoworks.service;
 
+import com.example.chronoworks.dto.empleado.FiltroEmpleadoDTO;
 import com.example.chronoworks.dto.empresa.EmpresaDTO;
+import com.example.chronoworks.dto.empresa.FiltroEmpresaDTO;
 import com.example.chronoworks.dto.empresa.RespuestaEmpresaDTO;
 import com.example.chronoworks.exception.BadRequestException;
+import com.example.chronoworks.exception.IllegalStateException;
 import com.example.chronoworks.exception.ResourceNotFoundException;
+import com.example.chronoworks.model.Credencial;
+import com.example.chronoworks.model.Empleado;
 import com.example.chronoworks.model.Empresa;
+import com.example.chronoworks.model.Rol;
 import com.example.chronoworks.repository.EmpresaRepository;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class EmpresaService {
@@ -25,32 +37,55 @@ public class EmpresaService {
         if (empresaRepository.findByNombreEmpresa(dto.getNombreEmpresa()).isPresent()) {
             throw new BadRequestException("La empresa ya está registrada");
         }
+        if(!dto.getTelefono().matches("^[0-9]{10}$")){
+            throw new IllegalStateException("Formato de telefono invalido");
+        }
+
         Empresa empresa = new Empresa();
         empresa.setNombreEmpresa(dto.getNombreEmpresa());
         empresa.setNitEmpresa(dto.getNitEmpresa());
         empresa.setDireccion(dto.getDireccion());
         empresa.setTelefono(dto.getTelefono());
         empresa.setSector(dto.getSector());
-        empresa.setLider(dto.getLider());
+        empresa.setRepresentante(dto.getRepresentante());
         empresa.setActivo(true);
-        return mapToDTO(empresaRepository.save(empresa));
+        return mapToEmpresaDTO(empresaRepository.save(empresa));
     }
 
     @Transactional(readOnly = true)
-    public Page<RespuestaEmpresaDTO> listarEmpresas(Pageable pageable, String nombre, String sector, Boolean activo) {
-        Specification<Empresa> spec = Specification.where(null);
+    public RespuestaEmpresaDTO obtenerEmpresa(Integer id) {
+        Empresa empresa = empresaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada"));
+        return mapToEmpresaDTO(empresa);
+    }
 
-        if (nombre != null) {
-            spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("nombreEmpresa")), "%" + nombre.toLowerCase() + "%"));
-        }
-        if (sector != null) {
-            spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("sector")), "%" + sector.toLowerCase() + "%"));
-        }
-        if (activo != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("activo"), activo));
-        }
+    @Transactional(readOnly = true)
+    public Page<RespuestaEmpresaDTO> listarEmpresas(FiltroEmpresaDTO filtro, Pageable pageable) {
+        Specification<Empresa> spec = crearSpecificationEmpresa(filtro);
+        Page<Empresa> empresasPage = empresaRepository.findAll(spec, pageable);
+        return empresasPage.map(this::mapToEmpresaDTO);
+    }
 
-        return empresaRepository.findAll(spec, pageable).map(this::mapToDTO);
+    private Specification<Empresa> crearSpecificationEmpresa(FiltroEmpresaDTO filtro) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Filtro por Nombre de la empresa
+            if (filtro.getNombreEmpresa() != null && !filtro.getNombreEmpresa().trim().isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("nombreEmpresa")), "%" + filtro.getNombreEmpresa().toLowerCase() + "%"));
+            }
+
+            // Filtro por rol
+            if (filtro.getSector() != null && !filtro.getSector().trim().isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("sector")), "%" + filtro.getSector().toLowerCase() + "%"));
+            }
+
+            // Filtro por estado activo
+            if (filtro.getActivo() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("activo"), filtro.getActivo()));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
     }
 
     @Transactional
@@ -62,33 +97,30 @@ public class EmpresaService {
         empresa.setDireccion(dto.getDireccion());
         empresa.setTelefono(dto.getTelefono());
         empresa.setSector(dto.getSector());
-        empresa.setLider(dto.getLider());
-        return mapToDTO(empresaRepository.save(empresa));
+        empresa.setRepresentante(dto.getRepresentante());
+        return mapToEmpresaDTO(empresaRepository.save(empresa));
     }
 
     @Transactional
-    public void eliminarEmpresa(Integer id) {
-        Empresa empresa = empresaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada"));
+    public void desactivarEmpresa(Integer idEmpresa) {
+        Empresa empresa = empresaRepository.findById(idEmpresa)
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada"));
         empresa.setActivo(false);
         empresaRepository.save(empresa);
     }
 
-    @Transactional(readOnly = true)
-    public RespuestaEmpresaDTO obtenerEmpresa(Integer id) {
-        Empresa empresa = empresaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada"));
-        return mapToDTO(empresa);
-    }
 
-    private RespuestaEmpresaDTO mapToDTO(Empresa e) {
+
+    private RespuestaEmpresaDTO mapToEmpresaDTO(Empresa empresa) {
         return RespuestaEmpresaDTO.builder()
-                .idEmpresa(e.getIdEmpresa())
-                .nombreEmpresa(e.getNombreEmpresa())
-                .nitEmpresa(e.getNitEmpresa())
-                .direccion(e.getDireccion())
-                .telefono(e.getTelefono())
-                .sector(e.getSector())
-                .lider(e.getLider())
-                .activo(e.isActivo())
+                .idEmpresa(empresa.getIdEmpresa())
+                .nombreEmpresa(empresa.getNombreEmpresa())
+                .nitEmpresa(empresa.getNitEmpresa())
+                .direccion(empresa.getDireccion())
+                .telefono(empresa.getTelefono())
+                .sector(empresa.getSector())
+                .representante(empresa.getRepresentante())
+                .activo(empresa.isActivo())
                 .build();
     }
 }

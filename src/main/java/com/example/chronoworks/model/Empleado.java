@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name= "empleados")
@@ -34,6 +36,14 @@ public class Empleado {
 
     @OneToOne(mappedBy = "empleado", cascade = CascadeType.ALL,orphanRemoval = true, fetch = FetchType.LAZY)
     private Credencial credencial;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "empleado_rol",
+            joinColumns = @JoinColumn(name = "id_empleado"),
+            inverseJoinColumns = @JoinColumn(name = "id_rol")
+    )
+    private Set<Rol> roles = new HashSet<>();
 
     private boolean activo = true;
 }

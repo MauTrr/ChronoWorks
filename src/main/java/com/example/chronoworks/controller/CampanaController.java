@@ -1,8 +1,9 @@
 package com.example.chronoworks.controller;
 
-import com.example.chronoworks.dto.campana.CampanaDTO;
-import com.example.chronoworks.dto.campana.FiltroCampanaDTO;
-import com.example.chronoworks.dto.campana.RespuestaCampanaDTO;
+import com.example.chronoworks.dto.asignacion.AsignacionConsultaDTO;
+import com.example.chronoworks.dto.asignacion.AsignacionCreacionDTO;
+import com.example.chronoworks.dto.campana.*;
+import com.example.chronoworks.model.enums.CampanaEstado;
 import com.example.chronoworks.service.CampanaService;
 import jakarta.validation.Valid;
 import org.springframework.core.io.ByteArrayResource;
@@ -29,8 +30,10 @@ public class CampanaController {
     }
 
     @PostMapping
-    public ResponseEntity<RespuestaCampanaDTO> crearCampana(@Valid @RequestBody CampanaDTO dto) {
-        RespuestaCampanaDTO nuevaCampana = campanaService.crearCampana(dto);
+    public ResponseEntity<RespuestaCampanaDTO> crearCampana(@Valid @RequestBody CrearCampanaCompletaDTO request) {
+        RespuestaCampanaDTO nuevaCampana = campanaService.crearCampana(
+                request.getCampana(),
+                request.getAsignaciones());
         return new ResponseEntity<>(nuevaCampana, HttpStatus.CREATED);
     }
 
@@ -50,7 +53,7 @@ public class CampanaController {
         return ResponseEntity.ok(campanaService.listarCampanas(filtro, pageable));
     }
 
-    // Nuevo endpoint que devuelve lista plana para HTML con fetch()
+
     @GetMapping("/todas")
     public ResponseEntity<List<RespuestaCampanaDTO>> listarTodasCampanas() {
         Page<RespuestaCampanaDTO> page = campanaService.listarCampanas(new FiltroCampanaDTO(), Pageable.unpaged());
@@ -70,40 +73,42 @@ public class CampanaController {
     @PutMapping("/{idCampana}")
     public ResponseEntity<RespuestaCampanaDTO> actualizarCampana(
             @PathVariable Integer idCampana,
-            @Valid @RequestBody CampanaDTO dto) {
-        RespuestaCampanaDTO campanaActualizada = campanaService.actualizarCampana(idCampana, dto);
+            @Valid @RequestBody ActualizarCampanaCompletaDTO request) {
+
+        RespuestaCampanaDTO campanaActualizada = campanaService.actualizarCampana(
+                idCampana,
+                request.getCampana(),
+                request.getAsignaciones());
+
         return ResponseEntity.ok(campanaActualizada);
     }
 
-    // Eliminar campaña (DELETE)
     @DeleteMapping("/{idCampana}")
     public ResponseEntity<Void> eliminarCampana(@PathVariable Integer idCampana) {
-        campanaService.cancelarCampana(idCampana); // o .eliminarCampana si lo prefieres
+        campanaService.cambiarEstado(
+                idCampana,
+                CampanaEstado.CANCELADA,
+                true);
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{idCampana}/iniciar")
-    public ResponseEntity<RespuestaCampanaDTO> iniciarCampana(@PathVariable Integer idCampana) {
-        RespuestaCampanaDTO respuesta = campanaService.iniciarCampana(idCampana);
+    @PutMapping("/{idCampana}/estado")
+    public ResponseEntity<RespuestaCampanaDTO> cambiarEstado (
+            @PathVariable Integer idCampana,
+            @RequestBody CambiarEstadoDTO request) {
+
+        RespuestaCampanaDTO respuesta = campanaService.cambiarEstado(
+                idCampana,
+                request.getEstado(),
+                request.isLiberarEmpleados()
+        );
         return ResponseEntity.ok(respuesta);
     }
 
-    @PutMapping("/{idCampana}/finalizar")
-    public ResponseEntity<RespuestaCampanaDTO> finalizarCampana(@PathVariable Integer idCampana) {
-        RespuestaCampanaDTO respuesta = campanaService.finalizarCampana(idCampana);
-        return ResponseEntity.ok(respuesta);
-    }
-
-    @PutMapping("/{idCampana}/cancelar")
-    public ResponseEntity<RespuestaCampanaDTO> cancelarCampana(@PathVariable Integer idCampana) {
-        RespuestaCampanaDTO respuesta = campanaService.cancelarCampana(idCampana);
-        return ResponseEntity.ok(respuesta);
-    }
-
-    @PutMapping("/{idCampana}/archivar")
-    public ResponseEntity<RespuestaCampanaDTO> archivarCampana(@PathVariable Integer idCampana) {
-        RespuestaCampanaDTO respuesta = campanaService.archivarCampana(idCampana);
-        return ResponseEntity.ok(respuesta);
+    @GetMapping("{idCampana}/asignaciones")
+    public ResponseEntity<List<AsignacionConsultaDTO>> getAsignaciondes(
+            @PathVariable Integer idCampana) {
+        return ResponseEntity.ok(campanaService.obtenerAsignaciones(idCampana));
     }
 
     @GetMapping("/reporte-excel")

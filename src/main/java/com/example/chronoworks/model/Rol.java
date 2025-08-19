@@ -3,6 +3,9 @@ package com.example.chronoworks.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "rol")
 @Data
@@ -15,4 +18,7 @@ public class Rol {
 
     @Column(name = "nombre", nullable = false, unique = true)
     private String nombreRol;
+
+    @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
+    private Set<Empleado> empleados = new HashSet<>();
 }

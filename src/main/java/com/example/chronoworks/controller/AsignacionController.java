@@ -1,6 +1,6 @@
 package com.example.chronoworks.controller;
 
-import com.example.chronoworks.dto.asignacion.AsignacionDTO;
+import com.example.chronoworks.dto.asignacion.AsignacionCreacionDTO;
 import com.example.chronoworks.dto.asignacion.FiltroAsignacionDTO;
 import com.example.chronoworks.dto.asignacion.RespuestaAsignacionDTO;
 import com.example.chronoworks.service.AsignacionService;
@@ -23,7 +23,7 @@ public class AsignacionController {
     }
 
     @PostMapping
-    public ResponseEntity<RespuestaAsignacionDTO> crearAsignacion(@Valid @RequestBody AsignacionDTO dto) {
+    public ResponseEntity<RespuestaAsignacionDTO> crearAsignacion(@Valid @RequestBody AsignacionCreacionDTO dto) {
         RespuestaAsignacionDTO nuevaAsignacion = asignacionService.crearAsignacion(dto);
         return new ResponseEntity<>(nuevaAsignacion, HttpStatus.CREATED);
     }
@@ -56,7 +56,7 @@ public class AsignacionController {
     }
 
     @PutMapping("/{idAsignacion}/actualizar")
-    public ResponseEntity<RespuestaAsignacionDTO> actualizarAsignacion(@PathVariable Integer idAsignacion, @Valid @RequestBody AsignacionDTO dto) {
+    public ResponseEntity<RespuestaAsignacionDTO> actualizarAsignacion(@PathVariable Integer idAsignacion, @Valid @RequestBody AsignacionCreacionDTO dto) {
         RespuestaAsignacionDTO asignacionActualizada = asignacionService.actualizarAsignacion(idAsignacion, dto);
         return ResponseEntity.ok(asignacionActualizada);
     }
