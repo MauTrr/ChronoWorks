@@ -88,7 +88,7 @@
     </div>
 </div>
 
-<!-- Modal -->
+<!-- Modal para crear campaña-->
 <div class="modal fade" id="campanaModal" tabindex="-1" aria-hidden ="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -146,6 +146,67 @@
     </div>
 </div>
 
+<!-- Modal para editar campaña-->
+<div class="modal fade" id="editarCampanaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header modal-custom">
+                <h5 class="modal-title">Editar Campaña</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editarCampanaForm">
+                    <input type="hidden" name="idCampana">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <input type="text" name="nombreCampana" class="form-control" placeholder="Nombre Campaña" required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="descripcion" class="form-control" placeholder="Descripción">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="date" name="fechaFin" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="empresaDisplay" readonly placeholder="Empresa">
+                            <input type="hidden" name="idEmpresa">
+                        </div>
+                    </div>
+                    <div class="mb-3 mt-3">
+                        <label class="form-label">Asignaciones</label>
+                        <div class="border p-3 rounded">
+                            <div class="mb-3">
+                                <label class="form-label">Líder de la campaña</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="inputLiderEditar" readonly placeholder="Seleccionar Líder">
+                                    <button class="btn btn-custom" type="button" onclick="abrirModalSeleccionEditar('lider')">
+                                        <i class="fas fa-user-tie"></i> Seleccionar
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="form-label">Agentes</label>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span id="contadorAgentesEditar">0 agentes seleccionados</span>
+                                    <button class="btn btn-custom" type="button" onclick="abrirModalSeleccionEditar('agentes')">
+                                        <i class="fas fa-users"></i> Seleccionar
+                                    </button>
+                                </div>
+                                <div id="listaAgentesEditar" class="d-flex flex-wrap gap-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-custom" id="guardarEdicionBtn">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar empleado -->
 <div class="modal fade" id="modalSeleccion" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -175,6 +236,39 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-custom" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-custom" id="btnConfirmarSeleccion">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para selección de agentes en editar -->
+<div class="modal fade" id="modalSeleccionEditar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header modal-custom">
+                <h5 class="modal-title" id="modalSeleccionTituloEditar">Seleccionar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="buscarEmpleadosEditar" placeholder="Buscar Empleados..." oninput="filtrarEmpleadosModalEditar()">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaEmpleadosEditar"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-custom" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-custom" id="btnConfirmarSeleccionEditar">Confirmar</button>
             </div>
         </div>
     </div>

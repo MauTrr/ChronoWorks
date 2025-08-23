@@ -198,16 +198,28 @@ public class CampanaService {
         Campana campanaExistente = campanaRepository.findById(idCampana)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaña no encontrada."));
 
-        campanaExistente.setNombreCampana(dto.getNombreCampana());
-        campanaExistente.setDescripcion(dto.getDescripcion());
-        campanaExistente.setFechaInicio(dto.getFechaInicio());
-        campanaExistente.setFechaFin(dto.getFechaFin());
+        if (dto.getNombreCampana() != null) {
+            campanaExistente.setNombreCampana(dto.getNombreCampana());
+        }
+
+        if (dto.getDescripcion() != null) {
+            campanaExistente.setDescripcion(dto.getDescripcion());
+        }
+
+        if (dto.getFechaFin() != null) {
+            campanaExistente.setFechaFin(dto.getFechaFin());
+        }
+
+        if (dto.getFechaInicio() != null) {
+            campanaExistente.setFechaInicio(dto.getFechaInicio());
+        }
 
         if (dto.getIdEmpresa() != null) {
             Empresa nuevaEmpresa = empresaRepository.findById(dto.getIdEmpresa())
                     .orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada"));
             campanaExistente.setEmpresa(nuevaEmpresa);
         }
+
 
         Campana campanaActualizada = campanaRepository.save(campanaExistente);
 
