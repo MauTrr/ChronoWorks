@@ -1,6 +1,5 @@
 package com.example.chronoworks.controller;
 
-import com.example.chronoworks.dto.empleado.RespuestaEmpleadoDTO;
 import com.example.chronoworks.dto.empresa.EmpresaDTO;
 import com.example.chronoworks.dto.empresa.FiltroEmpresaDTO;
 import com.example.chronoworks.dto.empresa.RespuestaEmpresaDTO;

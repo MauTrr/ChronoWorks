@@ -1,6 +1,6 @@
 package com.example.chronoworks.dto.asignacion;
 
-import com.example.chronoworks.model.enums.AsignacionEstado;
+import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -11,5 +11,5 @@ public class FiltroAsignacionDTO {
     private String apellidoEmpleado;
     private String nombreCampana;
     private LocalDateTime fechaAsignacion;
-    private AsignacionEstado estado;
+    private AsignacionCampanaEstado estado;
 }

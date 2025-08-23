@@ -1,9 +1,15 @@
 package com.example.chronoworks.controller;
 
 import com.example.chronoworks.dto.asignacion.AsignacionConsultaDTO;
-import com.example.chronoworks.dto.asignacion.AsignacionCreacionDTO;
 import com.example.chronoworks.dto.campana.*;
+import com.example.chronoworks.dto.empleado.EmpleadoDisponibleDTO;
+import com.example.chronoworks.dto.empleado.RespuestaEmpleadoDTO;
+import com.example.chronoworks.model.AsignacionCampana;
+import com.example.chronoworks.model.Empleado;
+import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
 import com.example.chronoworks.model.enums.CampanaEstado;
+import com.example.chronoworks.repository.AsignacionCampanaRepository;
+import com.example.chronoworks.repository.EmpleadoRepository;
 import com.example.chronoworks.service.CampanaService;
 import jakarta.validation.Valid;
 import org.springframework.core.io.ByteArrayResource;
@@ -19,18 +25,29 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/campanas")
 public class CampanaController {
     private final CampanaService campanaService;
+    private final EmpleadoRepository empleadoRepository;
+    private final AsignacionCampanaRepository asignacionCampanaRepository;
 
-    public CampanaController(CampanaService campanaService) {
+    public CampanaController(CampanaService campanaService,
+                             EmpleadoRepository empleadoRepository,
+                             AsignacionCampanaRepository asignacionCampanaRepository) {
         this.campanaService = campanaService;
+        this.empleadoRepository = empleadoRepository;
+        this.asignacionCampanaRepository = asignacionCampanaRepository;
     }
 
     @PostMapping
     public ResponseEntity<RespuestaCampanaDTO> crearCampana(@Valid @RequestBody CrearCampanaCompletaDTO request) {
+
+        System.out.println("=== LLAMADA A CREAR CAMPANA ===");
+        System.out.println("Request: " + request);
+
         RespuestaCampanaDTO nuevaCampana = campanaService.crearCampana(
                 request.getCampana(),
                 request.getAsignaciones());
@@ -48,8 +65,11 @@ public class CampanaController {
             @ModelAttribute FiltroCampanaDTO filtro,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "nombreCampana") String sort) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+            @RequestParam(defaultValue = "nombreCampana") String sort,
+            @RequestParam(defaultValue = "asc") String direction) {
+
+        Sort.Direction dir = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(dir, sort));
         return ResponseEntity.ok(campanaService.listarCampanas(filtro, pageable));
     }
 
@@ -110,6 +130,36 @@ public class CampanaController {
             @PathVariable Integer idCampana) {
         return ResponseEntity.ok(campanaService.obtenerAsignaciones(idCampana));
     }
+
+    @GetMapping("/empleados/disponibles")
+    public ResponseEntity<List<EmpleadoDisponibleDTO>> getEmpleadosDisponibles(
+            @RequestParam String rol,
+            @RequestParam(required = false) Integer idEmpresa // <-- lo agregas aquí
+    ) {
+        List<Empleado> empleados = empleadoRepository.findByNombreRol(rol);
+        List<Empleado> empleadosDisponibles = empleados.stream()
+                .filter(empleado -> {
+                    // Solo empleados NO asignados a campañas activas
+                    List<AsignacionCampana> asignacionesActivas = asignacionCampanaRepository
+                            .findByEmpleadoIdEmpleadoAndEstado(empleado.getIdEmpleado(), AsignacionCampanaEstado.ACTIVA);
+                    return asignacionesActivas.isEmpty();
+                })
+                .toList();
+        List<EmpleadoDisponibleDTO> respuesta = empleadosDisponibles.stream()
+                .map(empleado -> {
+                    EmpleadoDisponibleDTO dto = new EmpleadoDisponibleDTO();
+                    dto.setIdEmpleado(empleado.getIdEmpleado());
+                    dto.setNombre(empleado.getNombre());
+                    dto.setApellido(empleado.getApellido());
+                    dto.setCorreo(empleado.getCorreo());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(respuesta);
+    }
+
+
 
     @GetMapping("/reporte-excel")
     public ResponseEntity<ByteArrayResource> descargarReporteCampanasExcel(@ModelAttribute FiltroCampanaDTO filtro) throws IOException {

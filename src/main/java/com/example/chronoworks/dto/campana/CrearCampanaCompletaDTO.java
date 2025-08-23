@@ -1,7 +1,5 @@
 package com.example.chronoworks.dto.campana;
 
-import com.example.chronoworks.model.Asignacion;
-import com.example.chronoworks.service.CampanaService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;

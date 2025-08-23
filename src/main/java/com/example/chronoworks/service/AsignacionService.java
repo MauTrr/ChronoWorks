@@ -9,7 +9,7 @@ import com.example.chronoworks.model.Asignacion;
 import com.example.chronoworks.model.Campana;
 import com.example.chronoworks.model.Empleado;
 import com.example.chronoworks.model.Tarea;
-import com.example.chronoworks.model.enums.AsignacionEstado;
+import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
 import com.example.chronoworks.repository.AsignacionRepository;
 import com.example.chronoworks.repository.CampanaRepository;
 import com.example.chronoworks.repository.EmpleadoRepository;
@@ -60,7 +60,7 @@ public class AsignacionService {
         nuevaAsignacion.setTarea(tarea);
         nuevaAsignacion.setEmpleado(empleado);
         nuevaAsignacion.setCampana(campana);
-        nuevaAsignacion.setEstado(AsignacionEstado.ACTIVA);
+        nuevaAsignacion.setEstado(AsignacionCampanaEstado.ACTIVA);
 
         Asignacion asignacionGuardada = asignacionRepository.save(nuevaAsignacion);
         return mapToRespuestaAsignacionDTO(asignacionGuardada);
@@ -121,8 +121,8 @@ public class AsignacionService {
             }
 
             if(soloActivas) {
-                predicates.add(criteriaBuilder.notEqual(root.get("estado"), AsignacionEstado.INACTIVA));
-                predicates.add(criteriaBuilder.notEqual(root.get("estado"), AsignacionEstado.LIBERADA));
+                predicates.add(criteriaBuilder.notEqual(root.get("estado"), AsignacionCampanaEstado.INACTIVA));
+                predicates.add(criteriaBuilder.notEqual(root.get("estado"), AsignacionCampanaEstado.LIBERADA));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
@@ -161,11 +161,11 @@ public class AsignacionService {
         Asignacion asignacion= asignacionRepository.findById(idAsignacion)
                 .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
 
-        if(asignacion.getEstado()!= AsignacionEstado.ACTIVA) {
+        if(asignacion.getEstado()!= AsignacionCampanaEstado.ACTIVA) {
             throw new IllegalStateException("Solo se pueden iniciar asignaciones en el estado ACTIVA");
         }
 
-        asignacion.setEstado(AsignacionEstado.ACTIVA);
+        asignacion.setEstado(AsignacionCampanaEstado.ACTIVA);
         return mapToRespuestaAsignacionDTO(asignacionRepository.save(asignacion));
     }
 
@@ -174,11 +174,11 @@ public class AsignacionService {
         Asignacion asignacion= asignacionRepository.findById(idAsignacion)
                 .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
 
-        if(asignacion.getEstado()!= AsignacionEstado.ACTIVA) {
+        if(asignacion.getEstado()!= AsignacionCampanaEstado.ACTIVA) {
             throw new IllegalStateException("Solo se pueden finalizar asignaciones en el estado EN_PROCESO");
         }
 
-        asignacion.setEstado(AsignacionEstado.LIBERADA);
+        asignacion.setEstado(AsignacionCampanaEstado.LIBERADA);
         return mapToRespuestaAsignacionDTO(asignacionRepository.save(asignacion));
     }
 
@@ -187,11 +187,11 @@ public class AsignacionService {
         Asignacion asignacion = asignacionRepository.findById(idAsignacion)
                 .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
 
-        if(asignacion.getEstado() == AsignacionEstado.LIBERADA) {
+        if(asignacion.getEstado() == AsignacionCampanaEstado.LIBERADA) {
             throw new IllegalStateException("No se puede cancelar una asignacion ya finalizada");
         }
 
-        asignacion.setEstado(AsignacionEstado.INACTIVA);
+        asignacion.setEstado(AsignacionCampanaEstado.INACTIVA);
 
         Asignacion asignacionActualizada = asignacionRepository.save(asignacion);
         return mapToRespuestaAsignacionDTO(asignacionActualizada);
@@ -202,11 +202,11 @@ public class AsignacionService {
         Asignacion asignacion = asignacionRepository.findById(idAsignacion)
                 .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
 
-        if(asignacion.getEstado()!= AsignacionEstado.LIBERADA && asignacion.getEstado()!= AsignacionEstado.INACTIVA) {
+        if(asignacion.getEstado()!= AsignacionCampanaEstado.LIBERADA && asignacion.getEstado()!= AsignacionCampanaEstado.INACTIVA) {
             throw new IllegalStateException("Solo  se pueden archivar asignaciones finalizadas o canceladas");
         }
 
-        asignacion.setEstado(AsignacionEstado.INACTIVA);
+        asignacion.setEstado(AsignacionCampanaEstado.INACTIVA);
         Asignacion asignacionActualizada = asignacionRepository.save(asignacion);
         return  mapToRespuestaAsignacionDTO(asignacionActualizada);
     }

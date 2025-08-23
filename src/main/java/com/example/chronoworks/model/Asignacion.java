@@ -1,6 +1,6 @@
 package com.example.chronoworks.model;
 
-import com.example.chronoworks.model.enums.AsignacionEstado;
+import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -22,8 +22,8 @@ public class Asignacion {
     private String observaciones;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "estado_asignacion")
-    private AsignacionEstado estado = AsignacionEstado.ACTIVA;
+    @Column(name = "estado")
+    private AsignacionCampanaEstado estado = AsignacionCampanaEstado.ACTIVA;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tarea", nullable = false)

@@ -18,7 +18,4 @@ public class Rol {
 
     @Column(name = "nombre", nullable = false, unique = true)
     private String nombreRol;
-
-    @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
-    private Set<Empleado> empleados = new HashSet<>();
 }

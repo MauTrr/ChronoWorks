@@ -3,7 +3,7 @@ package com.example.chronoworks.controller;
 import com.example.chronoworks.dto.asignacion.AsignacionCreacionDTO;
 import com.example.chronoworks.dto.asignacion.FiltroAsignacionDTO;
 import com.example.chronoworks.dto.asignacion.RespuestaAsignacionDTO;
-import com.example.chronoworks.model.enums.AsignacionEstado;
+import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
 import com.example.chronoworks.service.AsignacionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -56,7 +56,7 @@ public class AsignacionControllerTest {
         AsignacionCreacionDTO dto = new AsignacionCreacionDTO();
         dto.setFecha(LocalDateTime.now().minusHours(1)); // Fecha en pasado
         dto.setObservaciones("Observaciones de prueba");
-        dto.setEstado(AsignacionEstado.ACTIVA); // Asume que existe este enum
+        dto.setEstado(AsignacionCampanaEstado.ACTIVA); // Asume que existe este enum
         dto.setIdTarea(1);
         dto.setIdCampana(1);
         dto.setIdEmpleado(1);
@@ -95,7 +95,7 @@ public class AsignacionControllerTest {
                         "Juan".equals(filter.getNombreEmpleado()) &&
                                 "Perez".equals(filter.getApellidoEmpleado()) &&
                                 "Campaña 1".equals(filter.getNombreCampana()) &&
-                                AsignacionEstado.ACTIVA.equals(filter.getEstado())
+                                AsignacionCampanaEstado.ACTIVA.equals(filter.getEstado())
                 ),
                 argThat(pageable ->
                         pageable.getPageNumber() == 0 &&
@@ -131,7 +131,7 @@ public class AsignacionControllerTest {
                 .idEmpleado(301)
                 .nombre("Empleado")
                 .apellido("Prueba")
-                .estado(AsignacionEstado.ACTIVA)
+                .estado(AsignacionCampanaEstado.ACTIVA)
                 .build();
 
         // 2. Crea un PageRequest explícito

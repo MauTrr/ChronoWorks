@@ -13,16 +13,4 @@ import java.util.Optional;
 
 @Repository
 public interface AsignacionRepository extends JpaRepository<Asignacion, Integer>, JpaSpecificationExecutor<Asignacion> {
-    @Query("SELECT a FROM Asignacion a WHERE a.campana.idCampana = :idCampana")
-    List<Asignacion> findByCampanaId(@Param("idCampana") Integer idCampana);
-
-    @Query("SELECT a FROM Asignacion a WHERE a.campana.idCampana = :idCampana AND a.esLider = true")
-    Optional<Asignacion> findLiderByCampanaId(@Param("idCampana") Integer idCampana);
-
-    @Query("SELECT a FROM Asignacion a WHERE a.campana.idCampana = :idCampana AND a.esLider = false")
-    List<Asignacion> findAgentesByCampanaId(@Param("idCampana") Integer idCampana);
-
-    @Modifying
-    @Query("DELETE FROM Asignacion a WHERE a.campana.idCampana = :idCampana")
-    void deleteByCampanaIdCampana(@Param("idCampana") Integer idCampana);
 }

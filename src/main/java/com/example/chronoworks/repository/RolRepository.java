@@ -11,6 +11,6 @@ import java.util.Optional;
 @Repository
 public interface RolRepository extends JpaRepository<Rol, Integer> {
 
-    @Query("SELECT r FROM Rol r JOIN r.empleados e WHERE r.nombreRol = :nombre AND e.turno.id = :idTurno")
-    Optional<Rol> findByNombreRolAndEmpresa(@Param("nombre") String nombre, @Param("idEmpresa") Integer idEmpresa);
+    @Query("SELECT r FROM Rol r WHERE r.nombreRol = :nombreRol")
+    Optional<Rol> findByNombreRol(String nombreRol);
 }

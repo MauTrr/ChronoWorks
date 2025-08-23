@@ -1,6 +1,6 @@
 package com.example.chronoworks.dto.asignacion;
 
-import com.example.chronoworks.model.enums.AsignacionEstado;
+import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
 import lombok.Builder;
 import lombok.Data;
 
@@ -20,5 +20,5 @@ public class RespuestaAsignacionDTO {
     private Integer idEmpleado;
     private String nombre;
     private String apellido;
-    private AsignacionEstado estado;
+    private AsignacionCampanaEstado estado;
 }

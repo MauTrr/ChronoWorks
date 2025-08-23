@@ -1,6 +1,6 @@
 package com.example.chronoworks.dto.asignacion;
 
-import com.example.chronoworks.model.enums.AsignacionEstado;
+import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import lombok.Data;
@@ -16,7 +16,7 @@ public class AsignacionCreacionDTO {
     private String observaciones;
 
     @NotNull(message = "El estado inicial de la asignacion es obligatorio")
-    private AsignacionEstado estado;
+    private AsignacionCampanaEstado estado;
 
     @NotNull(message = "El ID de la tarea no puede ser nulo")
     private Integer idTarea;

@@ -10,6 +10,7 @@ let agentesSeleccionados = [];
 let empleadosDisponibles = [];
 let empresaSeleccionadaId = null;
 let seleccionActual = '';
+let ultimoIdEmpresa = null;
 
 //Funcion del timer de respuesta
 function debounce(func, timeout = 300) {
@@ -20,20 +21,206 @@ function debounce(func, timeout = 300) {
     };
 }
 
+function getBadgeClass(estado) {
+    const classes = {
+        'ACTIVA': 'bg-success',
+        'EN_PROCESO': 'bg-warning text-dark',
+        'FINALIZADA': 'bg-info',
+        'CANCELADA': 'bg-danger',
+        'ARCHIVADA': 'bg-secondary'
+    };
+    return classes[estado] || 'bg-secondary';
+}
+
+async function guardarCampana() {
+    try {
+        const form = document.getElementById('campanaForm');
+
+        if (!form.idEmpresa.value) {
+            throw new Error('Debe seleccionar una empresa');
+        }
+
+        const idEmpresa = parseInt(form.idEmpresa.value);
+        if (isNaN(idEmpresa)) {
+            throw new Error('ID de empresa inválido');
+        }
+
+        if (!liderSeleccionado || !liderSeleccionado.id) {
+            throw new Error('Debe seleccionar un líder para la campaña');
+        }
+
+        const liderId = Number(liderSeleccionado.id);
+        if (!liderId || isNaN(liderId)) {
+            throw new Error('El líder seleccionado no es válido');
+        }
+
+        if (agentesSeleccionados.length === 0) {
+            throw new Error('Debe seleccionar al menos un agente para la campaña');
+        }
+
+        const agentesIds = agentesSeleccionados.map(a => Number(a.id));
+        if (agentesIds.some(id => !id || isNaN(id))) {
+            throw new Error('Todos los agentes seleccionados deben ser válidos');
+        }
+
+        const idCampana = form.idCampana.value;
+
+        const campanaDTO = {
+            nombreCampana: form.nombreCampana.value.trim(),
+            descripcion: form.descripcion.value.trim(),
+            fechaInicio: form.fechaInicio.value,
+            fechaFin: form.fechaFin.value,
+            idEmpresa: idEmpresa,
+            estado: "ACTIVA",
+            idLider: liderId,
+            idsAgentes: agentesIds
+        };
+
+        if (idCampana) {
+            campanaDTO.idCampana = parseInt(idCampana);
+        }
+
+        const asignaciones = [
+            {
+                idEmpleado: liderId,
+                esLider: true
+            },
+            ...agentesIds.map(id => ({
+                idEmpleado: id,
+                esLider: false
+            }))
+        ];
+
+        const method = idCampana ? 'PUT' : 'POST';
+        const url = idCampana ? `/api/campanas/${idCampana}` : '/api/campanas';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                campana: campanaDTO,
+                asignaciones: asignaciones
+            })
+        });
+
+        if (!response.ok) {
+            let errorDetail = '';
+            try {
+                const errorData = await response.json();
+                errorDetail = JSON.stringify(errorData);
+                console.error('Error detallado del servidor:', errorData);
+            } catch (e) {
+                errorDetail = await response.text();
+            }
+            throw new Error(`Error ${response.status}: ${response.statusText}\nDetalles: ${errorDetail}`);
+        }
+
+        const result = await response.json();
+        console.log('Respuesta exitosa:', result);
+
+        bootstrap.Modal.getInstance(document.getElementById('campanaModal')).hide();
+        cargarCampanas();
+        Swal.fire({
+            icon: 'success',
+            title: 'Éxito', 
+            text: 'Campaña guardada correctamente',
+            confirmButtonColor: '#23A7C1',
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
+         });
+
+        resetearSelecciones();
+
+    } catch (error) {
+        console.error("Error al guardar:", error);
+        Swal.fire('Error', error.message, 'error');
+    }
+}
+
+async function actualizarCampana() {
+    try {
+        const form = document.getElementById('campanaForm');
+        const idCampana = form.idCampana.value;
+        // ...validaciones igual que antes...
+
+        const idEmpresa = parseInt(form.idEmpresa.value);
+        const liderId = Number(liderSeleccionado.id);
+        const agentesIds = agentesSeleccionados.map(a => Number(a.id));
+
+        const campanaDTO = {
+            idCampana: parseInt(idCampana),
+            nombreCampana: form.nombreCampana.value.trim(),
+            descripcion: form.descripcion.value.trim(),
+            fechaInicio: form.fechaInicio.value,
+            fechaFin: form.fechaFin.value,
+            idEmpresa: idEmpresa,
+            estado: "ACTIVA", // O el estado actual si lo editas
+            idLider: liderId,
+            idsAgentes: agentesIds
+        };
+
+        const asignaciones = [
+            { idEmpleado: liderId, esLider: true },
+            ...agentesIds.map(id => ({ idEmpleado: id, esLider: false }))
+        ];
+
+        const response = await fetch(`/api/campanas/${idCampana}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ campana: campanaDTO, asignaciones })
+        });
+
+        if (!response.ok) {
+            let errorDetail = '';
+            try {
+                const errorData = await response.json();
+                errorDetail = JSON.stringify(errorData);
+                console.error('Error detallado del servidor:', errorData);
+            } catch (e) {
+                errorDetail = await response.text();
+            }
+            throw new Error(`Error ${response.status}: ${response.statusText}\nDetalles: ${errorDetail}`);
+        }
+
+        const result = await response.json();
+        console.log('Respuesta exitosa:', result);
+
+        bootstrap.Modal.getInstance(document.getElementById('campanaModal')).hide();
+        cargarCampanas();
+        Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: 'Campaña actualizada correctamente',
+            confirmButtonColor: '#23A7C1',
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
+        });
+
+        resetearSelecciones();
+
+    } catch (error) {
+        console.error("Error al actualizar campaña:", error);
+        Swal.fire('Error', error.message, 'error');
+    }
+}
+
 //Inicializacion
 document.addEventListener('DOMContentLoaded', () => {
     cargarCampanas();
     cargarEmpresas();
 
-    document.getElementById('searchNombre').addEventListener('input', () => {
+    document.getElementById('searchNombre').addEventListener('input', debounce(() => {
         currentPage = 0;
         cargarCampanas();
-    }, 300);
+    }, 300));
 
-    document.getElementById('searchEmpresa').addEventListener('input', () => {
+    document.getElementById('searchEmpresa').addEventListener('input', debounce(() => {
         currentPage = 0;
         cargarCampanas();
-    }, 300);
+    }, 300));
 
     document.getElementById('estadoFilter').addEventListener('change', () => {
         currentPage = 0;
@@ -44,6 +231,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const idCampana = e.target.closest('[data-id]')?.dataset.id;
         if(!idCampana) return;
         
+        if (e.target.closest('.editar-btn')) {
+            const fila = e.target.closest('tr');
+            const estado = fila.querySelector('.badge').textContent.trim();
+            if (estado !== 'ACTIVA' && estado !== 'EN_PROCESO') {
+                Swal.fire('No permitido', 'Solo puedes editar campañas ACTIVAS o EN PROCESO', 'warning');
+                return;
+            }
+            await abrirModalEdicion(idCampana);
+        }
         if (e.target.closest('.iniciar-btn')) {
             await cambiarEstadoCampana(idCampana, 'EN_PROCESO');
         }
@@ -56,9 +252,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     });
 
-   document.getElementById('guardarCampanasBtn').addEventListener('click', guardarCampana);
-   document.getElementById('actualizarCampanaBtn').addEventListener('click', actualizarEmpleado);
-   document.getElementById('generarReporteBtn').addEventListener('click', generarReporteExcel);
+    document.getElementById('guardarCampanasBtn').addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+        const form = document.getElementById('campanaForm');
+        const idCampana = form.idCampana.value;
+
+        const accion = idCampana ? actualizarCampana : crearCampana;  
+
+        accion().finally(() => {
+        setTimeout(() => {
+            this.disabled = false;
+            this.innerHTML = 'Guardar';
+        }, 2000);
+    });
+
+    });
+    document.getElementById('generarReporteBtn').addEventListener('click', generarReporteExcel);
 });
 
 // Funcion para resetear las selecciones
@@ -85,11 +299,13 @@ async function cargarCampanas() {
         const params = new URLSearchParams();
         params.append('page', currentPage);
         params.append('size', Math.max(pageSize, 1));
+        params.append('sort', 'idCampana');
+        params.append('direction', 'desc');
 
         if (searchNombre) params.append('nombreCampana', searchNombre);
-        if (searchEmpresa) params.append('empresa', searchEmpresa);
+        if (searchEmpresa) params.append('nombreEmpresa', searchEmpresa);
         if (estado && estado !==  'ALL') {
-            params.append('estado', estado)
+            params.append('estados', estado)
 
             if (estado !== 'ARCHIVADA') {
                 params.append('excluirArchivadas', 'true')
@@ -115,9 +331,12 @@ async function cargarCampanas() {
 
 async function cargarEmpresas() {
     try {
+        document.getElementById('selectEmpresa').addEventListener('focus', (e) => {
+            ultimoIdEmpresa = e.target.value;
+        });
 
         document.getElementById('selectEmpresa').addEventListener('change', async (e) => {
-            empresaSeleccionadaId = e.target.value;
+            empresaSeleccionadaId = parseInt(e.target.value); 
             resetearSelecciones();
             if (empresaSeleccionadaId) {
                 await cargarLideresDisponibles();
@@ -181,7 +400,8 @@ async function cargarAgentesDisponibles() {
         const response = await fetch(`/api/empleados?nombreRol=AGENTE&idEmpresa=${empresaSeleccionadaId}&activo=true&size=1000`);
         if (!response.ok) throw new Error("Error al cargar agentes");
 
-        empleadosDisponibles = await response.json();
+        const data = await response.json();
+        empleadosDisponibles = data.content || data || [];
         console.log("Agentes cargados:", empleadosDisponibles);
     } catch (error) {
         console.error("Error cargando agentes", error);
@@ -201,7 +421,7 @@ async function cargarAsignacionesCampana(idCampana) {
         if (lider) {
             liderSeleccionado = {
                 id: lider.idEmpleado,
-                nombre: `${lider.empleado.nombre} ${lider.empleado.apellido}`
+                nombre: `${lider.nombreEmpleado || ''} ${lider.apellidoEmpleado || ''}`.trim()
             };
             document.getElementById('inputLider').value = liderSeleccionado.nombre;
         }
@@ -210,15 +430,15 @@ async function cargarAsignacionesCampana(idCampana) {
             .filter(a => !a.esLider)
             .map(a => ({
                 id: a.idEmpleado,
-                nombre: `${a.empleado.nombre} ${a.empleado.apellido}`
+                nombre: `${a.nombreEmpleado || ''} ${a.apellidoEmpleado || ''}`.trim()
             }));
 
         actualizarVistaAgentes();    
 
     } catch (error) {
-        
+        console.error("Error cargando asignaciones:", error);
+        Swal.fire('Error', 'No se pudieron cargar las asignaciones', 'error');
     }
-    
 }
 
 // ==================== RENDERIZADO ====================
@@ -232,6 +452,7 @@ function renderizarCampanas(campanas) {
     }
 
     campanas.forEach(c => {
+        const puedeEditar = c.estado === 'ACTIVA' || c.estado === 'EN_PROCESO';
         const tr = document.createElement('tr');
         tr.style.cursor = 'pointer';
         tr.innerHTML = `
@@ -247,7 +468,7 @@ function renderizarCampanas(campanas) {
                 </span>
             </td>
             <td class="text-nowrap">
-                <button class="btn btn-sm btn-primary editar-btn" data-id="${c.idCampana}">
+                <button class="btn btn-sm btn-custom editar-btn" data-id="${c.idCampana}">
                     <i class="fa-solid fa-pen-to-square"></i>
                 </button>
                 ${getEstadoBtn(c)}
@@ -270,21 +491,31 @@ async function mostrarEmpleadosAsignados(idCampana) {
         if (!response.ok) throw new Error("Error al cargar asignaciones");
 
         const asignaciones = await response.json();
+        console.log("Asignaciones recibidas:", asignaciones);
 
-        const content = asignaciones.map(a => `
-            <div class="mb-2">
-                <strong>${a.esLider ? 'Líder' : 'Agente'}:</strong>
-                ${a.empleado.nombre} ${a.empleado.apellido}
-                <span class="badge ${a.estado === 'ACTIVA' ? 'bg-success' : 'bg-secondary'}">
-                    ${a.estado}
-                </span>
-            </div>
-        `).join('');
+        const content = asignaciones.map(a => {
+            const nombre = a.nombreEmpleado || 'Nombre no disponible';
+            const apellido = a.apellidoEmpleado || '';
+            const estado = a.estadoAsignacion || 'DESCONOCIDO';
+            
+            return `
+                <div class="mb-2 p-2 border rounded">
+                    <strong>${a.esLider ? '🧑‍💼 Líder' : '👨‍💻 Agente'}:</strong>
+                    ${nombre} ${apellido}
+                    <span class="badge ${estado === 'ACTIVA' ? 'bg-success' : 'bg-secondary'} ms-2">
+                        ${estado}
+                    </span>
+                </div>
+            `;
+        }).join('');
 
         Swal.fire({
             title: 'Empleados Asignados',
             html: content || '<p>No hay asignaciones</p>',
-            confirmButtonText: 'Cerrar'
+            confirmButtonText: 'Cerrar',
+            confirmButtonColor: '#23A7C1',
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
         });
 
     } catch (error) {
@@ -298,20 +529,20 @@ function getEstadoBtn(campana) {
 
     if (campana.estado === 'ACTIVA') {
         buttons = `
-            <button class="btn btn-sm btn-success iniciar-btn mx-1" data-id="${campana.idCampana}">
+            <button class="btn btn-sm btn-custom iniciar-btn mx-1" data-id="${campana.idCampana}">
                 <i class="fa-solid fa-play"></i>
             </button>
-            <button class="btn btn-sm btn-danger archivar-btn" data-id="${campana.idCampana}">
+            <button class="btn btn-sm btn-custom archivar-btn" data-id="${campana.idCampana}">
                 <i class="fa-solid fa-box-archive"></i>
             </button>
         `;
     }
     else if (campana.estado === 'EN_PROCESO') {
         buttons = `
-            <button class="btn btn-sm btn-warning finalizar-btn mx-1" data-id="${campana.idCampana}">
+            <button class="btn btn-sm btn-custom finalizar-btn mx-1" data-id="${campana.idCampana}">
                 <i class="fa-solid fa-flag-checkered"></i>
             </button>
-            <button class="btn btn-sm btn-danger cancelar-btn mx-1" data-id="${campana.idCampana}">
+            <button class="btn btn-sm btn-custom cancelar-btn mx-1" data-id="${campana.idCampana}">
                 <i class="fa-solid fa-ban"></i>
             </button>
         `;
@@ -469,8 +700,9 @@ function abrirModal(campana = {}) {
     form.descripcion.value   = campana.descripcion || '';
     form.fechaInicio.value   = campana.fechaInicio || '';
     form.fechaFin.value      = campana.fechaFin || '';
-    form.estado.value        = campana.estado || 'ACTIVA';
     form.idEmpresa.value     = campana.idEmpresa || '';
+
+    empresaSeleccionadaId = campana.idEmpresa;
 
     new bootstrap.Modal('#campanaModal').show();
 }
@@ -490,8 +722,9 @@ async function abrirModalEdicion(idCampana) {
         form.descripcion.value = campana.descripcion || '';
         form.fechaInicio.value = campana.fechaInicio || '';
         form.fechaFin.value = campana.fechaFin || '';
-        form.estado.value = campana.estado || 'ACTIVA';
         form.idEmpresa.value = campana.idEmpresa || '';
+
+        empresaSeleccionadaId = campana.idEmpresa;
 
         await cargarAsignacionesCampana(idCampana);
 
@@ -504,128 +737,101 @@ async function abrirModalEdicion(idCampana) {
     }
 }
 
-async function guardarCampana() {
-    try {
-        const form = document.getElementById('campanaForm');
 
-        if(!liderSeleccionado) {
-            throw new Error ('Debe seleccionar un lider para la campaña')
-        }
-
-        if(agentesSeleccionados.length === 0) {
-            throw new Error ('Debe seleccionar al menos un agente para la campaña');
-        }
-
-        const campanaDTO = {
-            nombreCampana: form.nombreCampana.value.trim(),
-            descripcion: form.descripcion.value.trim(),
-            fechaInicio: form.fechaInicio.value,
-            fechaFin: form.fechaFin.value,
-            idEmpresa: parseInt(form.idEmpresa.value),
-            estado: form.estado.value
-        };
-
-        const asignaciones = [
-            {
-                idEmpleado: liderSeleccionado.id,
-                esLider: true
-            },
-            ...agentesSeleccionados.map(agente => ({
-                idEmpleado: agente.id,
-                esLider: false
-            }))
-        ];
-
-        /*if (form.idCampana.value) dto.idCampana = parseInt(form.idCampana.value);*/
-
-        const method = dto.idCampana ? 'PUT' : 'POST';
-        const url = form.idCampana.value
-            ? `/api/campanas/${form.idCampana.value}`
-            : '/api/campanas';
-
-        const response = await fetch(url, {
-            method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                campana: campanaDTO,
-                asignaciones: asignaciones
-            })
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Error al guardar');
-        }
-
-        // Cerrar modal y recargar
-        bootstrap.Modal.getInstance('#campanaModal').hide();
-        cargarCampanas();
-        Swal.fire('Éxito', 'Campaña guardada correctamente', 'success');
-
-        resetearSelecciones();
-
-    } catch (error) {
-        console.error("Error al guardar:", error);
-        Swal.fire('Error', error.message, 'error');
-    }
-}
 
 // ==================== MODALES ====================
 function abrirModalSeleccion(tipo) {
     seleccionActual = tipo;
-    const modal = new bootstrap.Modal('#modalSeleccion');
+    const modal = new bootstrap.Modal(document.getElementById('modalSeleccion'));
     const titulo = tipo === 'lider' ? 'Seleccionar Lider' : 'Seleccionar Agentes';
     document.getElementById('modalSeleccionTitulo').textContent = titulo
 
     const btnConfirmar = document.getElementById('btnConfirmarSeleccion');
     if (tipo === 'lider') {
         btnConfirmar.style.display = 'none';
+        cargarEmpleadosporRol('LIDER');
     } else {
         btnConfirmar.style.display = 'block';
         btnConfirmar.onclick = confirmarSeleccionAgentes;
+        cargarEmpleadosporRol('AGENTE');
     }
 
-    const rol = tipo === 'lider' ? 'LIDER' : 'AGENTE';
-    cargarEmpleadosporRol(rol);
-    
     modal.show();
 }
 
 async function cargarEmpleadosporRol(rol) {
     try {
+        if (!empresaSeleccionadaId) {
+            Swal.fire({
+                icon: 'warning',
+                title:'Advertencia', 
+                text: 'Primero seleccione una empresa',
+                confirmButtonColor: '#23A7C1',
+                background: '#edf3f4',
+                iconColor: '#23A7C1' 
+            });
+            return;
+        }
         
-        const response = await fetch(`/api/empleados?nombreRol=${rol}&activo=true&size=1000`);
-        if(!response.ok) throw new Error('Error al cargar empleados');
+        const response = await fetch(`/api/campanas/empleados/disponibles?rol=${rol}&idEmpresa=${empresaSeleccionadaId}&activo=true&size=1000`);
+        if(!response.ok) throw new Error('Error al cargar empleados disponibles');
 
-        const data = await response.json();
-        empleadosDisponibles = data.content;
-        renderizarEmpleadosModal( rol === 'LIDER');
+        empleadosDisponibles = await response.json();
+        console.log(`Empleados ${rol} disponibles:`, empleadosDisponibles);
+
+        renderizarEmpleadosModal(rol === 'LIDER');
     } catch (error) {
         console.error("Error al cargar empleados:", error);
         Swal.fire('Error', error.message, 'error');
     }
 }
 
-function renderizarEmpleadosModal(esParaLider) {
+function renderizarEmpleadosModal(esParaLider, lista = empleadosDisponibles) {
     const tbody = document.getElementById('tablaEmpleados');
     tbody.innerHTML = '';
 
-    empleadosDisponibles.forEach(empleado => {
+    if (esParaLider && liderSeleccionado && liderSeleccionado.id) {
+        const existe = lista.some(e => parseInt(e.idEmpleado) === parseInt(liderSeleccionado.id));
+        if (!existe) {
+            lista = [
+                ...lista,
+                {
+                    idEmpleado: liderSeleccionado.id,
+                    nombre: liderSeleccionado.nombre.split(' ')[0] || '',
+                    apellido: liderSeleccionado.nombre.split(' ').slice(1).join(' ') || '',
+                    email: 'N/A'
+                }   
+            ];
+        }
+    }
+    if (!lista || lista.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center">No hay empleados disponibles</td></tr>';
+        return;
+    }
+
+    lista.forEach(empleado => {
         const tr = document.createElement('tr');
-        const estaSeleccionado = esParaLider ? liderSeleccionado?.id === empleado.idEmpleado : agentesSeleccionados.some(a => a.id === empleado.idEmpleado);
+        
+        const estaSeleccionado = esParaLider ? 
+            liderSeleccionado && parseInt(liderSeleccionado.id) === parseInt(empleado.idEmpleado) : 
+            agentesSeleccionados.some(a => parseInt(a.id) === parseInt(empleado.idEmpleado));
 
         tr.innerHTML = `
             <td>${empleado.nombre} ${empleado.apellido}</td>
-            <td>${empleado.email || empleado.correo}</td>
+            <td>${empleado.email || empleado.correo || 'N/A'}</td>
             <td>
                 ${esParaLider 
-                    ? `<button class="btn btn-sm ${estaSeleccionado ? 'btn-success' : 'btn-primary'}" 
+                    ? `<button class="btn btn-sm btn-custom ${estaSeleccionado ? 'btn-seleccionado' : ''}" 
                          onclick="seleccionarLiderModal(${empleado.idEmpleado}, '${empleado.nombre} ${empleado.apellido}')">
                         ${estaSeleccionado ? 'Seleccionado' : 'Seleccionar'}
                        </button>`
-                    : `<input type="checkbox" class="form-check-input" 
-                         ${estaSeleccionado ? 'checked' : ''}
-                         onchange="toggleSeleccionAgente(${empleado.idEmpleado}, '${empleado.nombre} ${empleado.apellido}', this.checked)">`}
+                    : `<label class="custom-checkbox d-flex justify-content-center align-items-center">
+                        <input type="checkbox" 
+                            ${estaSeleccionado ? 'checked' : ''}
+                            onchange="toggleSeleccionAgente(${empleado.idEmpleado}, '${empleado.nombre} ${empleado.apellido}', this.checked)">
+                        <span></span>
+                      </label>`
+                }
             </td>
         `;
         tbody.appendChild(tr);
@@ -633,16 +839,35 @@ function renderizarEmpleadosModal(esParaLider) {
 }
 
 function seleccionarLiderModal(id, nombre) {
-    liderSeleccionado = { id, nombre};
+    const numericId = parseInt(id);
+    if (!numericId || isNaN(numericId)) {
+        Swal.fire('Error', 'El líder seleccionado no es válido', 'error');
+        return;
+    }
+    liderSeleccionado = { 
+        id: numericId,
+        nombre: nombre
+    };
     document.getElementById('inputLider').value = nombre;
-    bootstrap.Modal.getInstance('#modalSeleccion').hide();
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalSeleccion'));
+    if (modal) modal.hide();
 }
 
 function toggleSeleccionAgente(id, nombre, seleccionado) {
+    const numericId = parseInt(id);
+    if (!numericId || isNaN(numericId)) {
+        Swal.fire('Error', 'El agente seleccionado no es válido', 'error');
+        return;
+    }
     if (seleccionado) {
-        agentesSeleccionados.push({ id, nombre});
+        if (!agentesSeleccionados.some(a => a.id === numericId)) {
+            agentesSeleccionados.push ({
+                id: numericId, 
+                nombre: nombre
+            });
+        }
     } else {
-        agentesSeleccionados = agentesSeleccionados.filter(a => a.id !== id);
+        agentesSeleccionados = agentesSeleccionados.filter(a => a.id !== numericId);
     }
 }
 
@@ -657,16 +882,17 @@ function actualizarVistaAgentes() {
 
     contador.textContent = `${agentesSeleccionados.length} agente(s) seleccionado(s)`;
     lista.innerHTML = agentesSeleccionados.map(agente => `
-        <span class="badge bg-primary me-1">
-            ${agente.nombre}
-            <button class="btn-close btn-close-white btn-sm ms-1" 
-                    onclick="eliminarAgente(${agente.id})"></button>
+        <span class="d-inline-flex align-items-center rounded-pill border px-2 py-1 me-2 mb-1" 
+                style="font-size: 0.95em; background-color: #23A7C1; color: white;">
+            <span>${agente.nombre}</span>
+            <button type="button" class="btn-close btn-close-white btn-close-sm ms-2" 
+                onclick="eliminarAgente(${agente.id})" aria-label="Eliminar"></button>
         </span>
     `).join('');
 }
 
 function eliminarAgente(id) {
-    agentesSeleccionados = agentesSeleccionados.filter(a => a.id !== id);
+    agentesSeleccionados = agentesSeleccionados.filter(a => parseInt(a.id) !== parseInt(id));
     actualizarVistaAgentes();
 }
 
@@ -676,7 +902,7 @@ function filtrarEmpleadosModal() {
         `${emp.nombre} ${emp.apellido}`.toLowerCase().includes(termino) ||
         (emp.email || emp.correo).toLowerCase().includes(termino)
     );
-    renderizarEmpleadosModal(seleccionActual === 'lider');
+    renderizarEmpleadosModal(seleccionActual === 'lider', empleadosFiltrados);
 }
 
 // ==================== SOFT DELETE (ARCHIVADO) ====================

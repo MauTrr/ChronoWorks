@@ -28,7 +28,7 @@ public class CampanaDTO {
     @NotNull(message = "El ID de la empresa no puede ser nulo")
     private Integer idEmpresa;
 
-    @NotNull(message = "El estadp inicial de la campaña es obligatorio.")
+    @NotNull(message = "El estado inicial de la campaña es obligatorio.")
     private CampanaEstado estado;
 
     @NotNull(message = "El líder de la campaña es obligatorio")

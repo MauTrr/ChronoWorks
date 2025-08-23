@@ -1,19 +1,13 @@
 package com.example.chronoworks.service;
 
-import com.example.chronoworks.dto.empleado.FiltroEmpleadoDTO;
 import com.example.chronoworks.dto.empresa.EmpresaDTO;
 import com.example.chronoworks.dto.empresa.FiltroEmpresaDTO;
 import com.example.chronoworks.dto.empresa.RespuestaEmpresaDTO;
 import com.example.chronoworks.exception.BadRequestException;
 import com.example.chronoworks.exception.IllegalStateException;
 import com.example.chronoworks.exception.ResourceNotFoundException;
-import com.example.chronoworks.model.Credencial;
-import com.example.chronoworks.model.Empleado;
 import com.example.chronoworks.model.Empresa;
-import com.example.chronoworks.model.Rol;
 import com.example.chronoworks.repository.EmpresaRepository;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

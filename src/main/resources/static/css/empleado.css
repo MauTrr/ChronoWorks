@@ -39,6 +39,68 @@ html, body {
     background: rgba(0,0,0,0.1);
 }
 
+/*Boton Seleccionado*/
+.btn-seleccionado {
+    background-color: #176e7f !important;
+    color: #fff !important;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s;
+}
+.btn-seleccionado:hover {
+    background-color: #23A7C1 !important;
+    color: #fff !important;
+}
+
+/*Checkbox Personalizado*/
+.custom-checkbox {
+  position: relative;
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+}
+.custom-checkbox input[type="checkbox"] {
+  opacity: 0;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  cursor: pointer;
+}
+.custom-checkbox span {
+  position: absolute;
+  top: 0; left: 0;
+  width: 22px; height: 22px;
+  background: #23A7C1;
+  border-radius: 6px;
+  border: 2px solid #176e7f;
+  transition: background 0.2s;
+}
+.custom-checkbox input[type="checkbox"]:checked + span {
+  background: #176e7f;
+}
+.custom-checkbox span:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+.custom-checkbox input[type="checkbox"]:checked + span:after {
+  display: block;
+}
+.custom-checkbox span:after {
+  left: 7px;
+  top: 3px;
+  width: 6px;
+  height: 12px;
+  border: solid #fff;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
+  content: "";
+  position: absolute;
+}
+
 /* Estilo principal para la tabla */
 .table-custom {
     width: 100%;
