@@ -43,7 +43,21 @@ async function guardarCampana() {
         const form = document.getElementById('campanaForm');
         const formData = new FormData(form);
         
-        const errores = validarFormulario(formData);
+        
+        const erroresFront = validarFormulario(formData);
+        if (Object.keys(erroresFront).length > 0) {
+            mostrarErrores(erroresFront);
+            Swal.fire({
+                icon: 'error',
+                title: 'Formulario incompleto',
+                text: 'Por favor completa todos los campos requeridos',
+                footer: 'Revisa que todos los campos esten correctos',
+                confirmButtonColor: '#23A7C1',
+                background: '#edf3f4',
+                iconColor: '#23A7C1'
+            })
+            return;
+        }
         if (!form.idEmpresa.value) {
             throw new Error('Debe seleccionar una empresa');
         }
@@ -148,6 +162,32 @@ async function guardarCampana() {
     }
 }
 
+function mostrarErrores(errores, formId = 'campanaForm') {
+    const form = document.getElementById(formId);
+    form.querySelectorAll('.error-message').forEach(el => el.remove());
+    form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+    for (const [campo, mensaje] of Object.entries(errores)) {
+        const input = form.querySelector(`[name="${campo}"]`);
+        const formGroup = input?.closest('.form-group') || input?.parentElement;
+
+        if (formGroup) {
+            const errorElement = document.createElement('div');
+            errorElement.className = 'error-message text-danger mt-1 small';
+            errorElement.textContent = mensaje;
+
+            formGroup.appendChild(errorElement);
+
+            input.classList.add('is-invalid')
+
+            input.addEventListener('input', function() {
+                this.classList.remove('is-invalid');
+                errorElement.remove();
+            }, {once: true});
+        }
+    }
+}
+
 function validarFormulario(formData) {
     const errores = [];
 
@@ -171,7 +211,21 @@ async function actualizarCampana() {
     try {
         const form = document.getElementById('campanaForm');
         const idCampana = form.idCampana.value;
-        // ...validaciones igual que antes...
+
+        const ErroresFront = validarFormularioEdicion(new FormData(form));
+        if (Object.keys(ErroresFront).length > 0) {
+            mostrarErrores(ErroresFront, 'editarCampanaForm');
+            Swal.fire({
+                icon: 'error',
+                title: 'Formulario incompleto',
+                text: 'Por favor completa todos los campos requeridos',
+                footer: 'Revisa que todos los campos esten correctos',
+                confirmButtonColor: '#23A7C1',
+                background: '#edf3f4',
+                iconColor: '#23A7C1'
+            });
+            return;
+        }
 
         const idEmpresa = parseInt(form.idEmpresa.value);
         const liderId = Number(liderSeleccionado.id);
