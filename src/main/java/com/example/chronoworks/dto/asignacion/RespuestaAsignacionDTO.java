@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 public class RespuestaAsignacionDTO {
     private Integer idAsignacion;
     private LocalDateTime fecha;
-    private String observaciones;
     private Integer idTarea;
     private String nombreTarea;
     private String detalles;

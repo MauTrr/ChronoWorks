@@ -13,8 +13,6 @@ public class AsignacionCreacionDTO {
     @PastOrPresent(message = "La fecha de asignacion no puede ser futura")
     private LocalDateTime fecha;
 
-    private String observaciones;
-
     @NotNull(message = "El estado inicial de la asignacion es obligatorio")
     private AsignacionCampanaEstado estado;
 
@@ -23,7 +21,4 @@ public class AsignacionCreacionDTO {
 
     @NotNull(message = "El ID de la campaña no puede ser nulo")
     private Integer idCampana;
-
-    @NotNull(message = "El ID del empleado no puede ser nulo")
-    private Integer idEmpleado;
 }

@@ -1,6 +1,5 @@
 package com.example.chronoworks.repository;
 
-import com.example.chronoworks.model.Asignacion;
 import com.example.chronoworks.model.AsignacionCampana;
 import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
 import org.springframework.data.jpa.repository.JpaRepository;

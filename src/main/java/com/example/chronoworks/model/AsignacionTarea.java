@@ -7,9 +7,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "asignacion")
+@Table(name = "asignacion_tarea")
 @Data
-public class Asignacion {
+public class AsignacionTarea {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,12 +18,6 @@ public class Asignacion {
 
     @Column(name = "fecha")
     private LocalDateTime fecha;
-    @Column(name = "observaciones")
-    private String observaciones;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "estado")
-    private AsignacionCampanaEstado estado = AsignacionCampanaEstado.ACTIVA;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tarea", nullable = false)
@@ -33,10 +27,7 @@ public class Asignacion {
     @JoinColumn(name = "id_campaña", nullable = false)
     private Campana campana;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_empleado", nullable = false)
-    private Empleado empleado;
-
-    @Column(name = "es_lider")
-    private Boolean esLider;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado")
+    private AsignacionCampanaEstado estado = AsignacionCampanaEstado.ACTIVA;
 }

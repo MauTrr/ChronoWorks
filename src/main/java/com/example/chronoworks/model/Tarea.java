@@ -1,5 +1,6 @@
 package com.example.chronoworks.model;
 
+import com.example.chronoworks.model.enums.TareaTipos;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -16,11 +17,10 @@ public class Tarea {
     @Column(name = "nombre_tarea")
     private String nombreTarea;
 
-    @Column(name = "detalles")
-    private String detalles;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo")
+    private TareaTipos tipo;
 
     @OneToMany(mappedBy = "tarea", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private  java.util.List<Asignacion> asignaciones;
-
-    private boolean activo = true;
+    private  java.util.List<AsignacionTarea> asignaciones;
 }

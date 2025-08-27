@@ -1,5 +1,6 @@
 package com.example.chronoworks.dto.tarea;
 
+import com.example.chronoworks.model.enums.TareaTipos;
 import lombok.Builder;
 import lombok.Data;
 
@@ -8,6 +9,5 @@ import lombok.Data;
 public class RespuestaTareaDTO {
     private Integer idTarea;
     private String nombreTarea;
-    private String detalles;
-    private boolean activo;
+    private TareaTipos tipos;
 }

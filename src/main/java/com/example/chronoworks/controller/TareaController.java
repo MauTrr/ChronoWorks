@@ -14,7 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/tarea")
+@RequestMapping("/api/tareas")
 public class TareaController {
     private final TareaService tareaService;
 
@@ -51,10 +51,10 @@ public class TareaController {
         return ResponseEntity.ok(tareaActualizada);
     }
 
-    @PatchMapping("/{idTarea}/desactivar")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<RespuestaTareaDTO> desactivarTarea(@PathVariable Integer idTarea) {
-        tareaService.desactivarTarea(idTarea);
+    @DeleteMapping("{idTarea}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole ('LIDER')")
+    public ResponseEntity<RespuestaTareaDTO> eliminarTarea(@PathVariable Integer idTarea) {
+        tareaService.eliminarTarea(idTarea);
         return ResponseEntity.noContent().build();
     }
 }

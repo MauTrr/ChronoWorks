@@ -5,6 +5,7 @@ import com.example.chronoworks.dto.tarea.TareaDTO;
 import com.example.chronoworks.exception.BadRequestException;
 import com.example.chronoworks.exception.ResourceNotFoundException;
 import com.example.chronoworks.model.Tarea;
+import com.example.chronoworks.model.enums.TareaTipos;
 import com.example.chronoworks.repository.TareaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,7 +28,7 @@ public class TareaService {
 
         Tarea nuevaTarea = new Tarea();
         nuevaTarea.setNombreTarea(dto.getNombreTarea());
-        nuevaTarea.setDetalles(dto.getDetalles());
+        nuevaTarea.setTipo(dto.getTipo());
 
         Tarea tareaGuardada = tareaRepository.save(nuevaTarea);
         return  mapToRespuestaTareaDTO(tareaGuardada);
@@ -42,7 +43,7 @@ public class TareaService {
 
     @Transactional(readOnly = true)
     public Page<RespuestaTareaDTO> listarTarea(Pageable pageable) {
-        return tareaRepository.findByActivoTrue(pageable).map(this::mapToRespuestaTareaDTO);
+        return tareaRepository.findAll(pageable).map(this::mapToRespuestaTareaDTO);
     }
 
     @Transactional
@@ -50,26 +51,36 @@ public class TareaService {
         Tarea tareaExistente = tareaRepository.findById(idTarea)
                 .orElseThrow(()-> new ResourceNotFoundException("Tarea no encontrada."));
 
-        if(dto.getNombreTarea() != null) tareaExistente.setNombreTarea(dto.getNombreTarea());
-        if(dto.getDetalles() != null) tareaExistente.setDetalles(dto.getDetalles());
+        if(dto.getNombreTarea() != null && !dto.getNombreTarea().equals(tareaExistente.getNombreTarea())){
+            tareaRepository.findByNombreTarea(dto.getNombreTarea())
+                    .ifPresent(tarea -> {throw new BadRequestException("Ya existe una tarea con ese nombre");
+                    });
+        }
+
+        if (dto.getNombreTarea() != null) {
+            tareaExistente.setNombreTarea(dto.getNombreTarea());
+        }
+
+        if (dto.getTipo() != null) {
+            tareaExistente.setTipo(dto.getTipo());
+        }
 
         Tarea tareaActualizada = tareaRepository.save(tareaExistente);
         return mapToRespuestaTareaDTO(tareaActualizada);
     }
 
     @Transactional
-    public void desactivarTarea(Integer idTarea) {
+    public void eliminarTarea(Integer idTarea) {
         Tarea tarea = tareaRepository.findById(idTarea)
-                .orElseThrow(()-> new ResourceNotFoundException("Tarea no encontrada."));
-        tarea.setActivo(false);
-        tareaRepository.save(tarea);
+                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada"));
+        tareaRepository.delete(tarea);
     }
 
     private RespuestaTareaDTO mapToRespuestaTareaDTO(Tarea tarea) {
         return RespuestaTareaDTO.builder()
                 .idTarea(tarea.getIdTarea())
                 .nombreTarea(tarea.getNombreTarea())
-                .detalles(tarea.getDetalles())
+                .tipos(tarea.getTipo())
                 .build();
     }
 
