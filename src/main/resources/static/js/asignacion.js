@@ -1,4 +1,5 @@
 let tareas = [];
+let asignaciones = [];
 let currentPage = 0;
 const pageSize = 10;
 let totalPages = 1;
@@ -12,61 +13,87 @@ function debounce(func, timeout = 300) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Cargar datos iniciales
     cargarAsignaciones();
     cargarEmpleados();
     cargarCampanas();
     cargarTareas();
 
-    document.querySelector('[data-bs-target="#asignacionModal"]').addEventListener('click', async function() {
-    try {
-        // Mostrar carga mientras se obtienen los datos
-        const guardarBtn = document.getElementById('guardarAsignacionBtn');
-        guardarBtn.disabled = true;
-        guardarBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
-
-        // Recargar datos necesarios
-        await Promise.all([
-            cargarEmpleados(),
-            cargarCampanas(),
-            cargarTareas()
-        ]);
-
-        // Limpiar formulario
-        document.getElementById('asignacionForm').reset();
-    } catch (error) {
-        console.error("Error al cargar datos:", error);
-        Swal.fire('Error', 'No se pudieron cargar los datos necesarios', 'error');
-    } finally {
-        const guardarBtn = document.getElementById('guardarAsignacionBtn');
-        guardarBtn.disabled = false;
-        guardarBtn.textContent = 'Guardar';
+    const searchTareas = document.getElementById('searchTareas');
+    if (searchTareas) {
+        searchTareas.addEventListener('input', debounce(() => {
+            const filtro = searchTareas.value.trim().toLowerCase();
+            const tareasFiltradas = tareas.filter(t =>
+                t.nombreTarea.toLowerCase().includes(filtro) ||
+                (t.tipos && t.tipos.toLowerCase().includes(filtro))
+            );
+            renderizarTareas(tareasFiltradas);
+        }, 300));
     }
+
+    const searchEmpleado = document.getElementById('searchEmpleado');
+    if (searchEmpleado) {
+        searchEmpleado.addEventListener('input', debounce(() => {
+            currentPage = 0;
+            cargarAsignaciones();
+        }));
+    }
+
+    const searchCampana = document.getElementById('searchCampana');
+    if (searchCampana) {
+        searchCampana.addEventListener('input', debounce(() => {
+            currentPage = 0;
+            cargarAsignaciones();
+        }));
+    }
+
+    const searchFecha = document.getElementById('searchFecha');
+    if (searchFecha) {
+        searchFecha.addEventListener('change', () => {
+            currentPage = 0;
+            cargarAsignaciones();
+        });
+    }
+
+    const estadoFilter = document.getElementById('estadoFilter');
+    if (estadoFilter) {
+        estadoFilter.addEventListener('change', () => {
+            currentPage = 0;
+            cargarAsignaciones();
+        });
+    }
+
+    const tareaModal = document.getElementById('tareaModal');
+    if (tareaModal) {
+        tareaModal.addEventListener('hidden.bs.modal', () => {
+            document.getElementById('tareaForm').reset();
+        });
+    }
+
+    const asignacionModal = document.getElementById('asignacionModal');
+    if (asignacionModal) {
+        asignacionModal.addEventListener('hidden.bs.modal', () => {
+            document.getElementById('asignacionForm').reset();
+        });
+    }
+
+    // Delegación de eventos para botones dinámicos
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'guardarAsignacionBtn') {
+            guardarAsignacion();
+        }
+        
+        if (e.target && e.target.id === 'crearTareaBtn') {
+            crearTarea();
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'actualizarTareaBtn') {
+            actualizarTarea();
+        }
+    });   
 });
-
-    document.getElementById('searchEmpleado').addEventListener('input', () => {
-        currentPage = 0;
-        cargarAsignaciones();
-    });
-
-    document.getElementById('searchCampana').addEventListener('input', () => {
-        currentPage = 0;
-        cargarAsignaciones();
-    });
-
-    document.getElementById('searchFecha').addEventListener('change', () => {
-        currentPage = 0;
-        cargarAsignaciones();
-    });
-
-    document.getElementById('estadoFilter').addEventListener('change', () => {
-        currentPage = 0;
-        cargarAsignaciones();
-    });
-
-    document.getElementById('guardarAsignacionBtn').addEventListener('click', guardarAsignacion);
-    document.getElementById('generarReporteBtn').addEventListener('click', generarReporteExcel);
-});
-
 
 // ======Aca se trabajan las funciones de Tareas=======
 // ===============CARGAR LISTA DE TAREAS===============
@@ -98,7 +125,7 @@ function renderizarTareas(tareas) {
         tr.innerHTML = `
             <td>${t.idTarea}</td>
             <td>${t.nombreTarea}</td>
-            <td>${t.tipo || 'N/A'}</td> <!-- Cambié de tipoTarea a tipo -->
+            <td>${t.tipos || 'N/A'}</td>
             <td class="text-nowrap">
                 <button class="btn btn-sm btn-custom editar-btn" data-id="${t.idTarea}" title="Editar">
                     <i class="fas fa-edit"></i>
@@ -110,8 +137,285 @@ function renderizarTareas(tareas) {
         `;
         tbody.appendChild(tr);
     });
+
+    document.querySelectorAll('.editar-btn').forEach(btn => {
+        btn.addEventListener('click', () => abrirModalEdicionTarea(btn.dataset.id));
+    });
+
+    document.querySelectorAll('.eliminar-btn').forEach(btn => {
+        btn.addEventListener('click', () => eliminarTarea(btn.dataset.id));
+    });
 }
 
+async function crearTarea() {
+    try {
+        const form = document.getElementById('tareaForm');
+        const formData = new FormData(form);
+
+        const erroresFront = validarFormularioTarea(formData);
+        if(Object.keys(erroresFront).length > 0) {
+            mostrarErrores(erroresFront);
+            Swal.fire({
+                icon: 'error',
+                title: 'Formulario incompleto',
+                text: 'Por favor completa todos los campos requeridos',
+                footer: 'Revisa que todos los campos esten correctos',
+                confirmButtonColor: '#23A7C1',
+                background: '#edf3f4',
+                iconColor: '#23A7C1'
+            })
+            return;
+        }
+
+        const tareaData = {
+            nombreTarea: formData.get('nombreTarea').trim(),
+            tipo: formData.get('tipoTarea')
+        }
+
+        const response = await fetch('/api/tareas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tareaData)
+        });
+
+        const responseData = await response.json();
+        if (!response.ok) {
+            if (responseData.type === 'VALIDATION_ERROR') {
+                mostrarErrores(responseData.errors);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Errores de validación',
+                    text: 'El servidor encontró problemas con los datos',
+                    footer: 'Por favor corrige los campos marcados'
+                });
+            } else {
+                throw new Error(responseData.message || 'Error al crear tarea');
+            }
+            return;
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('tareaModal')).hide();
+        form.reset();
+        currentPage = 0;
+        cargarTareas();
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: 'Tarea creada correctamente',
+            timer: 2000,
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
+        });
+
+    } catch (error) {
+        console.error('Error', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message,
+            footer: 'Inténtalo nuevamente',
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
+        });
+    }
+}
+
+async function abrirModalEdicionTarea(idTarea) {
+    try {
+        const form = document.getElementById('editarTareaForm');
+        form.querySelectorAll('.error-message').forEach(em => em.remove());
+        form.querySelectorAll('is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+        const response = await fetch(`/api/tareas/${idTarea}`);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al obtener tarea');
+        
+        }
+        const tarea = await response.json();
+        
+    form.querySelector('input[name="idTarea"]').value = tarea.idTarea;
+    form.querySelector('input[name="nombreTarea"]').value = tarea.nombreTarea;
+    form.querySelector('select[name="tipoTarea"]').value = tarea.tipos;
+
+    const modal = new bootstrap.Modal(document.getElementById('editarTareaModal'));
+    modal.show();
+
+    } catch (error) {
+        console.error('Error al cargar tarea:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'No se pudo cargar la tarea para edición',
+            footer: 'Verifica la consola para más detalles',
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
+        });
+    }
+}
+
+async function actualizarTarea() {
+    try {
+        const form = document.getElementById('editarTareaForm');
+
+        const formData = new FormData(form);
+        console.log('Formulario encontrado:', form);
+
+        console.log('Todos los campos del formulario:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+
+        const erroresFront = validarFormularioTarea(formData);
+        console.log('Errores encontrados:', erroresFront)
+
+        if(Object.keys(erroresFront).length > 0) {
+            console.log('Campos con errores:', Object.keys(erroresFront));
+            mostrarErrores(erroresFront, 'editarTareaForm');
+            Swal.fire({
+                icon: 'error',
+                title: 'Formulario incompleto',
+                text: 'Por favor completa todos los campos requeridos',
+                footer: 'Revisa que todos los campos esten correctos',
+                confirmButtonColor: '#23A7C1',
+                background: '#edf3f4',
+                iconColor: '#23A7C1'
+            })
+            return;
+        }
+
+        const idTarea = formData.get('idTarea');
+        const tareaData = {
+            nombreTarea: formData.get('nombreTarea').trim(),
+            tipo: formData.get('tipoTarea')
+        };
+
+        const response = await fetch(`/api/tareas/${idTarea}/actualizar`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tareaData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            if (errorData.type === 'VALIDATION_ERROR') {
+                mostrarErrores(errorData.errors, 'editarTareaForm');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Errores de validación',
+                    text: 'El servidor encontró problemas con los datos',
+                    footer: 'Por favor corrige los campos marcados',
+                    background: '#edf3f4',
+                    iconColor: '#23A7C1'
+                });
+            } else {
+                throw new Error(errorData.message || 'Error al actualizar tarea');
+            }
+            return;
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('editarTareaModal')).hide();
+        cargarTareas();
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: 'Empresa actualizada correctamente',
+            timer: 2000,
+            confirmButtonColor: '#23a7c1',
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
+        });
+
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message,
+            footer: 'Intentalo nuevamente',
+            background: '#edf3f4',
+            iconColor: '#23a7c1'
+        });
+    }
+}
+
+async function eliminarTarea(idTarea) {
+    try {
+        const result = await Swal.fire({
+            title: '¿Eliminar tarea?',
+            text: "Esta acción no se puede deshacer",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#23a7c1',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            background: '#edf3f4'
+        });
+
+        if (result.isConfirmed) {
+            const response = await fetch(`/api/tareas/${idTarea}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error al eliminar tarea');
+            }
+
+            await cargarTareas();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Eliminada',
+                text: 'Tarea eliminada correctamente',
+                timer: 2000,
+                confirmButtonColor: '#23a7c1',
+                background: '#edf3f4',
+                iconColor: '#23A7C1'
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error al eliminar tarea:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'No se pudo eliminar la tarea',
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
+        });
+    }
+}
+
+function validarFormularioTarea(formData) {
+    const errores = {};
+    if(!formData.get('nombreTarea')?.trim()) errores.nombreTarea = 'El nombre de la tarea es obligatorio';
+    if(!formData.get('tipoTarea')) errores.tipoTarea = 'El tipo de tarea es obligatorio';
+
+    return errores;
+}
+
+function mostrarErrores(errores, formId = 'tareaForm') {
+    const form = document.getElementById(formId);
+    form.querySelectorAll('.error-message').forEach(em => em.remove());
+    form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+    Object.entries(errores).forEach(([campo, mensaje]) => {
+        const input = form.querySelector(`[name="${campo}"]`);
+        if (input) {
+            input.classList.add('is-invalid');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback error-message';
+            errorDiv.textContent = mensaje;
+            input.parentNode.appendChild(errorDiv);
+        }
+    });
+}
+
+// ======Aca se trabajan las funciones de Asignaciones=======
 // ==================== CARGAR DATOS ====================
 async function cargarAsignaciones() {
     try {
@@ -201,28 +505,6 @@ async function cargarCampanas() {
     }
 }
 
-async function cargarTareas() {
-    try {
-        const response = await fetch('/api/tareas?page=0&size=1000');
-        const data = await response.json();
-        const tareas = data.content || [];
-
-        const selectTarea = document.getElementById('selectTarea');
-        selectTarea.innerHTML = '<option value="">Seleccione tarea...</option>';
-
-        tareas.forEach(t => {
-            const option = document.createElement('option');
-            option.value = t.idTarea;
-            option.textContent = t.nombreTarea;
-            selectTarea.appendChild(option);
-        });
-
-    } catch (error) {
-        console.error("Error al cargar tareas:", error);
-        Swal.fire('Error', 'No se pudieron cargar las tareas', 'error');
-    }
-}
-
 // ==================== RENDERIZADO ====================
 function renderizarAsignaciones(asignaciones) {
     const tbody = document.getElementById('tablaAsignaciones');
@@ -303,66 +585,6 @@ function getBadgeClass(estado) {
         'ARCHIVADA': 'bg-secondary'
     };
     return classes[estado] || 'bg-light text-dark';
-}
-
-// ==================== REPORTE EXCEL ====================
-async function generarReporteExcel() {
-    try {
-        // Mostrar loading en el botón
-        const btnExcel = document.getElementById('generarReporteBtn');
-        const originalHtml = btnExcel.innerHTML;
-        btnExcel.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
-        btnExcel.disabled = true;
-
-        // Usar los mismos filtros que en cargarAsignaciones()
-        const filtro = {
-            nombreEmpleado: document.getElementById('searchEmpleado').value.trim(),
-            nombreCampana: document.getElementById('searchCampana').value.trim(),
-            fechaAsignacion: document.getElementById('searchFecha').value,
-            estado: document.getElementById('estadoFilter').value
-        };
-
-        // Construir URL con filtros
-        const params = new URLSearchParams({
-            ...Object.fromEntries(Object.entries(filtro).filter(([_, v]) => v !== '' && v !== undefined)
-        });
-
-        // Hacer la petición al endpoint de Excel
-        const response = await fetch(`/api/asignaciones/reporte-excel?${params.toString()}`);
-
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-
-        // Crear y descargar el archivo
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `reporte_asignaciones_${new Date().toISOString().split('T')[0]}.xlsx`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-
-        // Notificación de éxito
-        Swal.fire({
-            icon: 'success',
-            title: 'Reporte generado',
-            text: 'El archivo Excel se ha descargado correctamente',
-            timer: 2000,
-            showConfirmButton: false
-        });
-
-    } catch (error) {
-        console.error("Error al generar reporte Excel:", error);
-        Swal.fire('Error', 'No se pudo generar el reporte: ' + error.message, 'error');
-    } finally {
-        // Restaurar el botón a su estado original
-        const btnExcel = document.getElementById('generarReporteBtn');
-        btnExcel.innerHTML = originalHtml;
-        btnExcel.disabled = false;
-    }
 }
 
 // ==================== PAGINACIÓN ====================

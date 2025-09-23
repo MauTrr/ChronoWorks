@@ -38,7 +38,7 @@ public class TareaController {
     public ResponseEntity<Page<RespuestaTareaDTO>> listarTarea (
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "idEmpresa") String sort,
+            @RequestParam(defaultValue = "idTarea") String sort,
             @RequestParam(required = false, defaultValue = "asc") String direction) {
         Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
@@ -51,7 +51,7 @@ public class TareaController {
         return ResponseEntity.ok(tareaActualizada);
     }
 
-    @DeleteMapping("{idTarea}")
+    @DeleteMapping("/{idTarea}")
     @PreAuthorize("hasRole('ADMIN') or hasRole ('LIDER')")
     public ResponseEntity<RespuestaTareaDTO> eliminarTarea(@PathVariable Integer idTarea) {
         tareaService.eliminarTarea(idTarea);

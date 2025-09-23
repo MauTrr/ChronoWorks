@@ -1,16 +1,16 @@
 package com.example.chronoworks.dto.asignacion;
 
 import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PastOrPresent;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
-public class AsignacionCreacionDTO {
+public class AsignacionCompletaDTO {
     @NotNull(message = "La fecha de asignacion no puede ser nula")
-    @PastOrPresent(message = "La fecha de asignacion no puede ser futura")
     private LocalDateTime fecha;
 
     @NotNull(message = "El estado inicial de la asignacion es obligatorio")
@@ -21,4 +21,7 @@ public class AsignacionCreacionDTO {
 
     @NotNull(message = "El ID de la campaña no puede ser nulo")
     private Integer idCampana;
+
+    @NotEmpty(message = "Debe asignar al menos un empleado")
+    private List<AsignacionEmpleadoDTO> empleados;
 }

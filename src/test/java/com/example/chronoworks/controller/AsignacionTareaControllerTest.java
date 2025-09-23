@@ -1,7 +1,7 @@
 package com.example.chronoworks.controller;
 
-import com.example.chronoworks.dto.asignacion.AsignacionCreacionDTO;
-import com.example.chronoworks.dto.asignacion.FiltroAsignacionDTO;
+import com.example.chronoworks.dto.asignacion.AsignacionCompletaDTO;
+import com.example.chronoworks.dto.asignacion.FiltroAsignacionCompletaDTO;
 import com.example.chronoworks.dto.asignacion.RespuestaAsignacionDTO;
 import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
 import com.example.chronoworks.service.AsignacionService;
@@ -52,8 +52,8 @@ public class AsignacionTareaControllerTest {
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
-    private AsignacionCreacionDTO crearAsignacionDTOValido() {
-        AsignacionCreacionDTO dto = new AsignacionCreacionDTO();
+    private AsignacionCompletaDTO crearAsignacionDTOValido() {
+        AsignacionCompletaDTO dto = new AsignacionCompletaDTO();
         dto.setFecha(LocalDateTime.now().minusHours(1)); // Fecha en pasado
         dto.setObservaciones("Observaciones de prueba");
         dto.setEstado(AsignacionCampanaEstado.ACTIVA); // Asume que existe este enum
@@ -65,10 +65,10 @@ public class AsignacionTareaControllerTest {
 
     @Test
     void crearAsignacion() throws Exception {
-        AsignacionCreacionDTO dto = crearAsignacionDTOValido();
+        AsignacionCompletaDTO dto = crearAsignacionDTOValido();
         RespuestaAsignacionDTO respuesta = Mockito.mock(RespuestaAsignacionDTO.class);
 
-        when(asignacionService.crearAsignacion(any(AsignacionCreacionDTO.class))).thenReturn(respuesta);
+        when(asignacionService.crearAsignacion(any(AsignacionCompletaDTO.class))).thenReturn(respuesta);
 
         mockMvc.perform(post("/api/asignaciones")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -145,7 +145,7 @@ public class AsignacionTareaControllerTest {
         );
 
         // 4. Configura el mock del servicio
-        when(asignacionService.listarAsignacionesActivas(any(FiltroAsignacionDTO.class), eq(pageable)))
+        when(asignacionService.listarAsignacionesActivas(any(FiltroAsignacionCompletaDTO.class), eq(pageable)))
                 .thenReturn(page);
 
         // 5. Ejecuta la prueba
@@ -164,10 +164,10 @@ public class AsignacionTareaControllerTest {
 
     @Test
     void actualizarAsignacion() throws Exception {
-        AsignacionCreacionDTO dto = crearAsignacionDTOValido();
+        AsignacionCompletaDTO dto = crearAsignacionDTOValido();
         RespuestaAsignacionDTO respuesta = Mockito.mock(RespuestaAsignacionDTO.class);
 
-        when(asignacionService.actualizarAsignacion(anyInt(), any(AsignacionCreacionDTO.class))).thenReturn(respuesta);
+        when(asignacionService.actualizarAsignacion(anyInt(), any(AsignacionCompletaDTO.class))).thenReturn(respuesta);
 
         mockMvc.perform(put("/api/asignaciones/1/actualizar")
                 .contentType(MediaType.APPLICATION_JSON)

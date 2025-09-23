@@ -6,10 +6,17 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class FiltroAsignacionDTO {
-    private String nombreEmpleado;
-    private String apellidoEmpleado;
+public class FiltroAsignacionCompletaDTO {
+
+    //Filtros de asignacion
+    private String nombreTarea;
     private String nombreCampana;
     private LocalDateTime fechaAsignacion;
     private AsignacionCampanaEstado estado;
+
+    //Filtros de empleado
+    private String nombreEmpleado;
+    private String apellidoEmpleado;
+    private AsignacionCampanaEstado estadoEmpleado;
+
 }

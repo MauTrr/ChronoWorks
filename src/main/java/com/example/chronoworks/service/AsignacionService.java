@@ -1,19 +1,11 @@
 package com.example.chronoworks.service;
 
-import com.example.chronoworks.dto.asignacion.AsignacionCreacionDTO;
-import com.example.chronoworks.dto.asignacion.FiltroAsignacionDTO;
-import com.example.chronoworks.dto.asignacion.RespuestaAsignacionDTO;
+import com.example.chronoworks.dto.asignacion.*;
 import com.example.chronoworks.exception.IllegalStateException;
 import com.example.chronoworks.exception.ResourceNotFoundException;
-import com.example.chronoworks.model.AsignacionTarea;
-import com.example.chronoworks.model.Campana;
-import com.example.chronoworks.model.Empleado;
-import com.example.chronoworks.model.Tarea;
+import com.example.chronoworks.model.*;
 import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
-import com.example.chronoworks.repository.AsignacionTareaRepository;
-import com.example.chronoworks.repository.CampanaRepository;
-import com.example.chronoworks.repository.EmpleadoRepository;
-import com.example.chronoworks.repository.TareaRepository;
+import com.example.chronoworks.repository.*;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
@@ -22,22 +14,28 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class AsignacionService {
 
     private final AsignacionTareaRepository asignacionTareaRepository;
+    private final AsignacionEmpleadoTareaRepository asignacionEmpleadoTareaRepository;
     private final EmpleadoRepository empleadoRepository;
     private final CampanaRepository campanaRepository;
     private final TareaRepository tareaRepository;
 
     public AsignacionService(AsignacionTareaRepository asignacionTareaRepository,
+                             AsignacionEmpleadoTareaRepository asignacionEmpleadoTareaRepository,
                              EmpleadoRepository empleadoRepository,
                              CampanaRepository campanaRepository,
                              TareaRepository tareaRepository) {
         this.asignacionTareaRepository = asignacionTareaRepository;
+        this.asignacionEmpleadoTareaRepository = asignacionEmpleadoTareaRepository;
         this.empleadoRepository = empleadoRepository;
         this.campanaRepository = campanaRepository;
         this.tareaRepository = tareaRepository;
@@ -45,52 +43,168 @@ public class AsignacionService {
     }
 
     @Transactional
-    public RespuestaAsignacionDTO crearAsignacion(AsignacionCreacionDTO dto) {
-
+    public RespuestaAsignacionCompletaDTO crearAsignacion(AsignacionCompletaDTO dto) {
+        // 1. Validar y obtener entidades principales
         Tarea tarea = tareaRepository.findById(dto.getIdTarea())
                 .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada."));
-        Empleado empleado = empleadoRepository.findById(dto.getIdEmpleado())
-                .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado."));
         Campana campana = campanaRepository.findById(dto.getIdCampana())
                 .orElseThrow(() -> new ResourceNotFoundException("Campaña no encontrada."));
 
+        // 2. Crear la asignación de tarea principal
         AsignacionTarea nuevaAsignacionTarea = new AsignacionTarea();
         nuevaAsignacionTarea.setFecha(dto.getFecha());
-        nuevaAsignacionTarea.setObservaciones(dto.getObservaciones());
         nuevaAsignacionTarea.setTarea(tarea);
-        nuevaAsignacionTarea.setEmpleado(empleado);
         nuevaAsignacionTarea.setCampana(campana);
-        nuevaAsignacionTarea.setEstado(AsignacionCampanaEstado.ACTIVA);
+        nuevaAsignacionTarea.setEstado(dto.getEstado());
 
         AsignacionTarea asignacionTareaGuardada = asignacionTareaRepository.save(nuevaAsignacionTarea);
-        return mapToRespuestaAsignacionDTO(asignacionTareaGuardada);
+
+        // 3. Crear asignaciones para cada empleado
+        List<RespuestaAsignacionEmpleadoDTO> empleadosAsignados = new ArrayList<>();
+        if (dto.getEmpleados() != null && !dto.getEmpleados().isEmpty()) {
+            for (AsignacionEmpleadoDTO empleadoDTO : dto.getEmpleados()) {
+                Empleado empleado = empleadoRepository.findById(empleadoDTO.getIdEmpleado())
+                        .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado"));
+
+                AsignacionEmpleadoTarea asignacionEmpleado = new AsignacionEmpleadoTarea();
+                asignacionEmpleado.setEmpleado(empleado);
+                asignacionEmpleado.setAsignacionTarea(asignacionTareaGuardada);
+                asignacionEmpleado.setFechaAsignacion(LocalDateTime.now());
+                asignacionEmpleado.setFechaInicio(empleadoDTO.getFechaInicio());
+                asignacionEmpleado.setFechaFin(empleadoDTO.getFechaFin());
+                asignacionEmpleado.setEstado(empleadoDTO.getEstado());
+
+                AsignacionEmpleadoTarea asignacionGuardada = asignacionEmpleadoTareaRepository.save(asignacionEmpleado);
+                empleadosAsignados.add(mapToRespuestaAsignacionEmpleadoDTO(asignacionGuardada));
+
+            }
+        }
+        return buildRespuestaCompleta(asignacionTareaGuardada, empleadosAsignados);
     }
 
     @Transactional(readOnly = true)
-    public RespuestaAsignacionDTO obtenerAsignacion(Integer idAsignacion) {
+    public RespuestaAsignacionCompletaDTO obtenerAsignacion(Integer idAsignacion) {
         AsignacionTarea asignacionTarea = asignacionTareaRepository.findById(idAsignacion)
                 .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
-        return mapToRespuestaAsignacionDTO(asignacionTarea);
+
+        List<AsignacionEmpleadoTarea> asignacionesEmpleados =
+                asignacionEmpleadoTareaRepository.findByAsignacionTarea(asignacionTarea);
+
+        List<RespuestaAsignacionEmpleadoDTO> empleadosAsignados = asignacionesEmpleados.stream()
+                .map(this::mapToRespuestaAsignacionEmpleadoDTO)
+                .toList();
+
+        return buildRespuestaCompleta(asignacionTarea, empleadosAsignados);
     }
 
 
     @Transactional(readOnly = true)
-    public Page<RespuestaAsignacionDTO> listarAsignaciones(FiltroAsignacionDTO filtro, Pageable pageable) {
-        return listarAsignacionesConFiltros(filtro, false, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<RespuestaAsignacionDTO> listarAsignacionesActivas(FiltroAsignacionDTO filtro, Pageable pageable) {
-        return listarAsignacionesConFiltros(filtro, true, pageable);
-    }
-
-    private Page<RespuestaAsignacionDTO> listarAsignacionesConFiltros(FiltroAsignacionDTO filtro, boolean soloActivas, Pageable pageable) {
-        Specification<AsignacionTarea> spec = crearSpecificationAsignacion(filtro, soloActivas);
+    public Page<RespuestaAsignacionCompletaDTO> listarAsignaciones(FiltroAsignacionCompletaDTO filtro, Pageable pageable) {
+        Specification<AsignacionTarea> spec = crearSpecification(filtro);
         Page<AsignacionTarea> asignacionesPage = asignacionTareaRepository.findAll(spec, pageable);
-        return asignacionesPage.map(this::mapToRespuestaAsignacionDTO);
+
+        return asignacionesPage.map(asignacion -> {
+            List<AsignacionEmpleadoTarea> asignacionesEmpleados =
+                    asignacionEmpleadoTareaRepository.findByAsignacionTarea(asignacion);
+
+            List<RespuestaAsignacionEmpleadoDTO> empleadosAsignados = asignacionesEmpleados.stream()
+                    .map(this::mapToRespuestaAsignacionEmpleadoDTO)
+                    .collect(Collectors.toList());
+
+            return buildRespuestaCompleta(asignacion, empleadosAsignados);
+        });
     }
 
-    private Specification<AsignacionTarea> crearSpecificationAsignacion(FiltroAsignacionDTO filtro, boolean soloActivas) {
+    @Transactional
+    public RespuestaAsignacionCompletaDTO actualizarAsignacion(Integer idAsignacion, AsignacionCompletaDTO dto) {
+        AsignacionTarea asignacionExistente = asignacionTareaRepository.findById(idAsignacion)
+                .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
+
+        if(dto.getFecha() != null) asignacionExistente.setFecha(dto.getFecha());
+        if (dto.getEstado() != null) asignacionExistente.setEstado(dto.getEstado());
+        if(dto.getIdTarea()!= null) {
+            Tarea nuevaTarea = tareaRepository.findById(dto.getIdTarea())
+                    .orElseThrow(()-> new ResourceNotFoundException("Tarea no encontrada."));
+            asignacionExistente.setTarea(nuevaTarea);
+        }
+        if(dto.getIdCampana()!=  null) {
+            Campana nuevaCampana = campanaRepository.findById(dto.getIdCampana())
+                    .orElseThrow(() -> new ResourceNotFoundException("Campaaña no encontrada."));
+            asignacionExistente.setCampana(nuevaCampana);
+        }
+
+        AsignacionTarea asignacionActualizada = asignacionTareaRepository.save(asignacionExistente);
+
+        List<RespuestaAsignacionEmpleadoDTO> empleadosAsignados = new ArrayList<>();
+        if (dto.getEmpleados() != null) {
+            List<AsignacionEmpleadoTarea> empleadosActuales = asignacionEmpleadoTareaRepository.findByAsignacionTarea(asignacionActualizada);
+            empleadosAsignados = empleadosActuales.stream().map(this::mapToRespuestaAsignacionEmpleadoDTO).toList();
+        }
+
+        return buildRespuestaCompleta(asignacionActualizada, empleadosAsignados);
+    }
+
+    @Transactional
+    public RespuestaAsignacionCompletaDTO agregarEmpleadoAsignacion(Integer idAsignacion, AsignacionEmpleadoDTO empleadoDTO) {
+        AsignacionTarea asignacion = asignacionTareaRepository.findById(idAsignacion)
+                .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada"));
+        Empleado empleado = empleadoRepository.findById(empleadoDTO.getIdEmpleado())
+                .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado"));
+
+        boolean yaAsignado = asignacionEmpleadoTareaRepository.existsByEmpleadoAndAsignacionTarea(empleado, asignacion);
+        if (yaAsignado) {
+            throw new IllegalStateException("El empleado ya esta asignado a esta tarea");
+        }
+
+        AsignacionEmpleadoTarea nuevaAsignacion = new AsignacionEmpleadoTarea();
+        nuevaAsignacion.setEmpleado(empleado);
+        nuevaAsignacion.setAsignacionTarea(asignacion);
+        nuevaAsignacion.setFechaAsignacion(LocalDateTime.now());
+        nuevaAsignacion.setFechaInicio(empleadoDTO.getFechaInicio());
+        nuevaAsignacion.setFechaFin(empleadoDTO.getFechaFin());
+        nuevaAsignacion.setEstado(empleadoDTO.getEstado());
+
+        asignacionEmpleadoTareaRepository.save(nuevaAsignacion);
+
+        return obtenerAsignacion(idAsignacion);
+    }
+
+    @Transactional
+    public RespuestaAsignacionCompletaDTO actualizarEmpleadoAsignacion(Integer idAsignacion, Integer idEmpleado, AsignacionEmpleadoDTO empleadoDTO) {
+        AsignacionEmpleadoTarea asignacionEmpleado = asignacionEmpleadoTareaRepository.findByAsignacionTareaIdAndEmpleadoId(idAsignacion, idEmpleado)
+                .orElseThrow(() -> new ResourceNotFoundException("Asignacion de empleado no encontrada"));
+
+        if (empleadoDTO.getFechaInicio() != null) {
+            asignacionEmpleado.setFechaInicio((empleadoDTO.getFechaInicio()));
+        }
+        if (empleadoDTO.getFechaFin() != null) {
+            asignacionEmpleado.setFechaFin(empleadoDTO.getFechaFin());
+        }
+        if (empleadoDTO.getEstado() != null) {
+            asignacionEmpleado.setEstado(empleadoDTO.getEstado());
+        }
+
+        asignacionEmpleadoTareaRepository.save(asignacionEmpleado);
+
+        return obtenerAsignacion(idAsignacion);
+    }
+
+    @Transactional
+    public RespuestaAsignacionCompletaDTO cambiarEstado(Integer idAsignacion, AsignacionCampanaEstado nuevoEstado) {
+        AsignacionTarea asignacion = asignacionTareaRepository.findById(idAsignacion)
+                .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada"));
+
+        asignacion.setEstado(nuevoEstado);
+        asignacionTareaRepository.save(asignacion);
+
+        return obtenerAsignacion(idAsignacion);
+    }
+
+    private Specification<AsignacionTarea> crearSpecification(FiltroAsignacionCompletaDTO filtro) {
+        return crearSpecification(filtro, false);
+    }
+
+    private Specification<AsignacionTarea> crearSpecification(FiltroAsignacionCompletaDTO filtro, boolean soloActivas) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -129,98 +243,30 @@ public class AsignacionService {
         };
     }
 
-    @Transactional
-    public RespuestaAsignacionDTO actualizarAsignacion(Integer idAsignacion, AsignacionCreacionDTO dto) {
-        AsignacionTarea asignacionTareaExistente = asignacionTareaRepository.findById(idAsignacion)
-                .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
 
-        if(dto.getFecha() != null) asignacionTareaExistente.setFecha(dto.getFecha());
-        if(dto.getObservaciones()!= null) asignacionTareaExistente.setObservaciones(dto.getObservaciones());
-        if(dto.getIdTarea()!= null) {
-            Tarea nuevaTarea = tareaRepository.findById(dto.getIdTarea())
-                    .orElseThrow(()-> new ResourceNotFoundException("Tarea no encontrada."));
-            asignacionTareaExistente.setTarea(nuevaTarea);
-        }
-        if(dto.getIdCampana()!=  null) {
-            Campana nuevaCampana = campanaRepository.findById(dto.getIdCampana())
-                    .orElseThrow(() -> new ResourceNotFoundException("Campaaña no encontrada."));
-            asignacionTareaExistente.setCampana(nuevaCampana);
-        }
-        if(dto.getIdEmpleado()!= null) {
-            Empleado nuevoEmpleado = empleadoRepository.findById(dto.getIdEmpleado())
-                    .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado."));
-            asignacionTareaExistente.setEmpleado(nuevoEmpleado);
-        }
-
-        AsignacionTarea asignacionTareaActualizada = asignacionTareaRepository.save(asignacionTareaExistente);
-        return mapToRespuestaAsignacionDTO(asignacionTareaActualizada);
+    private RespuestaAsignacionEmpleadoDTO mapToRespuestaAsignacionEmpleadoDTO(AsignacionEmpleadoTarea asignacion) {
+        return RespuestaAsignacionEmpleadoDTO.builder()
+                .idAsignacion(asignacion.getIdAsignacionEmpleadoTarea())
+                .idEmpleado(asignacion.getEmpleado().getIdEmpleado())
+                .nombreEmpleado(asignacion.getEmpleado().getNombre())
+                .apellidoEmpleado(asignacion.getEmpleado().getApellido())
+                .fechaAsignacion(asignacion.getFechaAsignacion())
+                .fechaInicio(asignacion.getFechaInicio())
+                .fechaFin(asignacion.getFechaFin())
+                .estado(asignacion.getEstado())
+                .build();
     }
 
-    @Transactional
-    public RespuestaAsignacionDTO iniciarAsignacion(Integer idAsignacion) {
-        AsignacionTarea asignacionTarea = asignacionTareaRepository.findById(idAsignacion)
-                .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
-
-        if(asignacionTarea.getEstado()!= AsignacionCampanaEstado.ACTIVA) {
-            throw new IllegalStateException("Solo se pueden iniciar asignaciones en el estado ACTIVA");
-        }
-
-        asignacionTarea.setEstado(AsignacionCampanaEstado.ACTIVA);
-        return mapToRespuestaAsignacionDTO(asignacionTareaRepository.save(asignacionTarea));
-    }
-
-    @Transactional
-    public RespuestaAsignacionDTO finalizarAsignacion(Integer idAsignacion) {
-        AsignacionTarea asignacionTarea = asignacionTareaRepository.findById(idAsignacion)
-                .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
-
-        if(asignacionTarea.getEstado()!= AsignacionCampanaEstado.ACTIVA) {
-            throw new IllegalStateException("Solo se pueden finalizar asignaciones en el estado EN_PROCESO");
-        }
-
-        asignacionTarea.setEstado(AsignacionCampanaEstado.LIBERADA);
-        return mapToRespuestaAsignacionDTO(asignacionTareaRepository.save(asignacionTarea));
-    }
-
-    @Transactional
-    public RespuestaAsignacionDTO cancelarAsignacion(Integer idAsignacion) {
-        AsignacionTarea asignacionTarea = asignacionTareaRepository.findById(idAsignacion)
-                .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
-
-        if(asignacionTarea.getEstado() == AsignacionCampanaEstado.LIBERADA) {
-            throw new IllegalStateException("No se puede cancelar una asignacion ya finalizada");
-        }
-
-        asignacionTarea.setEstado(AsignacionCampanaEstado.INACTIVA);
-
-        AsignacionTarea asignacionTareaActualizada = asignacionTareaRepository.save(asignacionTarea);
-        return mapToRespuestaAsignacionDTO(asignacionTareaActualizada);
-    }
-
-    @Transactional
-    public RespuestaAsignacionDTO archivarAsignacion(Integer idAsignacion) {
-        AsignacionTarea asignacionTarea = asignacionTareaRepository.findById(idAsignacion)
-                .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
-
-        if(asignacionTarea.getEstado()!= AsignacionCampanaEstado.LIBERADA && asignacionTarea.getEstado()!= AsignacionCampanaEstado.INACTIVA) {
-            throw new IllegalStateException("Solo  se pueden archivar asignaciones finalizadas o canceladas");
-        }
-
-        asignacionTarea.setEstado(AsignacionCampanaEstado.INACTIVA);
-        AsignacionTarea asignacionTareaActualizada = asignacionTareaRepository.save(asignacionTarea);
-        return  mapToRespuestaAsignacionDTO(asignacionTareaActualizada);
-    }
-
-    private RespuestaAsignacionDTO mapToRespuestaAsignacionDTO(AsignacionTarea asignacionTarea)  {
-        return RespuestaAsignacionDTO.builder()
-                .idAsignacion(asignacionTarea.getIdAsignacion())
-                .fecha(asignacionTarea.getFecha())
-                .idTarea(asignacionTarea.getTarea() != null ? asignacionTarea.getTarea().getIdTarea():  null)
-                .nombreTarea(asignacionTarea.getTarea()!= null ? asignacionTarea.getTarea().getNombreTarea(): null)
-                .detalles(asignacionTarea.getTarea()!= null ? asignacionTarea.getTarea().getDetalles(): null)
-                .idCampana(asignacionTarea.getCampana() != null ? asignacionTarea.getCampana().getIdCampana(): null)
-                .nombreCampana(asignacionTarea.getCampana()!= null ? asignacionTarea.getCampana().getNombreCampana(): null)
-                .estado(asignacionTarea.getEstado())
+    private RespuestaAsignacionCompletaDTO buildRespuestaCompleta(AsignacionTarea asignacion, List<RespuestaAsignacionEmpleadoDTO> empleados) {
+        return RespuestaAsignacionCompletaDTO.builder()
+                .idAsignacion(asignacion.getIdAsignacion())
+                .fecha(asignacion.getFecha())
+                .estado(asignacion.getEstado())
+                .idTarea(asignacion.getTarea().getIdTarea())
+                .nombreTarea(asignacion.getTarea().getNombreTarea())
+                .idCampana(asignacion.getCampana().getIdCampana())
+                .nombreCampana(asignacion.getCampana().getNombreCampana())
+                .empleados(empleados)
                 .build();
     }
 }
