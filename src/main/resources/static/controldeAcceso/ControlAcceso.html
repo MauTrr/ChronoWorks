@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -13,13 +14,11 @@
           max-height: 70vh;
           overflow-y: auto;
         }
-
-        .action-buttons {
-          white-space: nowrap;
-        }
-
         #searchInput {
           max-width: 250px;
+        }
+        .filtros {
+          gap: 10px;
         }
     </style>
 </head>
@@ -47,9 +46,18 @@
 
 <!-- CONTENIDO -->
 <div class="container-fluid container-fluid-custom mt-4">
-    <div class="row mb-3">
-        <div class="col-md-12 d-flex justify-content-between align-items-center">
+    <div class="row mb-3 filtros">
+        <div class="col-md-3">
             <input type="text" id="searchInput" class="form-control" placeholder="Buscar empleado...">
+        </div>
+        <div class="col-md-3">
+            <input type="date" id="fechaInicio" class="form-control" placeholder="Fecha inicio">
+        </div>
+        <div class="col-md-3">
+            <input type="date" id="fechaFin" class="form-control" placeholder="Fecha fin">
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100" onclick="cargarAccesos()">Filtrar</button>
         </div>
     </div>
 
@@ -64,7 +72,6 @@
                 <th>Hora Entrada</th>
                 <th>Hora Salida</th>
                 <th>Observaciones</th>
-                <th class="action-buttons">Acciones</th>
             </tr>
             </thead>
             <tbody id="accesos-body">
@@ -74,51 +81,11 @@
     </div>
 </div>
 
-<!-- MODAL NUEVO ACCESO -->
-<div class="modal fade" id="nuevoAccesoModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header modal-custom">
-                <h5 class="modal-title">Nuevo Registro de Acceso</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="nuevoAccesoForm">
-                    <div class="mb-3">
-                        <label class="form-label">ID Empleado</label>
-                        <input type="number" class="form-control" name="idEmpleado" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Fecha</label>
-                        <input type="date" class="form-control" name="fechaAcceso" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Hora Entrada</label>
-                        <input type="time" class="form-control" name="horaEntrada" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Hora Salida</label>
-                        <input type="time" class="form-control" name="horaSalida">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Observaciones</label>
-                        <textarea class="form-control" name="observaciones"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button class="btn btn-custom" onclick="guardarAcceso()">Guardar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
     // Cargar registros al iniciar
     async function cargarAccesos() {
       try {
-        const response = await fetch('/api/controlAcceso');
+        const response = await fetch('/api/control-acceso'); // 👈 ajusta ruta a tu backend
         if (!response.ok) throw new Error('Error en la respuesta del servidor');
         const data = await response.json();
         renderizarAccesos(data);
@@ -133,12 +100,22 @@
       tbody.innerHTML = '';
 
       const searchText = document.getElementById('searchInput').value.trim().toLowerCase();
+      const fechaInicio = document.getElementById('fechaInicio').value;
+      const fechaFin = document.getElementById('fechaFin').value;
 
       accesos
-        .filter(a =>
-          a.nombre?.toLowerCase().includes(searchText) ||
-          a.idEmpleado?.toString().includes(searchText)
-        )
+        .filter(a => {
+          // Filtro por texto
+          const cumpleTexto = a.nombre?.toLowerCase().includes(searchText) ||
+                              a.idEmpleado?.toString().includes(searchText);
+
+          // Filtro por rango de fechas
+          let cumpleFecha = true;
+          if (fechaInicio) cumpleFecha = a.fecha >= fechaInicio;
+          if (fechaFin) cumpleFecha = cumpleFecha && a.fecha <= fechaFin;
+
+          return cumpleTexto && cumpleFecha;
+        })
         .forEach(acceso => {
           const fila = `
             <tr>
@@ -150,9 +127,6 @@
               <td>
                 <strong>Entrada:</strong> ${acceso.observacionEntrada || '-'}<br>
                 <strong>Salida:</strong> ${acceso.observacionSalida || '-'}
-              </td>
-              <td class="action-buttons">
-                <!-- Opcional: acciones futuras -->
               </td>
             </tr>
           `;
@@ -167,7 +141,7 @@
     cargarAccesos();
 </script>
 
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+```

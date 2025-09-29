@@ -9,13 +9,10 @@ import java.time.LocalTime;
 
 @Data
 public class RegistroSalidaDTO {
-
     @NotNull(message = "El ID del empleado no puede ser nulo")
     @Positive(message = "El ID del empleado debe ser un numero positivo")
     private Integer idEmpleado;
-
     @PastOrPresent(message = "La hora de salida no puede ser futura")
-    private LocalTime horaSalida;
-
     private String observacionSalida;
 }
+

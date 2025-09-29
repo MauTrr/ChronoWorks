@@ -49,16 +49,16 @@ public class AsignacionService {
 
         Tarea tarea = tareaRepository.findById(dto.getIdTarea())
                 .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada."));
-        Empleado empleado = empleadoRepository.findById(dto.getIdEmpleado())
-                .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado."));
+       // Empleado empleado = empleadoRepository.findById(dto.getIdEmpleado())
+        //        .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado."));
         Campana campana = campanaRepository.findById(dto.getIdCampana())
                 .orElseThrow(() -> new ResourceNotFoundException("Campaña no encontrada."));
 
         AsignacionTarea nuevaAsignacionTarea = new AsignacionTarea();
         nuevaAsignacionTarea.setFecha(dto.getFecha());
-        nuevaAsignacionTarea.setObservaciones(dto.getObservaciones());
+        //nuevaAsignacionTarea.setObservaciones(dto.getObservaciones());
         nuevaAsignacionTarea.setTarea(tarea);
-        nuevaAsignacionTarea.setEmpleado(empleado);
+        //nuevaAsignacionTarea.setEmpleado(empleado);
         nuevaAsignacionTarea.setCampana(campana);
         nuevaAsignacionTarea.setEstado(AsignacionCampanaEstado.ACTIVA);
 
@@ -135,7 +135,7 @@ public class AsignacionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada."));
 
         if(dto.getFecha() != null) asignacionTareaExistente.setFecha(dto.getFecha());
-        if(dto.getObservaciones()!= null) asignacionTareaExistente.setObservaciones(dto.getObservaciones());
+       // if(dto.getObservaciones()!= null) asignacionTareaExistente.setObservaciones(dto.getObservaciones());
         if(dto.getIdTarea()!= null) {
             Tarea nuevaTarea = tareaRepository.findById(dto.getIdTarea())
                     .orElseThrow(()-> new ResourceNotFoundException("Tarea no encontrada."));
@@ -146,11 +146,11 @@ public class AsignacionService {
                     .orElseThrow(() -> new ResourceNotFoundException("Campaaña no encontrada."));
             asignacionTareaExistente.setCampana(nuevaCampana);
         }
-        if(dto.getIdEmpleado()!= null) {
-            Empleado nuevoEmpleado = empleadoRepository.findById(dto.getIdEmpleado())
-                    .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado."));
-            asignacionTareaExistente.setEmpleado(nuevoEmpleado);
-        }
+        //if(dto.getIdEmpleado()!= null) {
+           // Empleado nuevoEmpleado = empleadoRepository.findById(dto.getIdEmpleado())
+             //       .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado."));
+           // asignacionTareaExistente.setEmpleado(nuevoEmpleado);
+       // }
 
         AsignacionTarea asignacionTareaActualizada = asignacionTareaRepository.save(asignacionTareaExistente);
         return mapToRespuestaAsignacionDTO(asignacionTareaActualizada);
@@ -217,7 +217,7 @@ public class AsignacionService {
                 .fecha(asignacionTarea.getFecha())
                 .idTarea(asignacionTarea.getTarea() != null ? asignacionTarea.getTarea().getIdTarea():  null)
                 .nombreTarea(asignacionTarea.getTarea()!= null ? asignacionTarea.getTarea().getNombreTarea(): null)
-                .detalles(asignacionTarea.getTarea()!= null ? asignacionTarea.getTarea().getDetalles(): null)
+                //.detalles(asignacionTarea.getTarea()!= null ? asignacionTarea.getTarea().getDetalles(): null)
                 .idCampana(asignacionTarea.getCampana() != null ? asignacionTarea.getCampana().getIdCampana(): null)
                 .nombreCampana(asignacionTarea.getCampana()!= null ? asignacionTarea.getCampana().getNombreCampana(): null)
                 .estado(asignacionTarea.getEstado())

@@ -55,11 +55,11 @@ public class AsignacionTareaControllerTest {
     private AsignacionCreacionDTO crearAsignacionDTOValido() {
         AsignacionCreacionDTO dto = new AsignacionCreacionDTO();
         dto.setFecha(LocalDateTime.now().minusHours(1)); // Fecha en pasado
-        dto.setObservaciones("Observaciones de prueba");
+        //dto.setObservaciones("Observaciones de prueba");
         dto.setEstado(AsignacionCampanaEstado.ACTIVA); // Asume que existe este enum
         dto.setIdTarea(1);
         dto.setIdCampana(1);
-        dto.setIdEmpleado(1);
+      //  dto.setIdEmpleado(1);
         return dto;
     }
 
@@ -122,7 +122,7 @@ public class AsignacionTareaControllerTest {
         RespuestaAsignacionDTO respuesta = RespuestaAsignacionDTO.builder()
                 .idAsignacion(1)
                 .fecha(LocalDateTime.now())
-                .observaciones("Observación de prueba")
+                //.observaciones("Observación de prueba")
                 .idTarea(101)
                 .nombreTarea("Tarea de prueba")
                 .detalles("Detalles de prueba")

@@ -14,5 +14,5 @@ public interface TareaRepository extends JpaRepository<Tarea, Integer> {
 
     Optional<Tarea> findByNombreTarea(String nombreTarea);
 
-    Page<Tarea> findByActivoTrue(Pageable pageable);
+    //Page<Tarea> findByActivoTrue(Pageable pageable);
 }

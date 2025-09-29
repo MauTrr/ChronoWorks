@@ -89,6 +89,7 @@
       </tr>
       </thead>
       <tbody id="empleadosTableBody">
+      <!-- Se llenará dinámicamente -->
       </tbody>
     </table>
   </div>
@@ -133,7 +134,7 @@
             </div>
             <div class="col-md-6">
               <label class="form-label">Teléfono</label>
-              <input type="tel" class="form-control" id="telefono" name="telefono" maxlength="10" required>
+              <input type="tel" class="form-control" name="telefono" required>
             </div>
             <div class="col-md-6">
               <label class="form-label">Usuario</label>
@@ -219,11 +220,454 @@
       </div>
     </div>
   </div>
-</div>>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="/js/empleado.js"></script>
+<script>
+  // Variables globales
+  let currentPage = 0;
+  const pageSize = 10;
+  let totalPages = 1;
+  let roles = [];
+  let turnos = [];
+
+  // Inicialización
+  document.addEventListener('DOMContentLoaded', () => {
+      cargarRoles();
+      cargarTurnos();
+      cargarEmpleados();
+
+      // Event listeners
+      document.getElementById('searchInput').addEventListener('input', () => {
+          currentPage = 0;
+          cargarEmpleados();
+      });
+
+      document.getElementById('rolFilter').addEventListener('change', () => {
+          currentPage = 0;
+          cargarEmpleados();
+      });
+
+      document.getElementById('statusFilter').addEventListener('change', () => {
+          currentPage = 0;
+          cargarEmpleados();
+      });
+
+      document.getElementById('guardarEmpleadoBtn').addEventListener('click', crearEmpleado);
+      document.getElementById('actualizarEmpleadoBtn').addEventListener('click', actualizarEmpleado);
+  });
+
+  // Cargar lista de empleados
+  async function cargarEmpleados() {
+    try {
+        const search = document.getElementById('searchInput').value.trim();
+        const nombreRol = document.getElementById('rolFilter').value.trim();
+        const status = document.getElementById('statusFilter').value;
+
+        const params = new URLSearchParams();
+        params.append('page', currentPage);
+        params.append('size', Math.max(pageSize, 1));
+
+        if (search) params.append('search', search);
+        if (nombreRol) params.append('nombreRol', nombreRol);
+        if (status !== 'all') params.append('activo', status === 'true');
+
+        console.log('Solicitando con params:', params.toString());
+
+        const response = await fetch(`/api/empleados?${params.toString()}`, {
+            credentials: 'include'
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const data = await response.json();
+        console.log('Datos recibidos:', data);
+
+        // Adaptación para PagedModel
+        const empleados = data.content || data._embedded?.respuestaEmpleadoDTOs || [];
+        totalPages = data.totalPages || 1;
+        const totalElements = data.totalElements || empleados.length;
+
+        renderizarEmpleados(data.content);
+        actualizarPaginacion();
+
+    } catch (error) {
+        console.error('Error al cargar empleados:', error);
+        Swal.fire('Error', 'No se pudieron cargar los empleados', 'error');
+    }
+}
+
+function renderizarEmpleados(empleados) {
+    const tbody = document.getElementById('empleadosTableBody');
+    tbody.innerHTML = '';
+
+    if (!empleados || empleados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center">No se encontraron empleados</td></tr>';
+        return;
+    }
+
+    empleados.forEach(empleado => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${empleado.idEmpleado}</td>
+            <td>${empleado.nombre}</td>
+            <td>${empleado.apellido}</td>
+            <td>${empleado.correo}</td>
+            <td>${empleado.telefono}</td>
+            <td>${empleado.usuario}</td>
+            <td>${empleado.nombreRol}</td>
+            <td>${empleado.activo ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-danger">Inactivo</span>'}</td>
+            <td class="action-buttons">
+                <button class="btn btn-sm btn-custom editar-btn" data-id="${empleado.idEmpleado}">
+                    <i class="fas fa-edit"></i>
+                </button>
+                ${empleado.activo ? `
+                <button class="btn btn-sm btn-custom desactivar-btn" data-id="${empleado.idEmpleado}">
+                    <i class="fas fa-user-slash"></i>
+                </button>` : ''}
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+  // Renderizar empleados en la tabla
+  function renderizarEmpleados(empleados) {
+      const tbody = document.getElementById('empleadosTableBody');
+      tbody.innerHTML = '';
+
+      if (empleados.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="9" class="text-center">No se encontraron empleados</td></tr>`;
+          return;
+      }
+
+      empleados.forEach(empleado => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+              <td>${empleado.idEmpleado}</td>
+              <td>${empleado.nombre}</td>
+              <td>${empleado.apellido}</td>
+              <td>${empleado.correo}</td>
+              <td>${empleado.telefono}</td>
+              <td>${empleado.usuario}</td>
+              <td>${empleado.nombreRol}</td>
+              <td>${empleado.activo ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-danger">Inactivo</span>'}</td>
+              <td class="action-buttons">
+                  <button class="btn btn-sm btn-custom editar-btn" data-id="${empleado.idEmpleado}">
+                      <i class="fas fa-edit"></i>
+                  </button>
+                  ${empleado.activo ? `
+                  <button class="btn btn-sm btn-custom desactivar-btn" data-id="${empleado.idEmpleado}">
+                      <i class="fas fa-user-slash"></i>
+                  </button>
+                  ` : ''}
+              </td>
+          `;
+          tbody.appendChild(tr);
+      });
+
+      // Agregar event listeners a los botones
+      document.querySelectorAll('.editar-btn').forEach(btn => {
+          btn.addEventListener('click', () => abrirModalEdicion(btn.dataset.id));
+      });
+
+      document.querySelectorAll('.desactivar-btn').forEach(btn => {
+          btn.addEventListener('click', () => desactivarEmpleado(btn.dataset.id));
+      });
+  }
+
+  // Actualizar controles de paginación
+  function actualizarPaginacion() {
+      const pagination = document.getElementById('pagination');
+      pagination.innerHTML = '';
+
+      // Info de paginación
+      document.getElementById('paginationInfo').textContent =
+          `Mostrando página ${currentPage + 1} de ${totalPages}`;
+
+      // Botón Anterior
+      const prevLi = document.createElement('li');
+      prevLi.className = `page-item ${currentPage === 0 ? 'disabled' : ''}`;
+      prevLi.innerHTML = `<a class="page-link" href="#">Anterior</a>`;
+      prevLi.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (currentPage > 0) {
+              currentPage--;
+              cargarEmpleados();
+          }
+      });
+      pagination.appendChild(prevLi);
+
+      // Números de página
+      const startPage = Math.max(0, currentPage - 2);
+      const endPage = Math.min(totalPages - 1, currentPage + 2);
+
+      for (let i = startPage; i <= endPage; i++) {
+          const pageLi = document.createElement('li');
+          pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
+          pageLi.innerHTML = `<a class="page-link" href="#">${i + 1}</a>`;
+          pageLi.addEventListener('click', (e) => {
+              e.preventDefault();
+              currentPage = i;
+              cargarEmpleados();
+          });
+          pagination.appendChild(pageLi);
+      }
+
+      // Botón Siguiente
+      const nextLi = document.createElement('li');
+      nextLi.className = `page-item ${currentPage >= totalPages - 1 ? 'disabled' : ''}`;
+      nextLi.innerHTML = `<a class="page-link" href="#">Siguiente</a>`;
+      nextLi.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (currentPage < totalPages - 1) {
+              currentPage++;
+              cargarEmpleados();
+          }
+      });
+      pagination.appendChild(nextLi);
+  }
+
+  // Cargar roles para filtros y formularios
+  async function cargarRoles() {
+      try {
+          // En una implementación real, harías una llamada a tu API para obtener los roles
+          // roles = await fetch('/api/roles').then(res => res.json());
+
+          // Simulación de datos (deberías reemplazar esto con tu llamada real a la API)
+          roles = [
+              { idRol: 1, nombreRol: 'ADMIN' },
+              { idRol: 2, nombreRol: 'LIDER' },
+              { idRol: 3, nombreRol: 'AGENTE' }
+          ];
+
+          // Llenar filtro de roles
+          const rolFilter = document.getElementById('rolFilter');
+          roles.forEach(rol => {
+              const option = document.createElement('option');
+              option.value = rol.nombreRol;
+              option.textContent = rol.nombreRol;
+              rolFilter.appendChild(option);
+          });
+
+          // Llenar selectores en modales
+          const rolSelects = document.querySelectorAll('select[name="idRol"]');
+          rolSelects.forEach(select => {
+              roles.forEach(rol => {
+                  const option = document.createElement('option');
+                  option.value = rol.idRol;
+                  option.textContent = rol.nombreRol;
+                  select.appendChild(option);
+              });
+          });
+
+      } catch (error) {
+          console.error('Error al cargar roles:', error);
+      }
+  }
+
+  // Cargar turnos para formularios
+  async function cargarTurnos() {
+      try {
+          // En una implementación real, harías una llamada a tu API para obtener los turnos
+          // turnos = await fetch('/api/turnos').then(res => res.json());
+
+          // Simulación de datos (deberías reemplazar esto con tu llamada real a la API)
+          turnos = [
+              { idTurno: 1, nombre: 'Mañana' },
+              { idTurno: 2, nombre: 'Tarde' },
+              { idTurno: 3, nombre: 'Noche' }
+          ];
+
+          // Llenar selectores en modales
+          const turnoSelects = document.querySelectorAll('select[name="idTurno"]');
+          turnoSelects.forEach(select => {
+              turnos.forEach(turno => {
+                  const option = document.createElement('option');
+                  option.value = turno.idTurno;
+                  option.textContent = turno.nombre;
+                  select.appendChild(option);
+              });
+          });
+
+      } catch (error) {
+          console.error('Error al cargar turnos:', error);
+      }
+  }
+
+  // Crear nuevo empleado
+  async function crearEmpleado() {
+      try {
+          const form = document.getElementById('nuevoEmpleadoForm');
+          const formData = new FormData(form);
+
+          const empleadoData = {
+              nombre: formData.get('nombre'),
+              apellido: formData.get('apellido'),
+              correo: formData.get('correo'),
+              telefono: formData.get('telefono'),
+              usuario: formData.get('usuario'),
+              contrasena: formData.get('contrasena'),
+              idRol: parseInt(formData.get('idRol')),
+              idTurno: parseInt(formData.get('idTurno'))
+          };
+
+          const response = await fetch('/api/empleados', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              credentials: 'include',
+              body: JSON.stringify(empleadoData)
+          });
+
+          if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.message || 'Error al crear empleado');
+          }
+
+          // Cerrar modal y recargar lista
+          bootstrap.Modal.getInstance(document.getElementById('nuevoEmpleadoModal')).hide();
+          form.reset();
+          currentPage = 0;
+          cargarEmpleados();
+
+          Swal.fire('Éxito', 'Empleado creado correctamente', 'success');
+
+      } catch (error) {
+          console.error('Error:', error);
+          Swal.fire('Error', error.message, 'error');
+      }
+  }
+
+  // Abrir modal de edición
+  async function abrirModalEdicion(idEmpleado) {
+    try {
+        console.log(`Intentando cargar empleado con ID: ${idEmpleado}`);
+
+        const response = await fetch(`/api/empleados/${idEmpleado}`, {
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error del servidor:', errorData);
+            throw new Error(errorData.message || 'Error al cargar empleado');
+        }
+
+        const empleado = await response.json();
+        console.log('Datos del empleado recibidos:', empleado);
+
+        const form = document.getElementById('editarEmpleadoForm');
+
+        // Llenar formulario
+        form.querySelector('input[name="idEmpleado"]').value = empleado.idEmpleado;
+        form.querySelector('input[name="nombre"]').value = empleado.nombre || '';
+        form.querySelector('input[name="apellido"]').value = empleado.apellido || '';
+        form.querySelector('input[name="correo"]').value = empleado.correo || '';
+        form.querySelector('input[name="telefono"]').value = empleado.telefono || '';
+        form.querySelector('input[name="usuario"]').value = empleado.usuario || '';
+
+        // Seleccionar rol y turno correctos
+        if (empleado.idRol) {
+            form.querySelector('select[name="idRol"]').value = empleado.idRol;
+        }
+        if (empleado.idTurno) {
+            form.querySelector('select[name="idTurno"]').value = empleado.idTurno;
+        }
+
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById('editarEmpleadoModal'));
+        modal.show();
+
+    } catch (error) {
+        console.error('Error al cargar empleado:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'No se pudo cargar el empleado para edición',
+            footer: 'Verifica la consola para más detalles'
+        });
+    }
+}
+
+  // Actualizar empleado
+  async function actualizarEmpleado() {
+      try {
+          const form = document.getElementById('editarEmpleadoForm');
+          const formData = new FormData(form);
+          const idEmpleado = formData.get('idEmpleado');
+
+          const empleadoData = {
+              nombre: formData.get('nombre'),
+              apellido: formData.get('apellido'),
+              correo: formData.get('correo'),
+              telefono: formData.get('telefono'),
+              usuario: formData.get('usuario'),
+              idRol: parseInt(formData.get('idRol')),
+              idTurno: parseInt(formData.get('idTurno'))
+          };
+
+          const response = await fetch(`/api/empleados/${idEmpleado}/actualizar`, {
+              method: 'PUT',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              credentials: 'include',
+              body: JSON.stringify(empleadoData)
+          });
+
+          if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.message || 'Error al actualizar empleado');
+          }
+
+          // Cerrar modal y recargar lista
+          bootstrap.Modal.getInstance(document.getElementById('editarEmpleadoModal')).hide();
+          cargarEmpleados();
+
+          Swal.fire('Éxito', 'Empleado actualizado correctamente', 'success');
+
+      } catch (error) {
+          console.error('Error:', error);
+          Swal.fire('Error', error.message, 'error');
+      }
+  }
+
+  // Desactivar empleado
+  async function desactivarEmpleado(idEmpleado) {
+      try {
+          const result = await Swal.fire({
+              title: '¿Desactivar empleado?',
+              text: "El empleado ya no podrá acceder al sistema",
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonColor: '#d33',
+              cancelButtonColor: '#3085d6',
+              confirmButtonText: 'Sí, desactivar',
+              cancelButtonText: 'Cancelar'
+          });
+
+          if (!result.isConfirmed) return;
+
+          const response = await fetch(`/api/empleados/${idEmpleado}/desactivar`, {
+              method: 'PATCH',
+              credentials: 'include'
+          });
+
+          if (!response.ok) throw new Error('Error al desactivar empleado');
+
+          cargarEmpleados();
+          Swal.fire('Éxito', 'Empleado desactivado correctamente', 'success');
+
+      } catch (error) {
+          console.error('Error:', error);
+          Swal.fire('Error', 'No se pudo desactivar el empleado', 'error');
+      }
+  }
+
+</script>
 <script src="/js/main.js"></script>
 <script src="/js/header.js"></script>
 </body>
