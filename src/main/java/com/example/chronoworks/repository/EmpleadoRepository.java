@@ -23,4 +23,8 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Integer>, Jp
 
     @Query("SELECT e FROM Empleado e JOIN e.credencial c JOIN c.rol r WHERE r.nombreRol = :nombreRol")
     List<Empleado> findByNombreRol(@Param("nombreRol") String nombreRol);
+
+    @Query("SELECT e FROM Empleado e JOIN e.credencial c JOIN c.rol r WHERE r.nombreRol IN :roles")
+    List<Empleado> findByNombreRolIn(@Param("roles") List<String> roles);
+
 }
