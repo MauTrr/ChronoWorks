@@ -106,6 +106,17 @@ async function cargarTareas() {
         tareas = data.content || [];
 
         renderizarTareas(tareas);
+
+        const selectTarea = document.getElementById('selectTarea');
+        if (selectTarea) {
+            selectTarea.innerHTML = '<option value="">Seleccione tarea...</option>';
+            tareas.forEach(t => {
+                const option = document.createElement('option');
+                option.value = t.idTarea;
+                option.textContent = t.nombreTarea;
+                selectTarea.appendChild(option);
+            });
+        }
     } catch (error) {
         console.error("Error al cargar tareas:", error);
         Swal.fire('Error', 'No se pudieron cargar las tareas', 'error');
@@ -429,8 +440,14 @@ async function cargarAsignaciones() {
         const params = new URLSearchParams({
             page: currentPage,
             size: pageSize,
-            sort: 'fecha,desc',
-            ...Object.fromEntries(Object.entries(filtro).filter(([_, v]) => v !== '' && v !== undefined))
+            sort: 'fecha',
+            direction: 'desc',
+        });
+
+        Object.entries(filtro).forEach(([key, value]) => {
+            if (value !== '' && value !== undefined && value !== null) {
+                params.append(key, value);
+            }
         });
 
         const response = await fetch(`/api/asignaciones?${params.toString()}`);
@@ -451,7 +468,7 @@ async function cargarAsignaciones() {
 
 async function cargarEmpleados() {
     try {
-        const response = await fetch('/api/empleados?page=0&size=1000?activo=true');
+        const response = await fetch('/api/empleados?page=0&size=1000&activo=true');
         if (!response.ok) throw new Error('Error al cargar empleados');
 
         const data = await response.json();
@@ -515,14 +532,19 @@ function renderizarAsignaciones(asignaciones) {
         return;
     }
 
-    asignaciones.forEach(a => {
+     asignaciones.forEach(a => {
+        // Toma el primer empleado si existe
+        const empleado = a.empleados && a.empleados.length > 0 ? a.empleados[0] : {};
+        const nombreEmpleado = empleado.nombreEmpleado || '';
+        const apellidoEmpleado = empleado.apellidoEmpleado || '';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${a.idAsignacion}</td>
-            <td>${a.nombre} ${a.apellido}</td>
+            <td>${nombreEmpleado} ${apellidoEmpleado}</td>
             <td>${a.nombreCampana}</td>
             <td>${a.nombreTarea}</td>
-            <td>${a.fecha}</td>
+            <td>${a.fecha ? a.fecha.split('T')[0] : ''}</td>
             <td>${a.observaciones || '-'}</td>
             <td>
                 <span class="badge ${getBadgeClass(a.estado)}">
@@ -533,17 +555,13 @@ function renderizarAsignaciones(asignaciones) {
                 <button class="btn btn-sm btn-primary editar-btn" data-id="${a.idAsignacion}">
                     <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                ${a.estado === 'ACTIVA' ? `
+                ${a.estado === 'ASIGNADA' ? `
                 <button class="btn btn-sm btn-success iniciar-btn" data-id="${a.idAsignacion}">
                     <i class="fa-solid fa-play"></i>
                 </button>` : ''}
                 ${a.estado === 'EN_PROCESO' ? `
                 <button class="btn btn-sm btn-info finalizar-btn" data-id="${a.idAsignacion}">
                     <i class="fa-solid fa-flag-checkered"></i>
-                </button>` : ''}
-                ${a.estado !== 'FINALIZADA' && a.estado !== 'ARCHIVADA' ? `
-                <button class="btn btn-sm btn-warning cancelar-btn" data-id="${a.idAsignacion}">
-                    <i class="fa-solid fa-ban"></i>
                 </button>` : ''}
                 ${(a.estado === 'FINALIZADA' || a.estado === 'CANCELADA') ? `
                 <button class="btn btn-sm btn-secondary archivar-btn" data-id="${a.idAsignacion}">
@@ -578,11 +596,9 @@ function renderizarAsignaciones(asignaciones) {
 
 function getBadgeClass(estado) {
     const classes = {
-        'ACTIVA': 'bg-success',
+        'ASIGNADA': 'bg-success',
         'EN_PROCESO': 'bg-primary',
         'FINALIZADA': 'bg-info',
-        'CANCELADA': 'bg-warning',
-        'ARCHIVADA': 'bg-secondary'
     };
     return classes[estado] || 'bg-light text-dark';
 }
@@ -649,7 +665,7 @@ function abrirModal(asignacion = {}) {
     form.idTarea.value = asignacion.idTarea || '';
     form.fecha.value = asignacion.fecha || '';
     form.observaciones.value = asignacion.observaciones || '';
-    form.estado.value = asignacion.estado || 'ACTIVA';
+    form.estado.value = asignacion.estado || 'ASIGNADA';
 
     new bootstrap.Modal('#asignacionModal').show();
 }
@@ -683,21 +699,46 @@ async function abrirModalEdicion(idAsignacion) {
 async function guardarAsignacion() {
     try {
         const form = document.getElementById('asignacionForm');
+
+        const fechaInput = form.fecha.value;
+        if (!fechaInput) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Fecha requerida',
+                text: 'Debes seleccionar una fecha para la asignación',
+                background: '#edf3f4',
+                iconColor: '#23A7C1'
+            });
+            return;
+        }
+        let fechaValida = fechaInput + 'T00:00:00';
+
         const dto = {
-            idEmpleado: parseInt(form.idEmpleado.value),
             idCampana: parseInt(form.idCampana.value),
             idTarea: parseInt(form.idTarea.value),
-            fecha: form.fecha.value,
+            fecha: fechaValida,
             observaciones: form.observaciones.value,
-            estado: form.estado.value
+            estado: 'ACTIVA',
+            empleados: [
+                {
+                    idEmpleado: parseInt(form.idEmpleado.value),
+                    estado: 'ASIGNADA',
+                    fechaInicio: null,
+                    fechaFin: null
+                }
+            ]
         };
 
-        if (form.idAsignacion.value) dto.idAsignacion = parseInt(form.idAsignacion.value);
+        let url = '/api/asignaciones';
+        let method = 'POST';
 
-        const method = form.idAsignacion.value ? 'PUT' : 'POST';
-        const url = form.idAsignacion.value
-            ? `/api/asignaciones/${form.idAsignacion.value}/actualizar`
-            : '/api/asignaciones';
+        if (form.idAsignacion.value) {
+            dto.idAsignacion = parseInt(form.idAsignacion.value);
+            url = `/api/asignaciones/${form.idAsignacion.value}/actualizar`;
+            method = 'PUT';
+        }
+
+        console.log('Enviando datos:', dto);
 
         const response = await fetch(url, {
             method,
@@ -706,18 +747,33 @@ async function guardarAsignacion() {
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Error al guardar');
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al guardar asignación');
         }
 
         // Cerrar modal y recargar
-        bootstrap.Modal.getInstance('#asignacionModal').hide();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('asignacionModal'));
+        modal.hide();
         cargarAsignaciones();
-        Swal.fire('Éxito', 'Asignación guardada correctamente', 'success');
+        
+        Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: 'Asignación guardada correctamente',
+            timer: 2000,
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
+        });
 
     } catch (error) {
         console.error("Error al guardar:", error);
-        Swal.fire('Error', error.message, 'error');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message,
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
+        });
     }
 }
 

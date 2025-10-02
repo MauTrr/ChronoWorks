@@ -1,6 +1,6 @@
 package com.example.chronoworks.model;
 
-import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
+import com.example.chronoworks.model.enums.AsignacionTareaEstado;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -18,26 +18,23 @@ public class AsignacionEmpleadoTarea {
     private Integer idAsignacionEmpleadoTarea;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "`id_empleado`", nullable = false)
+    @JoinColumn(name = "id_empleado", nullable = false)
     private Empleado empleado;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "`id_asignacion`", nullable = false)
+    @JoinColumn(name = "id_asignacion", nullable = false)
     private AsignacionTarea asignacionTarea;
-
-    @OneToMany(mappedBy = "asignacionTarea", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<AsignacionEmpleadoTarea> asignacionesEmpleados = new ArrayList<>();
 
     @Column(name = "fecha_asignacion", nullable = false)
     private LocalDateTime fechaAsignacion;
 
-    @Column(name = "fecha_inicio", nullable = false)
+    @Column(name = "fecha_inicio")
     private LocalDateTime fechaInicio;
 
-    @Column(name = "fecha_fin", nullable = false)
+    @Column(name = "fecha_fin")
     private LocalDateTime fechaFin;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)
-    private AsignacionCampanaEstado estado = AsignacionCampanaEstado.ACTIVA;
+    private AsignacionTareaEstado estado = AsignacionTareaEstado.ASIGNADA;
 }

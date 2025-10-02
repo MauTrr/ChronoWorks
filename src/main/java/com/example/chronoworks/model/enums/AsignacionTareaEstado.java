@@ -1,7 +1,7 @@
 package com.example.chronoworks.model.enums;
 
 public enum AsignacionTareaEstado {
-    ACTIVA,
+    ASIGNADA,
     EN_PROCESO,
     FINALIZADA,
 }

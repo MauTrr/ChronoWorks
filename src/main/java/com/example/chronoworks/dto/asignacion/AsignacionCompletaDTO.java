@@ -1,6 +1,7 @@
 package com.example.chronoworks.dto.asignacion;
 
 import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
+import com.example.chronoworks.model.enums.AsignacionTareaEstado;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

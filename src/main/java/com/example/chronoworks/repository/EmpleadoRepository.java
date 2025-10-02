@@ -1,5 +1,6 @@
 package com.example.chronoworks.repository;
 
+import com.example.chronoworks.model.AsignacionCampana;
 import com.example.chronoworks.model.Credencial;
 import com.example.chronoworks.model.Empleado;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,9 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Integer>, Jp
     Optional<Empleado> findByCorreo(String correo);
 
     Optional<Empleado> findByCredencialUsuario(String usuario);
+
+    @Query("SELECT ac FROM AsignacionCampana ac WHERE ac.empleado.idEmpleado = :idEmpleado AND ac.estado = 'ACTIVA'")
+    List<AsignacionCampana> findAsignacionesActivasByEmpleadoId(@Param("idEmpleado") Integer idEmpleado);
 
     @Query("SELECT e FROM Empleado e JOIN e.credencial c JOIN c.rol r WHERE r.nombreRol = :nombreRol")
     List<Empleado> findByNombreRol(@Param("nombreRol") String nombreRol);

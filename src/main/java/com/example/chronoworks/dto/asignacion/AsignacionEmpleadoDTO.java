@@ -1,6 +1,6 @@
 package com.example.chronoworks.dto.asignacion;
 
-import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
+import com.example.chronoworks.model.enums.AsignacionTareaEstado;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -16,5 +16,5 @@ public class AsignacionEmpleadoDTO {
     private LocalDateTime fechaFin;
 
     @NotNull(message = "El estado del empleado en la asignación es obligatorio")
-    private AsignacionCampanaEstado estado;
+    private AsignacionTareaEstado estado;
 }

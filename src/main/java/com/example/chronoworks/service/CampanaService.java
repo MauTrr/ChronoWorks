@@ -1,10 +1,10 @@
 package com.example.chronoworks.service;
 
 import com.example.chronoworks.dto.asignacion.AsignacionConsultaDTO;
-import com.example.chronoworks.dto.campana.AsignacionCampanaDTO;
-import com.example.chronoworks.dto.campana.CampanaDTO;
-import com.example.chronoworks.dto.campana.FiltroCampanaDTO;
-import com.example.chronoworks.dto.campana.RespuestaCampanaDTO;
+import com.example.chronoworks.dto.campana.*;
+import com.example.chronoworks.dto.pdf.CampanaPDFDTO;
+import com.example.chronoworks.dto.pdf.ReporteCampanaPDFDTO;
+import com.example.chronoworks.dto.pdf.ResumenReporteDTO;
 import com.example.chronoworks.exception.BadRequestException;
 import com.example.chronoworks.exception.IllegalStateException;
 import com.example.chronoworks.exception.ResourceNotFoundException;
@@ -21,11 +21,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -38,17 +46,20 @@ public class CampanaService {
     private final EmpleadoRepository empleadoRepository;
     private final AsignacionCampanaRepository asignacionCampanaRepository;
     private final CredencialRepository credencialRepository;
+    private final PDFGeneratorService pdfGeneratorService;
 
     public CampanaService(CampanaRepository campanaRepository,
                           EmpresaRepository empresaRepository,
                           EmpleadoRepository empleadoRepository,
                           AsignacionCampanaRepository asignacionCampanaRepository,
-                          CredencialRepository credencialRepository) {
+                          CredencialRepository credencialRepository,
+                          PDFGeneratorService pdfGeneratorService) {
         this.campanaRepository = campanaRepository;
         this.empresaRepository = empresaRepository;
         this.empleadoRepository = empleadoRepository;
         this.asignacionCampanaRepository = asignacionCampanaRepository;
         this.credencialRepository = credencialRepository;
+        this.pdfGeneratorService = pdfGeneratorService;
     }
 
     @Transactional
@@ -360,6 +371,242 @@ public class CampanaService {
             workbook.write(outputStream);
             return outputStream.toByteArray();
         }
+    }
+
+    public byte[] generarReportePDFCampanas(FiltroCampanaDTO filtro) throws IOException {
+        //Obtener las campañas con filtros
+        Page<Campana> campanaPage = campanaRepository.findAll(
+            crearSpecificationCampana(filtro, false),
+            Pageable.unpaged()
+        );
+        List<Campana> campanas = campanaPage.getContent();
+
+        //Preparar el DTO para el PDF
+        ReporteCampanaPDFDTO reporte = new ReporteCampanaPDFDTO();
+        reporte.setTitulo("Reporte de Campañas");
+        reporte.setFechaGeneracion(LocalDate.now());
+        reporte.setFiltros(filtro);
+
+        //Mapeo de campaña a DTO para PDF
+        List<CampanaPDFDTO> campanasPDF = campanas.stream()
+                .map(this::mapearCampanaAPDFDTO)
+                .toList();
+        reporte.setCampanas(campanasPDF);
+
+        //Calcular resumen
+        reporte.setResumen(calcularResumen(campanas));
+
+        //Generar PDF
+        return  pdfGeneratorService.generarReporteCampanasPDF(reporte);
+    }
+
+    private CampanaPDFDTO mapearCampanaAPDFDTO(Campana campana) {
+        CampanaPDFDTO dto = new CampanaPDFDTO();
+        dto.setIdCampana(campana.getIdCampana());
+        dto.setNombreCampana(campana.getNombreCampana());
+        dto.setDescripcion(campana.getDescripcion());
+        dto.setFechaInicio(campana.getFechaInicio());
+        dto.setFechaFin(campana.getFechaFin());
+        dto.setNombreEmpresa(campana.getEmpresa() != null ? campana.getEmpresa().getNombreEmpresa() : "N/A");
+        dto.setEstado(campana.getEstado().toString());
+
+        // Obtener líder
+        Optional<AsignacionCampana> lider = asignacionCampanaRepository.findLiderByCampanaId(campana.getIdCampana());
+        dto.setLider(lider.map(a -> a.getEmpleado().getNombre() + " " + a.getEmpleado().getApellido())
+                .orElse("Sin líder"));
+
+        // Obtener agentes
+        List<AsignacionCampana> agentes = asignacionCampanaRepository.findAgentesByCampanaId(campana.getIdCampana());
+        dto.setCantidadAgentes(agentes.size());
+        dto.setAgentes(agentes.stream()
+                .map(a -> a.getEmpleado().getNombre() + " " + a.getEmpleado().getApellido())
+                .collect(Collectors.joining(", ")));
+
+        return dto;
+    }
+
+    private ResumenReporteDTO calcularResumen(List<Campana> campanas) {
+        ResumenReporteDTO resumen = new ResumenReporteDTO();
+        resumen.setTotalCampanas(campanas.size());
+        resumen.setActivas((int) campanas.stream().filter(c -> c.getEstado() == CampanaEstado.ACTIVA).count());
+        resumen.setEnProceso((int) campanas.stream().filter(c -> c.getEstado() == CampanaEstado.EN_PROCESO).count());
+        resumen.setFinalizadas((int) campanas.stream().filter(c -> c.getEstado() == CampanaEstado.FINALIZADA).count());
+        resumen.setCanceladas((int) campanas.stream().filter(c -> c.getEstado() == CampanaEstado.CANCELADA).count());
+        resumen.setArchivadas((int) campanas.stream().filter(c -> c.getEstado() == CampanaEstado.ARCHIVADA).count());
+
+        return resumen;
+    }
+
+    @Transactional
+    public CargaMasivaResponse procesarCargaMasiva(MultipartFile archivo) {
+        CargaMasivaResponse response = new CargaMasivaResponse();
+
+        try (Reader reader = new InputStreamReader(archivo.getInputStream());
+             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                     .withFirstRecordAsHeader()
+                     .withIgnoreHeaderCase()
+                     .withTrim())) {
+
+            for (CSVRecord record : csvParser) {
+                try {
+                    procesarRegistroCampana(record, response);
+                } catch (Exception e) {
+                    response.agregarError(
+                            (int) record.getRecordNumber(),
+                            e.getMessage(),
+                            String.join(",", record)
+                    );
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error procesando archivo CSV: " + e.getMessage(), e);
+        }
+
+        return response;
+    }
+
+    private void procesarRegistroCampana(CSVRecord record, CargaMasivaResponse response) {
+        // Validar campos obligatorios
+        validarCamposObligatorios(record);
+
+        // Mapear desde CSV
+        CampanaCargaMasivaDTO dto = mapearDesdeCSV(record);
+
+        // Validar y obtener empresa
+        Empresa empresa = empresaRepository.findByNombreEmpresa(dto.getNombreEmpresa())
+                .orElseThrow(() -> new BadRequestException("Empresa no encontrada: " + dto.getNombreEmpresa()));
+
+        // Validar y obtener líder (solo por correo, sin relación con empresa)
+        Empleado lider = empleadoRepository.findByCorreo(dto.getEmailLider())
+                .orElseThrow(() -> new BadRequestException("Líder no encontrado: " + dto.getEmailLider()));
+
+        // Validar rol del líder
+        validarRolEmpleado(lider, "LIDER");
+
+        // Validar disponibilidad del líder
+        validarDisponibilidadEmpleado(lider);
+
+        // Procesar agentes (solo por correo, sin relación con empresa)
+        List<Empleado> agentes = procesarAgentes(dto.getEmailsAgentes());
+
+        // Crear campaña
+        CampanaDTO campanaDTO = new CampanaDTO();
+        campanaDTO.setNombreCampana(dto.getNombreCampana());
+        campanaDTO.setDescripcion(dto.getDescripcion());
+        campanaDTO.setFechaInicio(dto.getFechaInicio());
+        campanaDTO.setFechaFin(dto.getFechaFin());
+        campanaDTO.setIdEmpresa(empresa.getIdEmpresa());
+
+        // Crear asignaciones
+        List<AsignacionCampanaDTO> asignaciones = new ArrayList<>();
+        asignaciones.add(crearAsignacionLider(lider.getIdEmpleado()));
+        asignaciones.addAll(crearAsignacionesAgentes(agentes));
+
+        // Guardar campaña
+        crearCampana(campanaDTO, asignaciones);
+
+        response.incrementarExitoso();
+    }
+
+    private void validarCamposObligatorios(CSVRecord record) {
+        if (!record.isSet("nombre_campana") || record.get("nombre_campana").isBlank()) {
+            throw new BadRequestException("El nombre de la campaña es obligatorio");
+        }
+        if (!record.isSet("fecha_inicio") || record.get("fecha_inicio").isBlank()) {
+            throw new BadRequestException("La fecha de inicio es obligatoria");
+        }
+        if (!record.isSet("fecha_fin") || record.get("fecha_fin").isBlank()) {
+            throw new BadRequestException("La fecha de fin es obligatoria");
+        }
+        if (!record.isSet("empresa") || record.get("empresa").isBlank()) {
+            throw new BadRequestException("La empresa es obligatoria");
+        }
+        if (!record.isSet("lider") || record.get("lider").isBlank()) {
+            throw new BadRequestException("El líder es obligatorio");
+        }
+        if (!record.isSet("agentes") || record.get("agentes").isBlank()) {
+            throw new BadRequestException("Los agentes son obligatorios");
+        }
+    }
+
+    private CampanaCargaMasivaDTO mapearDesdeCSV(CSVRecord record) {
+        CampanaCargaMasivaDTO dto = new CampanaCargaMasivaDTO();
+
+        dto.setNombreCampana(record.get("nombre_campana"));
+        dto.setDescripcion(record.get("descripcion"));
+        dto.setFechaInicio(LocalDate.parse(record.get("fecha_inicio")));
+        dto.setFechaFin(LocalDate.parse(record.get("fecha_fin")));
+        dto.setNombreEmpresa(record.get("empresa"));
+        dto.setEmailLider(record.get("lider"));
+        dto.setEmailsAgentes(record.get("agentes"));
+
+        return dto;
+    }
+
+    private List<Empleado> procesarAgentes(String emailsAgentes) {
+        List<Empleado> agentes = new ArrayList<>();
+        String[] emails = emailsAgentes.split(",");
+
+        for (String email : emails) {
+            String emailTrimmed = email.trim();
+            Empleado agente = empleadoRepository.findByCorreo(emailTrimmed)
+                    .orElseThrow(() -> new BadRequestException("Agente no encontrado: " + emailTrimmed));
+
+            validarRolEmpleado(agente, "AGENTE");
+            validarDisponibilidadEmpleado(agente);
+
+            agentes.add(agente);
+        }
+
+        return agentes;
+    }
+
+    private void validarDisponibilidadEmpleado(Empleado empleado) {
+        List<AsignacionCampana> asignacionesActivas = asignacionCampanaRepository
+                .findByEmpleadoIdEmpleadoAndEstado(empleado.getIdEmpleado(), AsignacionCampanaEstado.ACTIVA);
+
+        if (!asignacionesActivas.isEmpty()) {
+            throw new BadRequestException("El empleado " + empleado.getCorreo() + " ya está asignado a una campaña activa");
+        }
+    }
+
+    private void validarRolEmpleado(Empleado empleado, String rolEsperado) {
+        Credencial credencial = credencialRepository.findByEmpleado(empleado)
+                .orElseThrow(() -> new BadRequestException("Credencial no encontrada para el empleado"));
+
+        if (!rolEsperado.equalsIgnoreCase(credencial.getRol().getNombreRol())) {
+            throw new BadRequestException("El empleado " + empleado.getCorreo() +
+                    " no tiene rol de " + rolEsperado +
+                    ". Rol actual: " + credencial.getRol().getNombreRol());
+        }
+    }
+
+    private void validarDisponibilidadAgente(Empleado agente) {
+        List<AsignacionCampana> asignacionesActivas = asignacionCampanaRepository
+                .findByEmpleadoIdEmpleadoAndEstado(agente.getIdEmpleado(), AsignacionCampanaEstado.ACTIVA);
+
+        if (!asignacionesActivas.isEmpty()) {
+            throw new BadRequestException("El agente " + agente.getCorreo() + " ya está asignado a una campaña activa");
+        }
+    }
+
+    private AsignacionCampanaDTO crearAsignacionLider(Integer idEmpleado) {
+        AsignacionCampanaDTO asignacion = new AsignacionCampanaDTO();
+        asignacion.setIdEmpleado(idEmpleado);
+        asignacion.setEsLider(true);
+        return asignacion;
+    }
+
+    private List<AsignacionCampanaDTO> crearAsignacionesAgentes(List<Empleado> agentes) {
+        return agentes.stream()
+                .map(agente -> {
+                    AsignacionCampanaDTO asignacion = new AsignacionCampanaDTO();
+                    asignacion.setIdEmpleado(agente.getIdEmpleado());
+                    asignacion.setEsLider(false);
+                    return asignacion;
+                })
+                .collect(Collectors.toList());
     }
 
     private RespuestaCampanaDTO mapToRespuestaCampanaDTO(Campana campana) {

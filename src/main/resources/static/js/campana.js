@@ -1353,6 +1353,229 @@ function filtrarEmpleadosModal() {
     renderizarEmpleadosModal(seleccionActual === 'lider', empleadosFiltrados);
 }
 
+// ==================== EXPORTAR PDF ====================
+// ==================== EXPORTAR PDF ====================
+async function generarReportePDF() {
+    let btnPdf = document.getElementById('generarPdfBtn');
+    
+    // Si no encuentra el botón, busca alternativas
+    if (!btnPdf) {
+        console.warn('No se encontró el botón con id "generarPdfBtn", buscando alternativas...');
+        
+        // Buscar por texto del botón
+        const botones = document.querySelectorAll('.btn');
+        for (let boton of botones) {
+            if (boton.textContent.includes('PDF') || boton.innerHTML.includes('file-pdf')) {
+                btnPdf = boton;
+                break;
+            }
+        }
+        
+        // Si aún no lo encuentra, usar un botón temporal
+        if (!btnPdf) {
+            console.warn('Creando botón temporal para la operación...');
+            btnPdf = { innerHTML: '', disabled: false };
+        }
+    }
+    
+    try {
+        // Guardar el HTML original solo si es un elemento real
+        const originalHtml = btnPdf.innerHTML || '';
+        
+        // Mostrar loading solo si es un elemento real del DOM
+        if (btnPdf instanceof HTMLElement) {
+            btnPdf.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+            btnPdf.disabled = true;
+        }
+
+        // Obtener los mismos filtros que en cargarCampanas()
+        const filtro = {
+            nombreCampana: document.getElementById('searchNombre').value.trim(),
+            nombreEmpresa: document.getElementById('searchEmpresa').value.trim(),
+            estado: document.getElementById('estadoFilter').value,
+            excluirArchivadas: document.getElementById('estadoFilter').value === ''
+        };
+
+        // Construir URL con filtros
+        const params = new URLSearchParams();
+        if (filtro.nombreCampana) params.append('nombreCampana', filtro.nombreCampana);
+        if (filtro.nombreEmpresa) params.append('nombreEmpresa', filtro.nombreEmpresa);
+        if (filtro.estado && filtro.estado !== '') params.append('estados', filtro.estado);
+        if (filtro.excluirArchivadas) params.append('excluirArchivadas', 'true');
+
+        console.log('Solicitando PDF con filtros:', Object.fromEntries(params));
+
+        // Hacer la petición al endpoint de PDF
+        const response = await fetch(`/api/campanas/reporte-pdf?${params.toString()}`);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Error HTTP ${response.status}: ${errorText}`);
+        }
+
+        // Crear y descargar el archivo
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reporte_campanas_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        // Notificación de éxito
+        await Swal.fire({
+            icon: 'success',
+            title: 'PDF Generado',
+            text: 'El reporte PDF se ha descargado correctamente',
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+    } catch (error) {
+        console.error("Error al generar PDF:", error);
+        await Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo generar el PDF: ' + error.message,
+            confirmButtonColor: '#23A7C1'
+        });
+    } finally {
+        // Restaurar el botón solo si es un elemento real del DOM
+        if (btnPdf instanceof HTMLElement && originalHtml) {
+            btnPdf.innerHTML = originalHtml;
+            btnPdf.disabled = false;
+        }
+    }
+}
+
+// ==================== CARGA MASIVA ====================
+async function procesarCargaMasiva() {
+    const archivoInput = document.getElementById('archivoCargaMasiva');
+    const archivo = archivoInput.files[0];
+    
+    if (!archivo) {
+        Swal.fire('Error', 'Por favor selecciona un archivo CSV', 'error');
+        return;
+    }
+    
+    // Validar extensión
+    if (!archivo.name.toLowerCase().endsWith('.csv')) {
+        Swal.fire('Error', 'Solo se permiten archivos CSV', 'error');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    
+    try {
+        // Mostrar loading
+        Swal.fire({
+            title: 'Procesando archivo...',
+            text: 'Por favor espera mientras se cargan las campañas',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        const response = await fetch('/api/campanas/carga-masiva', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const resultado = await response.json();
+        
+        if (!response.ok) {
+            throw new Error('Error en la carga masiva');
+        }
+        
+        // Mostrar resultados
+        mostrarResultadoCargaMasiva(resultado);
+        
+        // Limpiar archivo
+        archivoInput.value = '';
+        
+        // Recargar tabla
+        cargarCampanas();
+        
+    } catch (error) {
+        console.error('Error en carga masiva:', error);
+        Swal.fire('Error', 'Error al procesar el archivo: ' + error.message, 'error');
+    }
+}
+
+function mostrarResultadoCargaMasiva(resultado) {
+    let contenido = `
+        <div class="alert alert-success">
+            <h6>Resumen de Carga Masiva</h6>
+            <p><strong>Total registros:</strong> ${resultado.totalRegistros}</p>
+            <p><strong>Éxitos:</strong> ${resultado.exitosos}</p>
+            <p><strong>Fallidos:</strong> ${resultado.fallidos}</p>
+        </div>
+    `;
+    
+    if (resultado.fallidos > 0 && resultado.errores.length > 0) {
+        contenido += `
+            <div class="mt-3">
+                <h6>Errores encontrados:</h6>
+                <div style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Línea</th>
+                                <th>Error</th>
+                                <th>Registro</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+        
+        resultado.errores.forEach(error => {
+            contenido += `
+                <tr>
+                    <td>${error.numeroLinea}</td>
+                    <td class="text-danger">${error.mensajeError}</td>
+                    <td><small>${error.registro || 'N/A'}</small></td>
+                </tr>
+            `;
+        });
+        
+        contenido += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+    
+    Swal.fire({
+        title: 'Carga Masiva Completada',
+        html: contenido,
+        width: '800px',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#23A7C1'
+    });
+}
+
+// Función para descargar plantilla CSV
+function descargarPlantillaCSV() {
+    const plantilla = `nombre_campana,descripcion,fecha_inicio,fecha_fin,empresa,lider,agentes
+Campaña Ejemplo 1,Descripción de ejemplo 1,2024-01-01,2024-12-31,Empresa Ejemplo,lider@empresa.com,agente1@empresa.com,agente2@empresa.com
+Campaña Ejemplo 2,Descripción de ejemplo 2,2024-02-01,2024-11-30,Empresa Ejemplo,lider@empresa.com,agente3@empresa.com`;
+
+    const blob = new Blob([plantilla], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'plantilla_campanas.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
 // ==================== SOFT DELETE (ARCHIVADO) ====================
 async function archivarCampana(idCampana) {
     try {

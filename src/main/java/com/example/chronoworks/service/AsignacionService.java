@@ -171,7 +171,7 @@ public class AsignacionService {
 
     @Transactional
     public RespuestaAsignacionCompletaDTO actualizarEmpleadoAsignacion(Integer idAsignacion, Integer idEmpleado, AsignacionEmpleadoDTO empleadoDTO) {
-        AsignacionEmpleadoTarea asignacionEmpleado = asignacionEmpleadoTareaRepository.findByAsignacionTareaIdAndEmpleadoId(idAsignacion, idEmpleado)
+        AsignacionEmpleadoTarea asignacionEmpleado = asignacionEmpleadoTareaRepository.findByAsignacionTareaIdAsignacionAndEmpleadoIdEmpleado(idAsignacion, idEmpleado)
                 .orElseThrow(() -> new ResourceNotFoundException("Asignacion de empleado no encontrada"));
 
         if (empleadoDTO.getFechaInicio() != null) {
@@ -208,35 +208,52 @@ public class AsignacionService {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if(filtro.getNombreEmpleado()!= null && !filtro.getNombreEmpleado().trim().isEmpty()) {
-                Join<AsignacionTarea, Empleado> empleadoJoin = root.join("Empleado");
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(empleadoJoin.get("nombre")),
-                        "%" + filtro.getNombreEmpleado().toLowerCase() + "%"));
+            // Para filtrar por empleado, necesitas hacer join a través de AsignacionEmpleadoTarea
+            if(filtro.getNombreEmpleado() != null && !filtro.getNombreEmpleado().trim().isEmpty()) {
+                Join<AsignacionTarea, AsignacionEmpleadoTarea> empleadoTareaJoin = root.join("asignacionesEmpleados");
+                Join<AsignacionEmpleadoTarea, Empleado> empleadoJoin = empleadoTareaJoin.join("empleado");
+
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(empleadoJoin.get("nombre")),
+                        "%" + filtro.getNombreEmpleado().toLowerCase() + "%"
+                ));
             }
 
-            if(filtro.getApellidoEmpleado()!= null && !filtro.getApellidoEmpleado().trim().isEmpty()){
-                Join<AsignacionTarea, Empleado> empleadoJoin  = root.join("Empleado");
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(empleadoJoin.get("apellido")),
-                        "%" + filtro.getApellidoEmpleado().toLowerCase() + "%"));
+            if(filtro.getApellidoEmpleado() != null && !filtro.getApellidoEmpleado().trim().isEmpty()){
+                Join<AsignacionTarea, AsignacionEmpleadoTarea> empleadoTareaJoin = root.join("asignacionesEmpleados");
+                Join<AsignacionEmpleadoTarea, Empleado> empleadoJoin = empleadoTareaJoin.join("empleado");
+
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(empleadoJoin.get("apellido")),
+                        "%" + filtro.getApellidoEmpleado().toLowerCase() + "%"
+                ));
             }
 
-            if(filtro.getNombreCampana()!= null && !filtro.getNombreCampana().trim().isEmpty()) {
-                Join<AsignacionTarea, Campana> campanaJoin = root.join("Campana");
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(campanaJoin.get("nombreCampana")),
-                        "%" + filtro.getNombreCampana().toLowerCase() + "%"));
+            // Para campaña, usa el nombre correcto de la relación
+            if(filtro.getNombreCampana() != null && !filtro.getNombreCampana().trim().isEmpty()) {
+                Join<AsignacionTarea, Campana> campanaJoin = root.join("campana"); // ← minúscula
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(campanaJoin.get("nombreCampana")),
+                        "%" + filtro.getNombreCampana().toLowerCase() + "%"
+                ));
             }
 
-            if(filtro.getFechaAsignacion()!= null) {
+            if(filtro.getFechaAsignacion() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("fecha"), filtro.getFechaAsignacion()));
             }
 
-            if(filtro.getEstado()!= null) {
+            if(filtro.getEstado() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("estado"), filtro.getEstado()));
             }
 
             if(soloActivas) {
                 predicates.add(criteriaBuilder.notEqual(root.get("estado"), AsignacionCampanaEstado.INACTIVA));
                 predicates.add(criteriaBuilder.notEqual(root.get("estado"), AsignacionCampanaEstado.LIBERADA));
+            }
+
+            // Para evitar duplicados cuando hay múltiples empleados
+            if (filtro.getNombreEmpleado() != null || filtro.getApellidoEmpleado() != null) {
+                query.distinct(true);
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

@@ -22,9 +22,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -159,7 +162,56 @@ public class CampanaController {
         return ResponseEntity.ok(respuesta);
     }
 
+    @GetMapping("/reporte-pdf")
+    public ResponseEntity<byte[]> descargarReporteCampanasPDF(@ModelAttribute FiltroCampanaDTO filtro) {
+        try {
+            byte[] pdfContent = campanaService.generarReportePDFCampanas(filtro);
 
+            String nombreArchivo = "reporte_campanas_" + LocalDate.now() + ".pdf";
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + nombreArchivo + "\"")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .contentLength(pdfContent.length)
+                    .body(pdfContent);
+
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping(value = "/carga-masiva", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CargaMasivaResponse> cargarCampanasMasivo(
+            @RequestParam("archivo") MultipartFile archivo) {
+
+        try {
+            // Validar tipo de archivo
+            if (archivo.isEmpty()) {
+                return ResponseEntity.badRequest().body(crearResponseError("El archivo está vacío"));
+            }
+
+            if (!Objects.equals(archivo.getContentType(), "text/csv") &&
+                    !archivo.getOriginalFilename().toLowerCase().endsWith(".csv")) {
+                return ResponseEntity.badRequest().body(crearResponseError("Solo se permiten archivos CSV"));
+            }
+
+            // Procesar carga masiva
+            CargaMasivaResponse response = campanaService.procesarCargaMasiva(archivo);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            CargaMasivaResponse errorResponse = new CargaMasivaResponse();
+            errorResponse.agregarError(0, "Error general: " + e.getMessage(), "");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    private CargaMasivaResponse crearResponseError(String mensaje) {
+        CargaMasivaResponse response = new CargaMasivaResponse();
+        response.agregarError(0, mensaje, "");
+        return response;
+    }
 
     @GetMapping("/reporte-excel")
     public ResponseEntity<ByteArrayResource> descargarReporteCampanasExcel(@ModelAttribute FiltroCampanaDTO filtro) throws IOException {

@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "asignacion_tarea")
@@ -18,6 +20,9 @@ public class AsignacionTarea {
 
     @Column(name = "fecha")
     private LocalDateTime fecha;
+
+    @OneToMany(mappedBy = "asignacionTarea", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<AsignacionEmpleadoTarea> asignacionesEmpleados = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tarea", nullable = false)

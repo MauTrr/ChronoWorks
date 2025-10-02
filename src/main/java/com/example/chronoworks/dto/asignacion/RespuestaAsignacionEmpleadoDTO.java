@@ -1,6 +1,6 @@
 package com.example.chronoworks.dto.asignacion;
 
-import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
+import com.example.chronoworks.model.enums.AsignacionTareaEstado;
 import lombok.Builder;
 import lombok.Data;
 
@@ -17,7 +17,7 @@ public class RespuestaAsignacionEmpleadoDTO {
     private LocalDateTime fechaAsignacion;
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaFin;
-    private AsignacionCampanaEstado estado;
+    private AsignacionTareaEstado estado;
     private Integer idTarea;
     private String nombreTarea;
     private Integer idCampana;

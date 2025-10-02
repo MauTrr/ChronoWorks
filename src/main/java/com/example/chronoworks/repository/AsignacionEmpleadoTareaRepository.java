@@ -17,5 +17,5 @@ public interface AsignacionEmpleadoTareaRepository extends JpaRepository<Asignac
 
     boolean existsByEmpleadoAndAsignacionTarea(Empleado empleado, AsignacionTarea asignacionTarea);
 
-    Optional<AsignacionEmpleadoTarea> findByAsignacionTareaIdAndEmpleadoId(Integer idAsignacion, Integer idEmpleado);
+    Optional<AsignacionEmpleadoTarea> findByAsignacionTareaIdAsignacionAndEmpleadoIdEmpleado(Integer idAsignacion, Integer idEmpleado);
 }
