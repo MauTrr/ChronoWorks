@@ -37,6 +37,7 @@
   <div class="content">
     <div class="container mt-5">
       <div class="row">
+        <!-- Tus cards existentes -->
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
           <a href="../asignacion/asignacion.html" class="card tarjeta">
             <img class="card-img-top" src="/img/asignacion.png" alt="Card image">
@@ -46,7 +47,6 @@
             </div>
           </a>
         </div>
-
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
           <a href="../campana/Campana.html"  class="card tarjeta">
             <img class="card-img-top" src="/img/campaña.png" alt="Card image">
@@ -56,7 +56,6 @@
             </div>
           </a>
         </div>
-
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
           <a href="../controldeAcceso/ControlAcceso.html"  class="card tarjeta">
             <img class="card-img-top" src="/img/control_acceso.png" alt="Card image">
@@ -68,7 +67,7 @@
         </div>
       </div>
 
-      <!-- Segunda fila con EMPLEADOS, EMPRESA y TAREAS -->
+      <!-- Segunda fila -->
       <div class="row">
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
           <a href="../empleado/empleado.html"  class="card tarjeta">
@@ -79,7 +78,6 @@
             </div>
           </a>
         </div>
-
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
           <a href="../empresa/Empresa.html"  class="card tarjeta">
             <img class="card-img-top" src="/img/empresa.png" alt="Card image">
@@ -89,30 +87,62 @@
             </div>
           </a>
         </div>
-
         <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
-          <a href="#"  class="card tarjeta">
+          <a href="#" class="card tarjeta" data-bs-toggle="modal" data-bs-target="#correoModal">
             <img class="card-img-top" src="/img/tarea.png" alt="Card image">
             <div class="card-body">
-              <h4 class="card-title">TAREAS</h4>
-              <p class="card-text">Gestiona las tareas de los empleados.</p>
+              <h4 class="card-title">CORREOS</h4>
+              <p class="card-text">Envía correos masivos a roles.</p>
             </div>
           </a>
         </div>
       </div>
     </div>
   </div>
+
   <footer class="footer mt-auto py-3">
     <p class="text-center texto">©2024 | Todos los derechos reservados</p>
   </footer>
 </div>
 
+<!-- Modal para correos -->
+<div class="modal fade" id="correoModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-light">
+        <h5 class="modal-title">Enviar correos masivos</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="correoForm">
+          <div class="mb-3">
+            <label for="roles" class="form-label">Roles (separados por coma)</label>
+            <input type="text" id="roles" class="form-control" placeholder="ADMIN,EMPLEADO">
+          </div>
+          <div class="mb-3">
+            <label for="subject" class="form-label">Asunto</label>
+            <input type="text" id="subject" class="form-control" placeholder="Aviso importante">
+          </div>
+          <div class="mb-3">
+            <label for="body" class="form-label">Mensaje</label>
+            <textarea id="body" class="form-control" rows="5" placeholder="Escribe tu mensaje aquí..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="enviarCorreo()">Enviar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+
   document.addEventListener('DOMContentLoaded', async () => {
     try {
         console.log('[1/3]Verificando autenticación...');
 
-        // 1. Verificar autenticación
         const authcHECK = await fetch('/api/auth/validate', {
             credentials: 'include',
             headers: {
@@ -123,11 +153,10 @@
 
         if (!authcHECK.ok) {
             console.warn('[Auth] Autenticación fallida, redirigiendo a login...');
-            await gracefullLogout();
+            await gracefulLogout();
             return;
         }
 
-        // 2. Verificar rol
         const roleCheck = await fetch('/api/auth/current-role', {
             credentials: 'include',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -155,49 +184,30 @@
         console.error('Error en verificación de acceso:', error);
         await gracefulLogout();
     }
-});
+  });
 
-async function gracefulLogout() {
+  async function enviarCorreo() {
+    const payload = {
+      roles: document.getElementById("roles").value.split(",").map(r => r.trim()),
+      subject: document.getElementById("subject").value,
+      body: document.getElementById("body").value
+    };
+
     try {
-        console.log('[Logout] Iniciando cierre de sesión...');
-        await fetch('/api/auth/logout', {
-            method: 'POST',
-            credentials: 'include'
-        });
-    } catch (error) {
-        console.error('[Logout] Error al cerrar sesión:', error);
-    } finally {
-        // Usa replace para evitar que el login.html quede en el historial
-        window.location.replace('/login.html');
+      const res = await fetch("/api/admin/email/send-massive", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const msg = await res.text();
+      alert(msg);
+    } catch (e) {
+      alert("Error enviando correos: " + e);
     }
-}
-
-function initializeAdminApp() {
-    console.log('[App] Inicializando aplicación administrativa...');
-    // Tu lógica de admin.html aquí
-
-    // Ejemplo:
-    document.body.style.display = 'block'; // Si estaba oculto durante la verificación
-    // ... resto de tu código
-}
-
-// Control adicional para manejo de caché
-window.addEventListener('pageshow', (event) => {
-    if (event.persisted) {
-        console.log('[Cache] Recargando por carga desde caché...');
-        document.location.reload();
-    }
-});
-
-// Control de caché adicional
-window.addEventListener('pageshow', (event) => {
-    if (event.persisted) {
-        console.log('Página cargada desde cache, verificando estado...');
-        document.location.reload();
-    }
-});
+  }
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/js/main.js"></script>
 </body>
 </html>

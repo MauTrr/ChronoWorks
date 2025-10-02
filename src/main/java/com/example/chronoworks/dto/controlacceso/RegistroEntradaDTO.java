@@ -16,3 +16,4 @@ public class RegistroEntradaDTO {
 
     private String observacionEntrada;
 }
+

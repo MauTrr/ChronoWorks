@@ -18,7 +18,8 @@
                     <div class="container-fluid">
                         <div>
                             <a class="navbar-brand">
-                                <img src="/img/logo.png" alt="Logo" style="width:50px;" class="rounded-pill border border-2">
+                                <img src="/img/logo.png" alt="Logo" style="width:50px;"
+                                     class="rounded-pill border border-2">
                             </a>
                             <a class="navbar-brand fw-semibold text-light">Chronoworks</a>
                         </div>
@@ -33,6 +34,7 @@
     <div class="content">
         <div class="container mt-5">
             <div class="row">
+                <!-- ASIGNACIÓN -->
                 <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
                     <div class="card tarjeta">
                         <img class="card-img-top" src="/img/asignacionTarea.png" alt="Card image">
@@ -44,6 +46,7 @@
                     </div>
                 </div>
 
+                <!-- CAMPAÑA -->
                 <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
                     <div class="card tarjeta">
                         <img class="card-img-top" src="/img/campaña.png" alt="Card image">
@@ -55,15 +58,32 @@
                     </div>
                 </div>
 
+                <!-- CONTROL DE ACCESO (abre modal) -->
                 <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
-                    <div class="card tarjeta">
+                    <div class="card tarjeta" data-bs-toggle="modal" data-bs-target="#controlAccesoModal">
                         <img class="card-img-top" src="/img/control_acceso.png" alt="Card image">
                         <div class="card-body text-center">
                             <h4 class="card-title">CONTROL DE ACCESO</h4>
-                            <p class="card-text">Gestiona el acceso de los empleados.</p>
-                            <a href="../controldeAcceso/ControlAcceso.html" class="card tarjeta"></a>
+                            <p class="card-text">Gestiona tu acceso personal.</p>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONTROL DE ACCESO -->
+    <div class="modal fade" id="controlAccesoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Control de Acceso</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p id="estadoAcceso">Cargando estado...</p>
+                    <button id="btnAcceso" class="btn btn-primary btn-lg">Marcar Entrada</button>
+                    <input type="text" id="observacionAcceso" class="form-control" placeholder="Observaciones">
                 </div>
             </div>
         </div>
@@ -73,113 +93,179 @@
         <p class="text-center texto">©2024 | Todos los derechos reservados</p>
     </footer>
 </div>
+
+```html
 <script>
     document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        console.log('[1/3] Verificando autenticación...');
+      try {
+        // Verificar autenticación
+        const authCheck = await fetch('/api/auth/validate', { credentials: 'include' });
+        if (!authCheck.ok) return gracefulLogout();
 
-        // 1. Verificar autenticación
-        const authCheck = await fetch('/api/auth/validate', {
-            credentials: 'include',
-            headers: {
-                'Cache-Control': 'no-cache',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        });
+        // Verificar rol
+        const roleCheck = await fetch('/api/auth/current-role', { credentials: 'include' });
+        if (!roleCheck.ok) return gracefulLogout();
+        const { normalizedRole } = await roleCheck.json();
+        if (normalizedRole !== 'LIDER') return gracefulLogout();
 
-        if (!authCheck.ok) {
-            console.warn('[Auth] Autenticación fallida');
-            await gracefulLogout();
-            return;
-        }
-
-        // 2. Verificar rol
-        const roleCheck = await fetch('/api/auth/current-role', {
-            credentials: 'include',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-
-        const { role, normalizedRole } = await roleCheck.json();
-        console.log(`[Role] Rol detectado: ${role} (${normalizedRole})`);
-
-        if (normalizedRole !== 'LIDER') {
-            console.warn(`[Role] Acceso denegado. Se requiere rol LÍDER`);
-            await gracefulLogout();
-            return;
-        }
-
-        console.log('[Access] Acceso concedido como líder');
         initializeLeaderApp();
-
-    } catch (error) {
+      } catch (error) {
         console.error('Error en verificación:', error);
-        await gracefulLogout();
-    }
-});
-
-async function gracefulLogout() {
-    try {
-        console.log('[Logout] Cerrando sesión...');
-        await fetch('/api/auth/logout', {
-            method: 'POST',
-            credentials: 'include'
-        });
-    } catch (error) {
-        console.error('[Logout] Error:', error);
-    } finally {
-        window.location.replace('/login.html');
-    }
-}
-
-function initializeLeaderApp() {
-    console.log('[App] Inicializando aplicación de líder...');
-
-    // 1. Mostrar contenido
-    document.body.style.display = 'block';
-
-    // 2. Configurar logout
-    document.querySelector('.botonsesion')?.addEventListener('click', async (e) => {
-        e.preventDefault();
-        await gracefulLogout();
+        gracefulLogout();
+      }
     });
 
-    // 3. Cargar datos específicos de líder
-    loadLeaderData();
+    async function gracefulLogout() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      } catch (e) { console.warn('logout error', e); }
+      window.location.replace('/login.html');
+    }
 
-    // ... resto de lógica para líderes
-}
+    // 🔹 Obtener ID del empleado autenticado
+    async function getCurrentEmployeeId() {
+      try {
+        const r = await fetch('/api/control-acceso/me', { credentials: 'include' });
+        if (!r.ok) return null;
+        const data = await r.json();
+        console.log("Empleado autenticado:", data);
+        return data.idEmpleado;
+      } catch (e) {
+        console.error("Error al obtener empleado:", e);
+        return null;
+      }
+    }
 
-async function loadLeaderData() {
-    try {
-        const response = await fetch('/api/lider/dashboard', {
-            credentials: 'include',
-            headers: { 'Cache-Control': 'no-cache' }
-        });
+    function initializeLeaderApp() {
+      document.querySelector('.botonsesion')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await gracefulLogout();
+      });
 
-        if (response.ok) {
-            const data = await response.json();
-            updateLeaderUI(data);
+      const btnAcceso = document.getElementById('btnAcceso');
+      const estadoAcceso = document.getElementById('estadoAcceso');
+      const obsInput = document.getElementById('observacionAcceso');
+
+      let empleadoId = null;
+      let estado = "Fuera de turno"; // valor inicial por defecto
+
+      // cuando se abra el modal consultamos estado real del usuario
+      const modalEl = document.getElementById('controlAccesoModal');
+      modalEl.addEventListener('show.bs.modal', async () => {
+        try {
+          estadoAcceso.textContent = 'Cargando estado...';
+          btnAcceso.disabled = true;
+
+          empleadoId = await getCurrentEmployeeId();
+          if (!empleadoId) {
+            estadoAcceso.textContent = 'No se pudo obtener el id del empleado. Contacte al administrador.';
+            btnAcceso.disabled = true;
+            return;
+          }
+
+          // pedir estado actual al backend
+          const estadoResp = await fetch(`/api/control-acceso/empleados/${empleadoId}/estado`, { credentials: 'include' });
+          if (!estadoResp.ok) {
+            estadoAcceso.textContent = 'No se pudo consultar estado';
+            btnAcceso.disabled = true;
+            return;
+          }
+          const estadoJson = await estadoResp.json();
+          console.log("📌 Estado recibido del backend:", estadoJson);
+
+          estado = estadoJson.estado; // "En turno" o "Fuera de turno"
+
+          actualizarUI();
+        } catch (e) {
+          console.error('Error cargando estado modal:', e);
+          estadoAcceso.textContent = 'Error al obtener estado';
+          btnAcceso.disabled = true;
         }
-    } catch (error) {
-        console.error('Error cargando datos:', error);
-    }
-}
+      });
 
-function updateLeaderUI(data) {
-    // Actualizar interfaz con datos de líder
-    console.log('Datos de líder:', data);
-}
+      function actualizarUI() {
+        if (estado === "En turno") {
+          estadoAcceso.textContent = 'Actualmente en jornada';
+          btnAcceso.textContent = 'Marcar Salida';
+          btnAcceso.classList.add('btn-danger');
+          btnAcceso.classList.remove('btn-primary');
+        } else {
+          estadoAcceso.textContent = 'No has registrado entrada';
+          btnAcceso.textContent = 'Marcar Entrada';
+          btnAcceso.classList.add('btn-primary');
+          btnAcceso.classList.remove('btn-danger');
+        }
+        btnAcceso.disabled = false;
+      }
 
-// Protección contra caché
-window.addEventListener('pageshow', (event) => {
-    if (event.persisted) {
-        console.log('[Cache] Recargando desde caché...');
-        location.reload();
+      // acción del botón
+      btnAcceso.addEventListener('click', async () => {
+        if (!empleadoId) {
+          alert('ID de empleado no disponible');
+          return;
+        }
+
+        const accion = estado === "En turno" ? "salida" : "entrada";
+        btnAcceso.disabled = true;
+        btnAcceso.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+
+        let payload;
+        if (accion === 'entrada') {
+          payload = {
+            idEmpleado: Number(empleadoId),
+            observacionEntrada: obsInput ? obsInput.value : ''
+          };
+        } else {
+          payload = {
+            idEmpleado: Number(empleadoId),
+            observacionSalida: obsInput ? obsInput.value : ''
+          };
+        }
+
+        // Log para depuración
+        console.log("➡️ Enviando a", `/api/control-acceso/${accion}`, payload);
+
+        try {
+          const resp = await fetch(`/api/control-acceso/${accion}`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          const txt = await resp.text();
+          let json;
+          try { json = txt ? JSON.parse(txt) : null; } catch(e){ json = null; }
+
+          if (resp.ok) {
+            estado = json.estado || (accion === "entrada" ? "En turno" : "Fuera de turno");
+            estadoAcceso.textContent = accion === "entrada" ? "Has marcado ENTRADA" : "Has marcado SALIDA";
+            if (json && (json.horaEntrada || json.horaSalida)) {
+              const hora = json.horaEntrada || json.horaSalida;
+              estadoAcceso.textContent += ` (${hora})`;
+            }
+            if (obsInput) obsInput.value = ""; // limpiar observaciones solo si existe
+            actualizarUI();
+          } else {
+            const msg = (json && (json.message || json.error)) ? (json.message || json.error) : txt || 'Error al registrar acceso';
+            alert(msg);
+            console.error('Error respuesta servidor:', resp.status, txt);
+          }
+        } catch (e) {
+          console.error('Error fetch acceso:', e);
+          alert('Error de conexión con el servidor.');
+        } finally {
+          btnAcceso.disabled = false;
+        }
+      });
     }
-});
 </script>
+
+```
+
+
+<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/main.js"></script>
 </body>
-
 </html>

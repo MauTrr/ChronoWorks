@@ -36,6 +36,7 @@ public class LoginController {
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.empleadoService = empleadoService;
+
     }
 
     @PostMapping("/login")
@@ -98,6 +99,8 @@ public class LoginController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         return ResponseEntity.ok().build();
+
+
     }
 
     @GetMapping("/current-role")

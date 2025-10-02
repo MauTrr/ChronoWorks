@@ -185,9 +185,27 @@ public class EmpleadoService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Empleado> findByUsuario(String usuario) {
-        return empleadoRepository.findByCredencialUsuario(usuario);
+    public Optional<Empleado> findByUsuario(String valor) {
+        // Intentar buscar por usuario
+        Optional<Empleado> empleado = empleadoRepository.findByCredencialUsuario(valor);
+
+        if (empleado.isPresent()) {
+            System.out.println("✅ Empleado encontrado por USUARIO: " + valor);
+            return empleado;
+        }
+
+        // Intentar buscar por correo
+        empleado = empleadoRepository.findByCorreo(valor);
+        if (empleado.isPresent()) {
+            System.out.println("✅ Empleado encontrado por CORREO: " + valor);
+            return empleado;
+        }
+
+        // Si no encuentra nada
+        System.out.println("⚠️ No se encontró empleado con usuario/correo: " + valor);
+        return Optional.empty();
     }
+
 
     private RespuestaEmpleadoDTO mapToRespuestaEmpleadoDTO(Empleado empleado) {
         return RespuestaEmpleadoDTO.builder()

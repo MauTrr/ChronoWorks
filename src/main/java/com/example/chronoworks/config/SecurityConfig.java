@@ -29,29 +29,38 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Permitir acceso a los archivos HTML y estáticos
-                        .requestMatchers("/", "/index.html", "/css/*", "/js/", "/img/*", "/favicon.ico").permitAll()
-                        .requestMatchers( "/login.html").permitAll()
-                        .requestMatchers("/api/auth/validate").authenticated()
+                        // ✅ Archivos estáticos (permitir TODO lo de /static)
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/login.html",
+                                "/css/**",
+                                "/js/**",
+                                "/img/**",
+                                "/favicon.ico"
+                        ).permitAll()
 
+                        // Endpoints públicos
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 
-                        // Restringir páginas por roles
+                        // Validación de sesión
+                        .requestMatchers("/api/auth/validate").authenticated()
+
+                        // Páginas restringidas por rol
                         .requestMatchers("/admin.html").hasRole("ADMIN")
                         .requestMatchers("/agente.html").hasRole("AGENTE")
                         .requestMatchers("/lider.html").hasRole("LIDER")
 
-                        // Requiere roles específicos
-                        .requestMatchers("/api/public/**").permitAll()
+                        // APIs restringidas por rol
                         .requestMatchers("/api/Admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/lider/**").hasRole("LIDER")
                         .requestMatchers("/api/agente/**").hasRole("AGENTE")
 
-                        // Todo lo demás necesita autenticación
+                        // Todo lo demás requiere autenticación
                         .anyRequest().authenticated()
                 )
-                .formLogin(form -> form.disable()) // Deshabilitar form login tradicional
+                .formLogin(form -> form.disable()) // deshabilitar login de Spring
                 .logout(logout -> {
                     logout.logoutUrl("/api/auth/logout");
                     logout.logoutSuccessHandler((request, response, authentication) -> {
@@ -88,6 +97,7 @@ public class SecurityConfig {
                         })
                 )
                 .addFilterBefore(new AuthValidationFilter(empleadoService), UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 

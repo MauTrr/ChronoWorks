@@ -18,4 +18,7 @@ public class RespuestaRegistroDTO {
     private String observacionSalida;
     private Integer idEmpleado;
     private String nombre;
+
+    // 🔹 Nuevo campo para sincronizar con el frontend
+    private String estado; // "En turno" o "Fuera de turno"
 }
