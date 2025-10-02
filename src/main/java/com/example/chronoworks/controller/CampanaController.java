@@ -4,6 +4,7 @@ import com.example.chronoworks.dto.asignacion.AsignacionConsultaDTO;
 import com.example.chronoworks.dto.campana.*;
 import com.example.chronoworks.dto.empleado.EmpleadoDisponibleDTO;
 import com.example.chronoworks.dto.empleado.RespuestaEmpleadoDTO;
+import com.example.chronoworks.dto.tarea.TareaDTO;
 import com.example.chronoworks.model.AsignacionCampana;
 import com.example.chronoworks.model.Empleado;
 import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
@@ -222,5 +223,32 @@ public class CampanaController {
                 .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .contentLength(excelContent.length)
                 .body(new ByteArrayResource(excelContent));
+    }
+
+    @GetMapping("/lider/{idEmpleado}")
+    public ResponseEntity<RespuestaCampanaDTO> getCampanaPorLider(@PathVariable Integer idEmpleado) {
+        try {
+            RespuestaCampanaDTO campana = campanaService.obtenerCampanaPorLider(idEmpleado);
+            return ResponseEntity.ok(campana);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/{idCampana}/tareas-lider")
+    public ResponseEntity<List<TareaDTO>> getTareasPorCampanaLider(@PathVariable Integer idCampana) {
+        // Devuelve todas las tareas de la campaña que el líder puede gestionar
+        List<TareaDTO> tareas = campanaService.obtenerTareasPorCampana(idCampana);
+        return ResponseEntity.ok(tareas);
+    }
+
+    @GetMapping("/agente/{idEmpleado}")
+    public ResponseEntity<RespuestaCampanaDTO> getCampanaPorAgente(@PathVariable Integer idEmpleado) {
+        try {
+            RespuestaCampanaDTO campana = campanaService.obtenerCampanaPorAgente(idEmpleado);
+            return ResponseEntity.ok(campana);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

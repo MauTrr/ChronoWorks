@@ -1,206 +1,497 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Líder</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="/css/admin.css">
-  <link rel="stylesheet" href="/css/header.css">
-  <script src="https://kit.fontawesome.com/8eb65f8551.js" crossorigin="anonymous"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agente - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/lider.css">
+    <link rel="stylesheet" href="/css/header.css">
+    <script src="https://kit.fontawesome.com/8eb65f8551.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
 <div class="wrapper">
-  <header>
-    <div class="fondo_menu">
-      <div class="container-fluid">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-          <div class="container-fluid">
-            <div>
-              <a class="navbar-brand">
-                <img src="/img/logo.png" alt="Logo" style="width:50px;" class="rounded-pill border border-2">
-              </a>
-              <a class="navbar-brand fw-semibold text-light">Chronoworks</a>
+    <header>
+        <div class="fondo_menu">
+            <div class="container-fluid">
+                <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+                    <div class="container-fluid">
+                        <div>
+                            <a class="navbar-brand">
+                                <img src="/img/logo.png" alt="Logo" style="width:50px;"
+                                     class="rounded-pill border border-2">
+                            </a>
+                            <a class="navbar-brand fw-semibold text-light">Chronoworks</a>
+                        </div>
+                        <a class="navbar-brand fw-semibold text-light">¡Bienvenido, Agente!</a>
+                        <a href="/static/logout" class="botonsesion">Cerrar Sesión</a>
+                    </div>
+                </nav>
             </div>
-            <a class="navbar-brand fw-semibold text-light">¡Bienvenido, Líder!</a>
-            <a href="/static/logout" class="botonsesion">Cerrar Sesión</a>
-          </div>
-        </nav>
-      </div>
+        </div>
+    </header>
+
+    <div class="content">
+        <div class="dashboard-container">
+            <!-- HEADER - Información de campaña y turno -->
+            <div class="header-info">
+                <div>
+                    <h2>Campaña Actual: <span id="nombre-campana-actual">Cargando...</span></h2>
+                    <p class="text-muted" id="descripcion-campana">Cargando descripción...</p>
+                </div>
+                <button class="btn-turno" data-bs-toggle="modal" data-bs-target="#controlAccesoModal">
+                    <i class="fas fa-clock me-2"></i>TURNO
+                </button>
+            </div>
+
+            <!-- Sección superior: Información de campaña y empresa -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h3>EMPRESA</h3>
+                        <p id="empresa-actual">Cargando...</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h3>CAMPAÑA ACTUAL</h3>
+                        <p id="campana-actual">Cargando...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección inferior: Mis asignaciones -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="table-container">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3>MIS ASIGNACIONES</h3>
+                            <div class="d-flex gap-2">
+                                <input type="text" id="searchMisAsignaciones" class="form-control" placeholder="Buscar asignaciones..." style="width: 250px;">
+                                <select id="estadoFilterAsignaciones" class="form-select" style="width: 200px;">
+                                    <option value="TODAS">Todos los estados</option>
+                                    <option value="ACTIVA">Activa</option>
+                                    <option value="LIBERADA">Liberada</option>
+                                    <option value="INACTIVA">Inactiva</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre Tarea</th>
+                                        <th>Descripción</th>
+                                        <th>Fecha Inicio</th>
+                                        <th>Fecha Fin</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-mis-asignaciones">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <i class="fas fa-spinner fa-spin fa-2x text-muted mb-2"></i>
+                                            <p class="text-muted">Cargando asignaciones...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </header>
 
-  <div class="content">
-    <div class="container mt-5">
-      <div class="row">
-        <!-- ASIGNACIÓN -->
-        <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
-          <div class="card tarjeta">
-            <img class="card-img-top" src="/img/asignacionTarea.png" alt="Card image">
-            <div class="card-body text-center">
-              <h4 class="card-title">ASIGNACIÓN</h4>
-              <p class="card-text">Gestiona las tareas asignadas a cada campaña.</p>
-              <a href="/asignacionTarea/listaasignacion.html" class="card tarjeta"></a>
+    <!-- MODAL CONTROL DE ACCESO -->
+    <div class="modal fade" id="controlAccesoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Control de Acceso</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p id="estadoAcceso">Cargando estado...</p>
+                    <button id="btnAcceso" class="btn btn-primary btn-lg">Marcar Entrada</button>
+                    <input type="text" id="observacionAcceso" class="form-control mt-3" placeholder="Observaciones">
+                </div>
             </div>
-          </div>
         </div>
-
-        <!-- CAMPAÑA -->
-        <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
-          <div class="card tarjeta">
-            <img class="card-img-top" src="/img/campaña.png" alt="Card image">
-            <div class="card-body text-center">
-              <h4 class="card-title">CAMPAÑA</h4>
-              <p class="card-text">Gestiona las campañas asociadas a las empresas.</p>
-              <a href="/campana/Campana.html" class="card tarjeta"></a>
-            </div>
-          </div>
-        </div>
-
-        <!-- CONTROL DE ACCESO (abre modal) -->
-        <div class="col-12 col-md-4 mb-4 d-flex justify-content-center align-items-center">
-          <div class="card tarjeta" data-bs-toggle="modal" data-bs-target="#controlAccesoModal">
-            <img class="card-img-top" src="/img/control_acceso.png" alt="Card image">
-            <div class="card-body text-center">
-              <h4 class="card-title">CONTROL DE ACCESO</h4>
-              <p class="card-text">Gestiona tu acceso personal.</p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
 
-  <!-- MODAL CONTROL DE ACCESO -->
-  <div class="modal fade" id="controlAccesoModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header bg-dark text-white">
-          <h5 class="modal-title">Control de Acceso</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body text-center">
-          <p id="estadoAcceso">Cargando estado...</p>
-          <button id="btnAcceso" class="btn btn-primary btn-lg">Marcar Entrada</button>
-          <input type="text" id="observacionAcceso" class="form-control" placeholder="Observaciones">
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <footer class="footer mt-auto py-3">
-    <p class="text-center texto">©2024 | Todos los derechos reservados</p>
-  </footer>
+    <footer class="footer mt-auto py-3">
+        <p class="text-center texto">©2024 | Todos los derechos reservados</p>
+    </footer>
 </div>
 
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      try {
+// ==================== VARIABLES GLOBALES ====================
+let campanaActual = null;
+let misAsignaciones = [];
+let empleadoActualId = null;
+
+// ==================== INICIALIZACIÓN PRINCIPAL ====================
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("=== INICIANDO DASHBOARD AGENTE ===");
+    
+    try {
         // Verificar autenticación
         const authCheck = await fetch('/api/auth/validate', { credentials: 'include' });
-        if (!authCheck.ok) return gracefulLogout();
+        if (!authCheck.ok) {
+            console.error("❌ Error de autenticación");
+            return gracefulLogout();
+        }
 
         // Verificar rol
         const roleCheck = await fetch('/api/auth/current-role', { credentials: 'include' });
-        if (!roleCheck.ok) return gracefulLogout();
+        if (!roleCheck.ok) {
+            console.error("❌ Error verificando rol");
+            return gracefulLogout();
+        }
+        
         const { normalizedRole } = await roleCheck.json();
-        if (normalizedRole !== 'LIDER') return gracefulLogout();
+        if (normalizedRole !== 'AGENTE') {
+            console.error("❌ Usuario no es agente:", normalizedRole);
+            return gracefulLogout();
+        }
 
-        initializeLeaderApp();
-      } catch (error) {
-        console.error('Error en verificación:', error);
+        console.log("✅ Autenticación y rol verificados correctamente");
+        
+        // Inicializar dashboard
+        await initializeAgenteDashboard();
+
+    } catch (error) {
+        console.error('❌ Error en inicialización:', error);
         gracefulLogout();
-      }
+    }
+});
+
+async function gracefulLogout() {
+    try {
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch (e) { 
+        console.warn('Error en logout:', e); 
+    }
+    window.location.replace('/login.html');
+}
+
+// ==================== INICIALIZACIÓN DASHBOARD AGENTE ====================
+async function initializeAgenteDashboard() {
+    console.log("🚀 Inicializando dashboard del agente...");
+    
+    // Primero obtener el ID del empleado actual
+    empleadoActualId = await getCurrentEmployeeId();
+    if (!empleadoActualId) {
+        console.error("❌ No se pudo obtener el ID del empleado actual");
+        alert("No se pudo identificar al empleado");
+        return;
+    }
+    
+    console.log("✅ Empleado ID:", empleadoActualId);
+    
+    await cargarDashboardData();
+    setupEventListeners();
+    setupControlAcceso();
+    
+    console.log("✅ Dashboard agente inicializado correctamente");
+}
+
+// ==================== CARGA DE DATOS ====================
+async function cargarDashboardData() {
+    console.log("📊 Cargando datos del dashboard agente...");
+    try {
+        // 1. Primero cargar la campaña del agente
+        await cargarCampanaActual();
+        
+        // 2. Luego cargar las asignaciones del agente
+        await cargarMisAsignaciones();
+        
+        actualizarVistaDashboard();
+    } catch (error) {
+        console.error('❌ Error cargando datos del dashboard:', error);
+        alert('No se pudieron cargar los datos del dashboard');
+    }
+}
+
+async function cargarCampanaActual() {
+    try {
+        console.log("🎯 Cargando campaña actual del agente...");
+        
+        // Usar endpoint específico para agente
+        const response = await fetch(`/api/campanas/agente/${empleadoActualId}`, { 
+            credentials: 'include' 
+        });
+        
+        if (response.ok) {
+            campanaActual = await response.json();
+            console.log("✅ Campaña actual encontrada:", campanaActual);
+        } else if (response.status === 404) {
+            campanaActual = null;
+            console.log("ℹ️ El agente no tiene campaña asignada");
+        } else {
+            console.error(`❌ Error HTTP al cargar campaña: ${response.status}`);
+            campanaActual = null;
+        }
+        
+    } catch (error) {
+        console.error('❌ Error cargando campaña actual:', error);
+        campanaActual = null;
+    }
+}
+
+async function cargarMisAsignaciones() {
+    try {
+        console.log("📋 Cargando mis asignaciones como agente...");
+        
+        // Usar endpoint específico para agente
+        const response = await fetch(`/api/asignaciones/agente/${empleadoActualId}`, {
+            credentials: 'include'
+        });
+
+        if (response.ok) {
+            misAsignaciones = await response.json();
+            console.log(`✅ Asignaciones del agente: ${misAsignaciones.length}`);
+        } else if (response.status === 404) {
+            misAsignaciones = [];
+            console.log("ℹ️ No se encontraron asignaciones para el agente");
+        } else {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+    } catch (error) {
+        console.error('❌ Error cargando mis asignaciones:', error);
+        misAsignaciones = [];
+    }
+}
+
+// ==================== ACTUALIZAR VISTA ====================
+function actualizarVistaDashboard() {
+    console.log("🎨 Actualizando vista del dashboard agente...");
+    
+    // Actualizar información de campaña
+    if (campanaActual) {
+        document.getElementById('empresa-actual').textContent = campanaActual.nombreEmpresa || 'Sin empresa asignada';
+        document.getElementById('campana-actual').textContent = campanaActual.nombreCampana;
+        document.getElementById('nombre-campana-actual').textContent = campanaActual.nombreCampana;
+        document.getElementById('descripcion-campana').textContent = campanaActual.descripcion || 'Sin descripción';
+        console.log("✅ Campaña actualizada en la vista");
+    } else {
+        document.getElementById('empresa-actual').textContent = 'Sin empresa asignada';
+        document.getElementById('campana-actual').textContent = 'Sin campaña asignada';
+        document.getElementById('nombre-campana-actual').textContent = 'Sin campaña asignada';
+        document.getElementById('descripcion-campana').textContent = 'No tienes una campaña asignada actualmente';
+        console.log("❌ No hay campaña asignada");
+    }
+
+    // Actualizar tabla de mis asignaciones
+    renderizarMisAsignaciones();
+}
+
+function renderizarMisAsignaciones() {
+    const tbody = document.getElementById('tabla-mis-asignaciones');
+    tbody.innerHTML = '';
+
+    if (misAsignaciones.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4">
+                    <i class="fas fa-tasks fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">No tienes asignaciones actualmente</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    misAsignaciones.forEach(asignacion => {
+        const tr = document.createElement('tr');
+        
+        // Determinar clase del badge según el estado
+        let badgeClass = 'badge-pendiente';
+        let estadoTexto = asignacion.estado || 'Activa';
+        
+        if (asignacion.estado === 'ACTIVA') {
+            badgeClass = 'badge-en-curso';
+            estadoTexto = 'Activa';
+        } else if (asignacion.estado === 'LIBERADA') {
+            badgeClass = 'badge-completada';
+            estadoTexto = 'Completada';
+        } else if (asignacion.estado === 'INACTIVA') {
+            badgeClass = 'badge-pendiente';
+            estadoTexto = 'Inactiva';
+        }
+
+        tr.innerHTML = `
+            <td>${asignacion.nombreTarea || 'Sin nombre'}</td>
+            <td>${asignacion.observaciones || 'Sin descripción'}</td>
+            <td>${asignacion.fecha ? asignacion.fecha.split('T')[0] : 'N/A'}</td>
+            <td>${asignacion.fechaFin ? asignacion.fechaFin.split('T')[0] : 'Pendiente'}</td>
+            <td><span class="badge ${badgeClass}">${estadoTexto}</span></td>
+            <td class="text-nowrap">
+                ${asignacion.estado === 'ACTIVA' ? `
+                <button class="btn btn-sm btn-success" onclick="cambiarEstadoAsignacionAgente(${asignacion.idAsignacion}, 'LIBERADA')">
+                    <i class="fas fa-check"></i> Completar
+                </button>` : ''}
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    console.log(`✅ Renderizadas ${misAsignaciones.length} asignaciones`);
+}
+
+// ==================== FUNCIONALIDADES AGENTE ====================
+async function cambiarEstadoAsignacionAgente(idAsignacion, nuevoEstado) {
+    try {
+        const response = await fetch(`/api/asignaciones/${idAsignacion}/estado?nuevoEstado=${nuevoEstado}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al cambiar estado');
+        }
+
+        await cargarDashboardData();
+        alert(`Asignación marcada como completada`);
+
+    } catch (error) {
+        console.error('❌ Error cambiando estado:', error);
+        alert('Error: ' + error.message);
+    }
+}
+
+// ==================== EVENT LISTENERS ====================
+function setupEventListeners() {
+    console.log("🔗 Configurando event listeners agente...");
+
+    // Búsqueda en tiempo real para mis asignaciones
+    const searchAsignaciones = document.getElementById('searchMisAsignaciones');
+    if (searchAsignaciones) {
+        searchAsignaciones.addEventListener('input', debounce(() => {
+            filtrarMisAsignaciones();
+        }, 300));
+        console.log("✅ Listener de búsqueda configurado");
+    }
+
+    // Filtro por estado
+    const estadoFilter = document.getElementById('estadoFilterAsignaciones');
+    if (estadoFilter) {
+        estadoFilter.addEventListener('change', () => {
+            filtrarMisAsignaciones();
+        });
+        console.log("✅ Listener de filtro por estado configurado");
+    }
+}
+
+// ==================== FILTRADO Y BÚSQUEDA ====================
+function filtrarMisAsignaciones() {
+    const searchTerm = document.getElementById('searchMisAsignaciones')?.value.toLowerCase() || '';
+    const estadoFilter = document.getElementById('estadoFilterAsignaciones')?.value || '';
+
+    let asignacionesFiltradas = misAsignaciones;
+
+    if (searchTerm) {
+        asignacionesFiltradas = asignacionesFiltradas.filter(a =>
+            (a.nombreTarea || '').toLowerCase().includes(searchTerm) ||
+            (a.observaciones || '').toLowerCase().includes(searchTerm)
+        );
+    }
+
+    if (estadoFilter && estadoFilter !== 'TODAS') {
+        asignacionesFiltradas = asignacionesFiltradas.filter(a => a.estado === estadoFilter);
+    }
+
+    renderizarAsignacionesFiltradas(asignacionesFiltradas);
+}
+
+function renderizarAsignacionesFiltradas(asignaciones) {
+    const tbody = document.getElementById('tabla-mis-asignaciones');
+    tbody.innerHTML = '';
+
+    if (asignaciones.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4">
+                    <i class="fas fa-search fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">No se encontraron asignaciones con los filtros aplicados</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    const tempAsignaciones = misAsignaciones;
+    misAsignaciones = asignaciones;
+    renderizarMisAsignaciones();
+    misAsignaciones = tempAsignaciones;
+}
+
+// ==================== CONTROL DE ACCESO ====================
+function setupControlAcceso() {
+    const btnAcceso = document.getElementById('btnAcceso');
+    const estadoAcceso = document.getElementById('estadoAcceso');
+    const obsInput = document.getElementById('observacionAcceso');
+
+    let empleadoId = null;
+    let estado = "Fuera de turno";
+
+    const modalEl = document.getElementById('controlAccesoModal');
+    modalEl.addEventListener('show.bs.modal', async () => {
+        try {
+            estadoAcceso.textContent = 'Cargando estado...';
+            btnAcceso.disabled = true;
+
+            empleadoId = await getCurrentEmployeeId();
+            if (!empleadoId) {
+                estadoAcceso.textContent = 'No se pudo obtener el id del empleado. Contacte al administrador.';
+                btnAcceso.disabled = true;
+                return;
+            }
+
+            const estadoResp = await fetch(`/api/control-acceso/empleados/${empleadoId}/estado`, { credentials: 'include' });
+            if (!estadoResp.ok) {
+                estadoAcceso.textContent = 'No se pudo consultar estado';
+                btnAcceso.disabled = true;
+                return;
+            }
+            const estadoJson = await estadoResp.json();
+            estado = estadoJson.estado;
+
+            actualizarUI();
+        } catch (e) {
+            console.error('Error cargando estado modal:', e);
+            estadoAcceso.textContent = 'Error al obtener estado';
+            btnAcceso.disabled = true;
+        }
     });
 
-    async function gracefulLogout() {
-      try {
-        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-      } catch (e) { console.warn('logout error', e); }
-      window.location.replace('/login.html');
-    }
-
-    // 🔹 Obtener ID del empleado autenticado
-    async function getCurrentEmployeeId() {
-      try {
-        const r = await fetch('/api/control-acceso/me', { credentials: 'include' });
-        if (!r.ok) return null;
-        const data = await r.json();
-        console.log("Empleado autenticado:", data);
-        return data.idEmpleado;
-      } catch (e) {
-        console.error("Error al obtener empleado:", e);
-        return null;
-      }
-    }
-
-    function initializeLeaderApp() {
-      document.querySelector('.botonsesion')?.addEventListener('click', async (e) => {
-        e.preventDefault();
-        await gracefulLogout();
-      });
-
-      const btnAcceso = document.getElementById('btnAcceso');
-      const estadoAcceso = document.getElementById('estadoAcceso');
-      const obsInput = document.getElementById('observacionAcceso');
-
-      let empleadoId = null;
-      let estado = "Fuera de turno"; // valor inicial por defecto
-
-      // cuando se abra el modal consultamos estado real del usuario
-      const modalEl = document.getElementById('controlAccesoModal');
-      modalEl.addEventListener('show.bs.modal', async () => {
-        try {
-          estadoAcceso.textContent = 'Cargando estado...';
-          btnAcceso.disabled = true;
-
-          empleadoId = await getCurrentEmployeeId();
-          if (!empleadoId) {
-            estadoAcceso.textContent = 'No se pudo obtener el id del empleado. Contacte al administrador.';
-            btnAcceso.disabled = true;
-            return;
-          }
-
-          // pedir estado actual al backend
-          const estadoResp = await fetch(`/api/control-acceso/empleados/${empleadoId}/estado`, { credentials: 'include' });
-          if (!estadoResp.ok) {
-            estadoAcceso.textContent = 'No se pudo consultar estado';
-            btnAcceso.disabled = true;
-            return;
-          }
-          const estadoJson = await estadoResp.json();
-          console.log("📌 Estado recibido del backend:", estadoJson);
-
-          estado = estadoJson.estado; // "En turno" o "Fuera de turno"
-
-          actualizarUI();
-        } catch (e) {
-          console.error('Error cargando estado modal:', e);
-          estadoAcceso.textContent = 'Error al obtener estado';
-          btnAcceso.disabled = true;
-        }
-      });
-
-      function actualizarUI() {
+    function actualizarUI() {
         if (estado === "En turno") {
-          estadoAcceso.textContent = 'Actualmente en jornada';
-          btnAcceso.textContent = 'Marcar Salida';
-          btnAcceso.classList.add('btn-danger');
-          btnAcceso.classList.remove('btn-primary');
+            estadoAcceso.textContent = 'Actualmente en jornada';
+            btnAcceso.textContent = 'Marcar Salida';
+            btnAcceso.classList.add('btn-danger');
+            btnAcceso.classList.remove('btn-primary');
         } else {
-          estadoAcceso.textContent = 'No has registrado entrada';
-          btnAcceso.textContent = 'Marcar Entrada';
-          btnAcceso.classList.add('btn-primary');
-          btnAcceso.classList.remove('btn-danger');
+            estadoAcceso.textContent = 'No has registrado entrada';
+            btnAcceso.textContent = 'Marcar Entrada';
+            btnAcceso.classList.add('btn-primary');
+            btnAcceso.classList.remove('btn-danger');
         }
         btnAcceso.disabled = false;
-      }
+    }
 
-      // acción del botón
-      btnAcceso.addEventListener('click', async () => {
+    btnAcceso.addEventListener('click', async () => {
         if (!empleadoId) {
-          alert('ID de empleado no disponible');
-          return;
+            alert('ID de empleado no disponible');
+            return;
         }
 
         const accion = estado === "En turno" ? "salida" : "entrada";
@@ -209,58 +500,79 @@
 
         let payload;
         if (accion === 'entrada') {
-          payload = {
-            idEmpleado: Number(empleadoId),
-            observacionEntrada: obsInput ? obsInput.value : ''
-          };
+            payload = {
+                idEmpleado: Number(empleadoId),
+                observacionEntrada: obsInput ? obsInput.value : ''
+            };
         } else {
-          payload = {
-            idEmpleado: Number(empleadoId),
-            observacionSalida: obsInput ? obsInput.value : ''
-          };
+            payload = {
+                idEmpleado: Number(empleadoId),
+                observacionSalida: obsInput ? obsInput.value : ''
+            };
         }
-
-        // Log para depuración
-        console.log("➡️ Enviando a", `/api/control-acceso/${accion}`, payload);
 
         try {
-          const resp = await fetch(`/api/control-acceso/${accion}`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify(payload)
-          });
+            const resp = await fetch(`/api/control-acceso/${accion}`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-          const txt = await resp.text();
-          let json;
-          try { json = txt ? JSON.parse(txt) : null; } catch(e){ json = null; }
+            const txt = await resp.text();
+            let json;
+            try { json = txt ? JSON.parse(txt) : null; } catch(e){ json = null; }
 
-          if (resp.ok) {
-            estado = json.estado || (accion === "entrada" ? "En turno" : "Fuera de turno");
-            estadoAcceso.textContent = accion === "entrada" ? "Has marcado ENTRADA" : "Has marcado SALIDA";
-            if (json && (json.horaEntrada || json.horaSalida)) {
-              const hora = json.horaEntrada || json.horaSalida;
-              estadoAcceso.textContent += ` (${hora})`;
+            if (resp.ok) {
+                estado = json.estado || (accion === "entrada" ? "En turno" : "Fuera de turno");
+                estadoAcceso.textContent = accion === "entrada" ? "Has marcado ENTRADA" : "Has marcado SALIDA";
+                if (json && (json.horaEntrada || json.horaSalida)) {
+                    const hora = json.horaEntrada || json.horaSalida;
+                    estadoAcceso.textContent += ` (${hora})`;
+                }
+                if (obsInput) obsInput.value = "";
+                actualizarUI();
+            } else {
+                const msg = (json && (json.message || json.error)) ? (json.message || json.error) : txt || 'Error al registrar acceso';
+                alert(msg);
             }
-            if (obsInput) obsInput.value = ""; // limpiar observaciones solo si existe
-            actualizarUI();
-          } else {
-            const msg = (json && (json.message || json.error)) ? (json.message || json.error) : txt || 'Error al registrar acceso';
-            alert(msg);
-            console.error('Error respuesta servidor:', resp.status, txt);
-          }
         } catch (e) {
-          console.error('Error fetch acceso:', e);
-          alert('Error de conexión con el servidor.');
+            console.error('Error fetch acceso:', e);
+            alert('Error de conexión con el servidor.');
         } finally {
-          btnAcceso.disabled = false;
+            btnAcceso.disabled = false;
         }
-      });
+    });
+}
+
+// ==================== UTILIDADES ====================
+function debounce(func, timeout = 300) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { func.apply(this, args); }, timeout);
+    };
+}
+
+async function getCurrentEmployeeId() {
+    try {
+        console.log("🔍 Obteniendo ID del empleado actual...");
+        const r = await fetch('/api/control-acceso/me', { credentials: 'include' });
+        if (!r.ok) {
+            console.warn("❌ No se pudo obtener el empleado actual");
+            return null;
+        }
+        const data = await r.json();
+        console.log("✅ Empleado autenticado:", data);
+        return data.idEmpleado;
+    } catch (e) {
+        console.error("❌ Error al obtener empleado:", e);
+        return null;
     }
+}
+
+// ==================== EXPORTAR FUNCIONES ====================
+window.cambiarEstadoAsignacionAgente = cambiarEstadoAsignacionAgente;
 </script>
-
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/js/main.js"></script>
 </body>
 </html>

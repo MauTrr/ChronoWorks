@@ -5,6 +5,7 @@ import com.example.chronoworks.dto.campana.*;
 import com.example.chronoworks.dto.pdf.CampanaPDFDTO;
 import com.example.chronoworks.dto.pdf.ReporteCampanaPDFDTO;
 import com.example.chronoworks.dto.pdf.ResumenReporteDTO;
+import com.example.chronoworks.dto.tarea.TareaDTO;
 import com.example.chronoworks.exception.BadRequestException;
 import com.example.chronoworks.exception.IllegalStateException;
 import com.example.chronoworks.exception.ResourceNotFoundException;
@@ -45,6 +46,7 @@ public class CampanaService {
     private final EmpresaRepository empresaRepository;
     private final EmpleadoRepository empleadoRepository;
     private final AsignacionCampanaRepository asignacionCampanaRepository;
+    private final AsignacionTareaRepository asignacionTareaRepository;
     private final CredencialRepository credencialRepository;
     private final PDFGeneratorService pdfGeneratorService;
 
@@ -52,12 +54,14 @@ public class CampanaService {
                           EmpresaRepository empresaRepository,
                           EmpleadoRepository empleadoRepository,
                           AsignacionCampanaRepository asignacionCampanaRepository,
+                          AsignacionTareaRepository asignacionTareaRepository,
                           CredencialRepository credencialRepository,
                           PDFGeneratorService pdfGeneratorService) {
         this.campanaRepository = campanaRepository;
         this.empresaRepository = empresaRepository;
         this.empleadoRepository = empleadoRepository;
         this.asignacionCampanaRepository = asignacionCampanaRepository;
+        this.asignacionTareaRepository = asignacionTareaRepository;
         this.credencialRepository = credencialRepository;
         this.pdfGeneratorService = pdfGeneratorService;
     }
@@ -607,6 +611,60 @@ public class CampanaService {
                     return asignacion;
                 })
                 .collect(Collectors.toList());
+    }
+
+    // Agrega esto en CampanaService.java
+
+    @Transactional(readOnly = true)
+    public RespuestaCampanaDTO obtenerCampanaPorLider(Integer idEmpleado) {
+        // Buscar la campaña activa donde el empleado es líder
+        Optional<AsignacionCampana> asignacionLider = asignacionCampanaRepository
+                .findByEmpleadoIdEmpleadoAndEsLiderAndEstadoAndCampanaEstadoIn(
+                        idEmpleado,
+                        true,
+                        AsignacionCampanaEstado.ACTIVA,
+                        Arrays.asList(CampanaEstado.ACTIVA, CampanaEstado.EN_PROCESO)
+                );
+
+        if (asignacionLider.isPresent()) {
+            Campana campana = asignacionLider.get().getCampana();
+            return mapToRespuestaCampanaDTO(campana);
+        }
+
+        throw new ResourceNotFoundException("No se encontró campaña activa para el líder");
+    }
+
+    @Transactional(readOnly = true)
+    public List<TareaDTO> obtenerTareasPorCampana(Integer idCampana) {
+        // Obtener todas las tareas relacionadas con asignaciones de esta campaña
+        // Necesitarías un repository para esto, pero por ahora puedes usar este enfoque
+        List<AsignacionTarea> asignaciones = asignacionTareaRepository.findByCampanaIdCampana(idCampana);
+
+        return asignaciones.stream()
+                .map(asignacion -> {
+                    TareaDTO dto = new TareaDTO();
+                    dto.setIdTarea(asignacion.getTarea().getIdTarea());
+                    dto.setNombreTarea(asignacion.getTarea().getNombreTarea());
+                    dto.setTipo(asignacion.getTarea().getTipo());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public RespuestaCampanaDTO obtenerCampanaPorAgente(Integer idEmpleado) {
+        // Buscar la campaña activa donde el empleado esté asignado como agente
+        List<AsignacionCampana> asignaciones = asignacionCampanaRepository.findByEmpleadoIdEmpleadoAndEstado(idEmpleado, AsignacionCampanaEstado.ACTIVA);
+
+        if (asignaciones.isEmpty()) {
+            throw new RuntimeException("El agente no tiene campaña asignada");
+        }
+
+        // Tomar la primera asignación (asumiendo que un agente solo tiene una campaña activa)
+        AsignacionCampana asignacion = asignaciones.get(0);
+        Campana campana = campanaRepository.findById(asignacion.getCampana().getIdCampana())
+                .orElseThrow(() -> new RuntimeException("Campaña no encontrada"));
+
+        return mapToRespuestaCampanaDTO(campana);
     }
 
     private RespuestaCampanaDTO mapToRespuestaCampanaDTO(Campana campana) {

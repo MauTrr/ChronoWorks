@@ -5,6 +5,7 @@ import com.example.chronoworks.exception.IllegalStateException;
 import com.example.chronoworks.exception.ResourceNotFoundException;
 import com.example.chronoworks.model.*;
 import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
+import com.example.chronoworks.model.enums.CampanaEstado;
 import com.example.chronoworks.repository.*;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
@@ -16,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,17 +28,20 @@ public class AsignacionService {
 
     private final AsignacionTareaRepository asignacionTareaRepository;
     private final AsignacionEmpleadoTareaRepository asignacionEmpleadoTareaRepository;
+    private final AsignacionCampanaRepository asignacionCampanaRepository;
     private final EmpleadoRepository empleadoRepository;
     private final CampanaRepository campanaRepository;
     private final TareaRepository tareaRepository;
 
     public AsignacionService(AsignacionTareaRepository asignacionTareaRepository,
                              AsignacionEmpleadoTareaRepository asignacionEmpleadoTareaRepository,
+                             AsignacionCampanaRepository asignacionCampanaRepository,
                              EmpleadoRepository empleadoRepository,
                              CampanaRepository campanaRepository,
                              TareaRepository tareaRepository) {
         this.asignacionTareaRepository = asignacionTareaRepository;
         this.asignacionEmpleadoTareaRepository = asignacionEmpleadoTareaRepository;
+        this.asignacionCampanaRepository = asignacionCampanaRepository;
         this.empleadoRepository = empleadoRepository;
         this.campanaRepository = campanaRepository;
         this.tareaRepository = tareaRepository;
@@ -258,6 +264,42 @@ public class AsignacionService {
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    @Transactional(readOnly = true)
+    public List<RespuestaAsignacionCompletaDTO> obtenerAsignacionesPorLider(Integer idEmpleado) {
+        // 1. Primero obtener la campaña del líder
+        Optional<AsignacionCampana> asignacionLider = asignacionCampanaRepository
+                .findByEmpleadoIdEmpleadoAndEsLiderAndEstadoAndCampanaEstadoIn(
+                        idEmpleado,
+                        true,
+                        AsignacionCampanaEstado.ACTIVA,
+                        Arrays.asList(CampanaEstado.ACTIVA, CampanaEstado.EN_PROCESO)
+                );
+
+        if (asignacionLider.isEmpty()) {
+            return new ArrayList<>(); // Retorna lista vacía si no es líder de campaña activa
+        }
+
+        Campana campanaLider = asignacionLider.get().getCampana();
+
+        // 2. Obtener todas las asignaciones de tareas de esa campaña
+        List<AsignacionTarea> asignacionesCampana = asignacionTareaRepository
+                .findByCampanaIdCampana(campanaLider.getIdCampana());
+
+        // 3. Convertir a DTOs
+        return asignacionesCampana.stream()
+                .map(asignacion -> {
+                    List<AsignacionEmpleadoTarea> asignacionesEmpleados =
+                            asignacionEmpleadoTareaRepository.findByAsignacionTarea(asignacion);
+
+                    List<RespuestaAsignacionEmpleadoDTO> empleadosAsignados = asignacionesEmpleados.stream()
+                            .map(this::mapToRespuestaAsignacionEmpleadoDTO)
+                            .collect(Collectors.toList());
+
+                    return buildRespuestaCompleta(asignacion, empleadosAsignados);
+                })
+                .collect(Collectors.toList());
     }
 
 

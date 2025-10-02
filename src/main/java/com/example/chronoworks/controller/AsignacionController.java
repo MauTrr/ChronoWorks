@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/asignaciones")
 public class AsignacionController {
@@ -96,4 +98,12 @@ public class AsignacionController {
         RespuestaAsignacionCompletaDTO respuesta = asignacionService.cambiarEstado(idAsignacion, AsignacionCampanaEstado.INACTIVA);
         return ResponseEntity.ok(respuesta);
     }
+
+    @GetMapping("/lider/{idEmpleado}")
+    public ResponseEntity<List<RespuestaAsignacionCompletaDTO>> getAsignacionesPorLider(@PathVariable Integer idEmpleado) {
+        // Devuelve todas las asignaciones que el líder puede ver/gestionar
+        List<RespuestaAsignacionCompletaDTO> asignaciones = asignacionService.obtenerAsignacionesPorLider(idEmpleado);
+        return ResponseEntity.ok(asignaciones);
+    }
+
 }

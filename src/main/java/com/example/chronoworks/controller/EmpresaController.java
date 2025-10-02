@@ -64,4 +64,6 @@ public class EmpresaController {
         empresaService.desactivarEmpresa(idEmpresa);
         return ResponseEntity.noContent().build();
     }
+
+    
 }

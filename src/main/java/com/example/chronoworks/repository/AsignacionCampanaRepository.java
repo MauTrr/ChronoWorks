@@ -2,6 +2,7 @@ package com.example.chronoworks.repository;
 
 import com.example.chronoworks.model.AsignacionCampana;
 import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
+import com.example.chronoworks.model.enums.CampanaEstado;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -26,5 +27,12 @@ public interface AsignacionCampanaRepository extends JpaRepository<AsignacionCam
     void deleteByCampanaIdCampana(@Param("idCampana") Integer idCampana);
 
     List<AsignacionCampana> findByEmpleadoIdEmpleadoAndEstado(Integer idEmpleado, AsignacionCampanaEstado estado);
+
+    Optional<AsignacionCampana> findByEmpleadoIdEmpleadoAndEsLiderAndEstadoAndCampanaEstadoIn(
+            Integer idEmpleado,
+            Boolean esLider,
+            AsignacionCampanaEstado estado,
+            List<CampanaEstado> estadosCampana
+    );
 
 }
