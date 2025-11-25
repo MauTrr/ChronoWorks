@@ -2,6 +2,7 @@ package com.example.chronoworks.controller;
 
 import com.example.chronoworks.dto.asignacion.*;
 import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
+import com.example.chronoworks.model.enums.AsignacionTareaEstado;
 import com.example.chronoworks.service.AsignacionService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -71,31 +72,22 @@ public class AsignacionController {
         return ResponseEntity.ok(respuesta);
     }
 
-    // CAMBIAR ESTADO DE ASIGNACIÓN
+    // Para cambiar estado del empleado en la asignación
+    @PatchMapping("/{idAsignacion}/empleados/{idEmpleado}/estado")
+    public ResponseEntity<RespuestaAsignacionCompletaDTO> cambiarEstadoEmpleado(
+            @PathVariable Integer idAsignacion,
+            @PathVariable Integer idEmpleado,
+            @RequestParam AsignacionTareaEstado nuevoEstado) {
+        RespuestaAsignacionCompletaDTO respuesta = asignacionService.cambiarEstadoEmpleado(idAsignacion, idEmpleado, nuevoEstado);
+        return ResponseEntity.ok(respuesta);
+    }
+
+    // Para cambiar estado de la asignación completa
     @PatchMapping("/{idAsignacion}/estado")
-    public ResponseEntity<RespuestaAsignacionCompletaDTO> cambiarEstado(
+    public ResponseEntity<RespuestaAsignacionCompletaDTO> cambiarEstadoAsignacion(
             @PathVariable Integer idAsignacion,
             @RequestParam AsignacionCampanaEstado nuevoEstado) {
-        RespuestaAsignacionCompletaDTO respuesta = asignacionService.cambiarEstado(idAsignacion, nuevoEstado);
-        return ResponseEntity.ok(respuesta);
-    }
-
-    // MÉTODOS ESPECÍFICOS DE ESTADO (opcionales - para mantener compatibilidad)
-    @PutMapping("/{idAsignacion}/iniciar")
-    public ResponseEntity<RespuestaAsignacionCompletaDTO> iniciarAsignacion(@PathVariable Integer idAsignacion) {
-        RespuestaAsignacionCompletaDTO respuesta = asignacionService.cambiarEstado(idAsignacion, AsignacionCampanaEstado.ACTIVA);
-        return ResponseEntity.ok(respuesta);
-    }
-
-    @PutMapping("/{idAsignacion}/finalizar")
-    public ResponseEntity<RespuestaAsignacionCompletaDTO> finalizarAsignacion(@PathVariable Integer idAsignacion) {
-        RespuestaAsignacionCompletaDTO respuesta = asignacionService.cambiarEstado(idAsignacion, AsignacionCampanaEstado.LIBERADA);
-        return ResponseEntity.ok(respuesta);
-    }
-
-    @PutMapping("/{idAsignacion}/cancelar")
-    public ResponseEntity<RespuestaAsignacionCompletaDTO> cancelarAsignacion(@PathVariable Integer idAsignacion) {
-        RespuestaAsignacionCompletaDTO respuesta = asignacionService.cambiarEstado(idAsignacion, AsignacionCampanaEstado.INACTIVA);
+        RespuestaAsignacionCompletaDTO respuesta = asignacionService.cambiarEstadoAsignacion(idAsignacion, nuevoEstado);
         return ResponseEntity.ok(respuesta);
     }
 
@@ -103,6 +95,19 @@ public class AsignacionController {
     public ResponseEntity<List<RespuestaAsignacionCompletaDTO>> getAsignacionesPorLider(@PathVariable Integer idEmpleado) {
         // Devuelve todas las asignaciones que el líder puede ver/gestionar
         List<RespuestaAsignacionCompletaDTO> asignaciones = asignacionService.obtenerAsignacionesPorLider(idEmpleado);
+        return ResponseEntity.ok(asignaciones);
+    }
+
+    // NUEVOS ENDPOINTS PARA LÍDER
+    @GetMapping("/empleado/{idEmpleado}")
+    public ResponseEntity<List<RespuestaAsignacionCompletaDTO>> getAsignacionesPorEmpleado(@PathVariable Integer idEmpleado) {
+        List<RespuestaAsignacionCompletaDTO> asignaciones = asignacionService.obtenerAsignacionesPorEmpleado(idEmpleado);
+        return ResponseEntity.ok(asignaciones);
+    }
+
+    @GetMapping("/campana/{idCampana}")
+    public ResponseEntity<List<RespuestaAsignacionCompletaDTO>> getAsignacionesPorCampana(@PathVariable Integer idCampana) {
+        List<RespuestaAsignacionCompletaDTO> asignaciones = asignacionService.obtenerAsignacionesPorCampana(idCampana);
         return ResponseEntity.ok(asignaciones);
     }
 

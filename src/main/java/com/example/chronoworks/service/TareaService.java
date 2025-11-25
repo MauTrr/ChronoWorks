@@ -12,12 +12,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class TareaService {
     private final TareaRepository tareaRepository;
+    private final TareaEmpleadoService tareaEmpleadoService;
 
-    public TareaService(TareaRepository tareaRepository) {
+    public TareaService(TareaRepository tareaRepository,
+                        TareaEmpleadoService tareaEmpleadoService) {
         this.tareaRepository = tareaRepository;
+        this.tareaEmpleadoService = tareaEmpleadoService;
     }
 
     @Transactional
@@ -39,6 +44,20 @@ public class TareaService {
         Tarea tarea = tareaRepository.findById(idTarea)
                 .orElseThrow(()-> new ResourceNotFoundException("Tarea no encontrada."));
         return mapToRespuestaTareaDTO(tarea);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Tarea> obtenerTareasPorLider(Integer idEmpleado) {
+        // Obtener todas las tareas
+        List<Tarea> todasLasTareas = tareaRepository.findAll();
+
+        // Filtrar solo las tareas a las que el líder tiene acceso
+        return todasLasTareas.stream()
+                .filter(tarea -> tareaEmpleadoService.estaEmpleadoAsignadoATarea(
+                        tarea.getIdTarea(),
+                        idEmpleado
+                ))
+                .toList();
     }
 
     @Transactional(readOnly = true)

@@ -5,6 +5,7 @@ import com.example.chronoworks.exception.IllegalStateException;
 import com.example.chronoworks.exception.ResourceNotFoundException;
 import com.example.chronoworks.model.*;
 import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
+import com.example.chronoworks.model.enums.AsignacionTareaEstado;
 import com.example.chronoworks.model.enums.CampanaEstado;
 import com.example.chronoworks.repository.*;
 import jakarta.persistence.criteria.Join;
@@ -32,20 +33,22 @@ public class AsignacionService {
     private final EmpleadoRepository empleadoRepository;
     private final CampanaRepository campanaRepository;
     private final TareaRepository tareaRepository;
+    private final TareaEmpleadoService tareaEmpleadoService;
 
     public AsignacionService(AsignacionTareaRepository asignacionTareaRepository,
                              AsignacionEmpleadoTareaRepository asignacionEmpleadoTareaRepository,
                              AsignacionCampanaRepository asignacionCampanaRepository,
                              EmpleadoRepository empleadoRepository,
                              CampanaRepository campanaRepository,
-                             TareaRepository tareaRepository) {
+                             TareaRepository tareaRepository,
+                             TareaEmpleadoService tareaEmpleadoService) {
         this.asignacionTareaRepository = asignacionTareaRepository;
         this.asignacionEmpleadoTareaRepository = asignacionEmpleadoTareaRepository;
         this.asignacionCampanaRepository = asignacionCampanaRepository;
         this.empleadoRepository = empleadoRepository;
         this.campanaRepository = campanaRepository;
         this.tareaRepository = tareaRepository;
-
+        this.tareaEmpleadoService = tareaEmpleadoService;
     }
 
     @Transactional
@@ -196,9 +199,22 @@ public class AsignacionService {
     }
 
     @Transactional
-    public RespuestaAsignacionCompletaDTO cambiarEstado(Integer idAsignacion, AsignacionCampanaEstado nuevoEstado) {
+    public RespuestaAsignacionCompletaDTO cambiarEstadoEmpleado(Integer idAsignacion, Integer idEmpleado, AsignacionTareaEstado nuevoEstado) {
+        AsignacionEmpleadoTarea asignacionEmpleado = asignacionEmpleadoTareaRepository
+                .findByAsignacionTareaIdAsignacionAndEmpleadoIdEmpleado(idAsignacion, idEmpleado)
+                .orElseThrow(() -> new ResourceNotFoundException("Asignación de empleado no encontrada"));
+
+        asignacionEmpleado.setEstado(nuevoEstado);
+        asignacionEmpleadoTareaRepository.save(asignacionEmpleado);
+
+        return obtenerAsignacion(idAsignacion);
+    }
+
+    // Metodo para cambiar estado de la asignación completa
+    @Transactional
+    public RespuestaAsignacionCompletaDTO cambiarEstadoAsignacion(Integer idAsignacion, AsignacionCampanaEstado nuevoEstado) {
         AsignacionTarea asignacion = asignacionTareaRepository.findById(idAsignacion)
-                .orElseThrow(() -> new ResourceNotFoundException("Asignacion no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Asignación no encontrada"));
 
         asignacion.setEstado(nuevoEstado);
         asignacionTareaRepository.save(asignacion);
@@ -287,7 +303,60 @@ public class AsignacionService {
         List<AsignacionTarea> asignacionesCampana = asignacionTareaRepository
                 .findByCampanaIdCampana(campanaLider.getIdCampana());
 
-        // 3. Convertir a DTOs
+        // 3. Filtrar solo las asignaciones donde el líder tiene permisos
+        List<AsignacionTarea> asignacionesFiltradas = asignacionesCampana.stream()
+                .filter(asignacion -> {
+                    // Verificar que el líder tenga acceso a la tarea
+                    return tareaEmpleadoService.estaEmpleadoAsignadoATarea(
+                            asignacion.getTarea().getIdTarea(),
+                            idEmpleado
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // 4. Convertir a DTOs
+        return asignacionesFiltradas.stream()
+                .map(asignacion -> {
+                    List<AsignacionEmpleadoTarea> asignacionesEmpleados =
+                            asignacionEmpleadoTareaRepository.findByAsignacionTarea(asignacion);
+
+                    List<RespuestaAsignacionEmpleadoDTO> empleadosAsignados = asignacionesEmpleados.stream()
+                            .map(this::mapToRespuestaAsignacionEmpleadoDTO)
+                            .collect(Collectors.toList());
+
+                    return buildRespuestaCompleta(asignacion, empleadosAsignados);
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<RespuestaAsignacionCompletaDTO> obtenerAsignacionesPorEmpleado(Integer idEmpleado) {
+        // Obtener asignaciones donde el empleado está asignado
+        List<AsignacionEmpleadoTarea> asignacionesEmpleado = asignacionEmpleadoTareaRepository
+                .findByEmpleadoIdEmpleado(idEmpleado);
+
+        return asignacionesEmpleado.stream()
+                .map(AsignacionEmpleadoTarea::getAsignacionTarea)
+                .distinct()
+                .map(asignacion -> {
+                    List<AsignacionEmpleadoTarea> asignacionesEmpleados =
+                            asignacionEmpleadoTareaRepository.findByAsignacionTarea(asignacion);
+
+                    List<RespuestaAsignacionEmpleadoDTO> empleadosAsignados = asignacionesEmpleados.stream()
+                            .map(this::mapToRespuestaAsignacionEmpleadoDTO)
+                            .collect(Collectors.toList());
+
+                    return buildRespuestaCompleta(asignacion, empleadosAsignados);
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<RespuestaAsignacionCompletaDTO> obtenerAsignacionesPorCampana(Integer idCampana) {
+        // Obtener todas las asignaciones de una campaña específica
+        List<AsignacionTarea> asignacionesCampana = asignacionTareaRepository
+                .findByCampanaIdCampana(idCampana);
+
         return asignacionesCampana.stream()
                 .map(asignacion -> {
                     List<AsignacionEmpleadoTarea> asignacionesEmpleados =

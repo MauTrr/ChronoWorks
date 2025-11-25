@@ -76,7 +76,7 @@
 
         <div class="col-lg-8 col-md-12">
             <div class="card">
-                <div class="card-header bg-info text-white">
+                <div class="card-header">
                     <h5 class="mb-0"> Asignaciones</h5>
                 </div>
                 <div class="card-body">
@@ -96,17 +96,11 @@
                             <div class="col-md-2">
                                 <select id="estadoFilter" class="form-select">
                                     <option value="">Todos los estados</option>
-                                    <option value="ACTIVA">Activa</option>
+                                    <option value="ASIGNADA">Asignada</option>
                                     <option value="EN_PROCESO">En Proceso</option>
                                     <option value="FINALIZADA">Finalizada</option>
                                     <option value="CANCELADA">Cancelada</option>
-                                    <option value="ARCHIVADA">Archivada</option>
                                 </select>
-                            </div>
-                            <div class="col-md-2">
-                                <button class="btn btn-secondary w-100" onclick="cargarAsignaciones()">
-                                    <i class="fas fa-sync-alt"></i> Filtrar
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -245,20 +239,31 @@
                         <div class="col-md-12">
                             <textarea name="observaciones" class="form-control" placeholder="Observaciones"></textarea>
                         </div>
-                        <div class="col-md-6">
-                            <select name="estado" class="form-select" required>
-                                <option value="ACTIVA">Activa</option>
-                                <option value="EN_PROCESO">En Proceso</option>
-                                <option value="FINALIZADA">Finalizada</option>
-                                <option value="CANCELADA">Cancelada</option>
-                            </select>
-                        </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-custom" id="guardarAsignacionBtn">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Confirmar Acciones -->
+<div class="modal fade" id="accionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header modal-custom">
+                <h5 class="modal-title" id="accionModalTitle">Confirmar Acción</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="accionModalBody">
+                ¿Está seguro de realizar esta acción?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-custom" id="confirmarAccionBtn">Confirmar</button>
             </div>
         </div>
     </div>

@@ -16,6 +16,20 @@ html, body {
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 6px;
+}
+
+.table-custom .btn-sm {
+    padding: 0.25rem 0.5rem;
+}
+
+.text-nowrap {
+    white-space: nowrap;
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
 }
 
 .btn-custom::after {
@@ -114,16 +128,19 @@ html, body {
     background-color: #23A7C1;
     color: #ffffff;
     font-weight: 600;
-    padding: 12px 15px;
-    border-bottom: 2px solid #ffffff;
-    text-align: left;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    border: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 /* Estilo para las celdas del cuerpo */
 .table-custom tbody td {
-    padding: 12px 15px;
-    border-bottom: 1px solid #23A7C1;
+    padding: 0.875rem 1rem;
     vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
 }
 
 /* Efecto hover para filas */
@@ -131,11 +148,41 @@ html, body {
     background-color: #f1f3f5;
 }
 
+/* Mejorar la tabla de asignaciones - reducir columnas visualmente */
+.table-custom tbody td:nth-child(6) {
+    /* Observaciones */
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Bordes redondeados para la tabla */
 .table-responsive {
+    max-height: 600px;
     border-radius: 8px;
-    overflow: hidden;
+    overflow-y: auto;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Mejorar scrollbar */
+.table-responsive::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #23A7C1;
+    border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #1a8a9e;
 }
 
 .botonsesion {
@@ -338,4 +385,86 @@ html, body {
 select.is-invalid {
     background-position: right 1.75rem center;
     padding-right: 2.25rem;
+}
+
+/* =============================================
+   MEJORAS PARA EL MÓDULO DE ASIGNACIONES
+   ============================================= */
+
+/* Cards principales */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+/* Headers de cards - UNIFICAR COLOR */
+.card-header {
+    background: linear-gradient(135deg, #23A7C1 0%, #1a8a9e 100%) !important;
+    color: white !important;
+    padding: 1rem 1.5rem;
+    border-bottom: none;
+    font-weight: 600;
+}
+
+.card-header h5 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+/* Área de filtros más compacta */
+.filter-container {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.filter-container .form-control,
+.filter-container .form-select {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+}
+
+/* Ocultar el botón filtrar si usas debounce */
+.filter-container .btn-secondary {
+    display: none; /* Los filtros ya aplican automáticamente */
+}
+
+/* Badges de estado mejorados */
+.badge {
+    padding: 0.4rem 0.75rem;
+    font-weight: 500;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    letter-spacing: 0.3px;
+}
+
+/* Estados específicos */
+.bg-secondary {
+    background-color: #6c757d !important;
+}
+
+.bg-warning {
+    background-color: #ffc107 !important;
+}
+
+.bg-success {
+    background-color: #28a745 !important;
+}
+
+.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+/* Responsive: apilar columnas en móviles */
+@media (max-width: 992px) {
+    .col-lg-4, .col-lg-8 {
+        margin-bottom: 1.5rem;
+    }
+    
+    .filter-container .row {
+        gap: 0.5rem;
+    }
 }

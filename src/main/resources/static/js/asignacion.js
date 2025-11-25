@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarCampanas();
     cargarTareas();
 
+    // Eventos de búsqueda y filtros
     const searchTareas = document.getElementById('searchTareas');
     if (searchTareas) {
         searchTareas.addEventListener('input', debounce(() => {
@@ -63,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Resetear formularios al cerrar modales
     const tareaModal = document.getElementById('tareaModal');
     if (tareaModal) {
         tareaModal.addEventListener('hidden.bs.modal', () => {
@@ -77,22 +79,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Delegación de eventos para botones dinámicos
-    document.addEventListener('click', function(e) {
-        if (e.target && e.target.id === 'guardarAsignacionBtn') {
-            guardarAsignacion();
-        }
-        
-        if (e.target && e.target.id === 'crearTareaBtn') {
-            crearTarea();
-        }
-    });
+    // CORREGIDO: Botón nueva asignación - usar querySelector en lugar de getElementById
+    const nuevaAsignacionBtn = document.querySelector('[data-bs-target="#asignacionModal"]');
+    if (nuevaAsignacionBtn) {
+        nuevaAsignacionBtn.addEventListener('click', () => {
+            abrirModalAsignacion();
+        });
+    }
 
-    document.addEventListener('click', function(e) {
-        if (e.target && e.target.id === 'actualizarTareaBtn') {
-            actualizarTarea();
-        }
-    });   
+    // Delegación de eventos para la tabla de asignaciones
+    const tablaAsignaciones = document.getElementById('tablaAsignaciones');
+    if (tablaAsignaciones) {
+        tablaAsignaciones.addEventListener('click', async (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            
+            const idAsignacion = btn.dataset.id;
+            const idEmpleado = btn.dataset.empleado;
+            
+            console.log('Botón clickeado:', btn.className, 'Asignación:', idAsignacion, 'Empleado:', idEmpleado);
+            
+            if (btn.classList.contains('editar-btn')) {
+                if (!btn.disabled) {
+                    await abrirModalEdicionAsignacion(idAsignacion);
+                } else {
+                    Swal.fire('No permitido', 'No puedes editar esta asignación porque no está activa', 'warning');
+                }
+            }
+            else if (btn.classList.contains('iniciar-btn')) {
+                await cambiarEstadoEmpleado(idAsignacion, idEmpleado, 'EN_PROCESO');
+            }
+            else if (btn.classList.contains('finalizar-btn')) {
+                await cambiarEstadoEmpleado(idAsignacion, idEmpleado, 'FINALIZADA');
+            }
+            else if (btn.classList.contains('cancelar-btn')) {
+                await cambiarEstadoEmpleado(idAsignacion, idEmpleado, 'CANCELADA');
+            }
+        });
+    }
+
+    const guardarAsignacionBtn = document.getElementById('guardarAsignacionBtn');
+    if (guardarAsignacionBtn) {
+        guardarAsignacionBtn.addEventListener('click', guardarAsignacion);
+    }
 });
 
 // ======Aca se trabajan las funciones de Tareas=======
@@ -427,14 +456,14 @@ function mostrarErrores(errores, formId = 'tareaForm') {
 }
 
 // ======Aca se trabajan las funciones de Asignaciones=======
-// ==================== CARGAR DATOS ====================
+// ====== FUNCIONES DE ASIGNACIONES ======
 async function cargarAsignaciones() {
     try {
         const filtro = {
-            nombreEmpleado: document.getElementById('searchEmpleado').value.trim(),
-            nombreCampana: document.getElementById('searchCampana').value.trim(),
-            fechaAsignacion: document.getElementById('searchFecha').value,
-            estado: document.getElementById('estadoFilter').value
+            nombreEmpleado: document.getElementById('searchEmpleado')?.value.trim() || '',
+            nombreCampana: document.getElementById('searchCampana')?.value.trim() || '',
+            fechaAsignacion: document.getElementById('searchFecha')?.value || '',
+            estado: document.getElementById('estadoFilter')?.value || ''
         };
 
         const params = new URLSearchParams({
@@ -454,7 +483,7 @@ async function cargarAsignaciones() {
         if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
 
         const data = await response.json();
-        const asignaciones = data.content || [];
+        asignaciones = data.content || [];
         totalPages = data.totalPages || 1;
 
         renderizarAsignaciones(asignaciones);
@@ -475,15 +504,15 @@ async function cargarEmpleados() {
         const empleados = data.content || [];
 
         const selectEmpleado = document.getElementById('selectEmpleado');
-        selectEmpleado.innerHTML = '<option value="">Seleccione empleado...</option>';
-
-        empleados.forEach(e => {
-            const option = document.createElement('option');
-            option.value = e.idEmpleado;
-            option.textContent = `${e.nombre} ${e.apellido}`;
-            selectEmpleado.appendChild(option);
-        });
-
+        if (selectEmpleado) {
+            selectEmpleado.innerHTML = '<option value="">Seleccione empleado...</option>';
+            empleados.forEach(e => {
+                const option = document.createElement('option');
+                option.value = e.idEmpleado;
+                option.textContent = `${e.nombre} ${e.apellido}`;
+                selectEmpleado.appendChild(option);
+            });
+        }
     } catch (error) {
         console.error("Error al cargar empleados:", error);
         Swal.fire('Error', 'No se pudieron cargar los empleados', 'error');
@@ -498,33 +527,38 @@ async function cargarCampanas() {
 
         // Llenar filtro de campañas
         const searchCampana = document.getElementById('searchCampana');
-        searchCampana.innerHTML = '<option value="">Todas las campañas</option>';
-        campanas.forEach(c => {
-            const option = document.createElement('option');
-            option.value = c.nombreCampana;
-            option.textContent = c.nombreCampana;
-            searchCampana.appendChild(option);
-        });
+        if (searchCampana) {
+            searchCampana.innerHTML = '<option value="">Todas las campañas</option>';
+            campanas.forEach(c => {
+                const option = document.createElement('option');
+                option.value = c.nombreCampana;
+                option.textContent = c.nombreCampana;
+                searchCampana.appendChild(option);
+            });
+        }
 
         // Llenar selector en modal
         const selectCampana = document.getElementById('selectCampana');
-        selectCampana.innerHTML = '<option value="">Seleccione campaña...</option>';
-        campanas.forEach(c => {
-            const option = document.createElement('option');
-            option.value = c.idCampana;
-            option.textContent = c.nombreCampana;
-            selectCampana.appendChild(option);
-        });
-
+        if (selectCampana) {
+            selectCampana.innerHTML = '<option value="">Seleccione campaña...</option>';
+            campanas.forEach(c => {
+                const option = document.createElement('option');
+                option.value = c.idCampana;
+                option.textContent = c.nombreCampana;
+                selectCampana.appendChild(option);
+            });
+        }
     } catch (error) {
         console.error("Error al cargar campañas:", error);
         Swal.fire('Error', 'No se pudieron cargar las campañas', 'error');
     }
 }
 
-// ==================== RENDERIZADO ====================
+// ==================== RENDERIZADO CORREGIDO ====================
 function renderizarAsignaciones(asignaciones) {
     const tbody = document.getElementById('tablaAsignaciones');
+    if (!tbody) return;
+    
     tbody.innerHTML = '';
 
     if (!asignaciones || asignaciones.length === 0) {
@@ -532,85 +566,440 @@ function renderizarAsignaciones(asignaciones) {
         return;
     }
 
-     asignaciones.forEach(a => {
-        // Toma el primer empleado si existe
+    console.log('Renderizando asignaciones:', asignaciones);
+
+    asignaciones.forEach(a => {
         const empleado = a.empleados && a.empleados.length > 0 ? a.empleados[0] : {};
-        const nombreEmpleado = empleado.nombreEmpleado || '';
-        const apellidoEmpleado = empleado.apellidoEmpleado || '';
+        
+        // Estados
+        const estadoEmpleado = empleado.estado || 'ASIGNADA';
+        const estadoAsignacion = a.estado || 'ACTIVA';
+
+        console.log(`Asignación ${a.idAsignacion}:`, {
+            estadoEmpleado: estadoEmpleado,
+            estadoAsignacion: estadoAsignacion,
+            empleado: empleado
+        });
+
+        // Verificar si se puede editar (solo asignaciones ACTIVAS)
+        const puedeEditar = estadoAsignacion === 'ACTIVA';
 
         const tr = document.createElement('tr');
+        tr.setAttribute('data-id', a.idAsignacion);
         tr.innerHTML = `
             <td>${a.idAsignacion}</td>
-            <td>${nombreEmpleado} ${apellidoEmpleado}</td>
+            <td>${empleado.nombreEmpleado || ''} ${empleado.apellidoEmpleado || ''}</td>
             <td>${a.nombreCampana}</td>
             <td>${a.nombreTarea}</td>
             <td>${a.fecha ? a.fecha.split('T')[0] : ''}</td>
             <td>${a.observaciones || '-'}</td>
             <td>
-                <span class="badge ${getBadgeClass(a.estado)}">
-                    ${a.estado}
+                <span class="badge ${getBadgeClassAsignacion(estadoEmpleado)}">
+                    ${estadoEmpleado}
                 </span>
             </td>
             <td class="text-nowrap">
-                <button class="btn btn-sm btn-primary editar-btn" data-id="${a.idAsignacion}">
+                <button class="btn btn-sm btn-custom editar-btn" 
+                        data-id="${a.idAsignacion}" 
+                        ${!puedeEditar ? 'disabled' : ''}
+                        title="${!puedeEditar ? 'No se puede editar asignaciones no activas' : 'Editar'}">
                     <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                ${a.estado === 'ASIGNADA' ? `
-                <button class="btn btn-sm btn-success iniciar-btn" data-id="${a.idAsignacion}">
-                    <i class="fa-solid fa-play"></i>
-                </button>` : ''}
-                ${a.estado === 'EN_PROCESO' ? `
-                <button class="btn btn-sm btn-info finalizar-btn" data-id="${a.idAsignacion}">
-                    <i class="fa-solid fa-flag-checkered"></i>
-                </button>` : ''}
-                ${(a.estado === 'FINALIZADA' || a.estado === 'CANCELADA') ? `
-                <button class="btn btn-sm btn-secondary archivar-btn" data-id="${a.idAsignacion}">
-                    <i class="fa-solid fa-box-archive"></i>
-                </button>` : ''}
+                ${getEstadoBtnsAsignacion(a, estadoEmpleado, estadoAsignacion)}
             </td>
         `;
         tbody.appendChild(tr);
     });
-
-    // Event listeners para botones dinámicos
-    document.querySelectorAll('.editar-btn').forEach(btn => {
-        btn.addEventListener('click', () => abrirModalEdicion(btn.dataset.id));
-    });
-
-    document.querySelectorAll('.iniciar-btn').forEach(btn => {
-        btn.addEventListener('click', () => confirmarAccion(btn.dataset.id, 'iniciar', '¿Iniciar esta asignación?'));
-    });
-
-    document.querySelectorAll('.finalizar-btn').forEach(btn => {
-        btn.addEventListener('click', () => confirmarAccion(btn.dataset.id, 'finalizar', '¿Finalizar esta asignación?'));
-    });
-
-    document.querySelectorAll('.cancelar-btn').forEach(btn => {
-        btn.addEventListener('click', () => confirmarAccion(btn.dataset.id, 'cancelar', '¿Cancelar esta asignación?'));
-    });
-
-    document.querySelectorAll('.archivar-btn').forEach(btn => {
-        btn.addEventListener('click', () => confirmarAccion(btn.dataset.id, 'archivar', '¿Archivar esta asignación?'));
-    });
 }
 
-function getBadgeClass(estado) {
+function getEstadoBtnsAsignacion(asignacion, estadoEmpleado, estadoAsignacion) {
+    console.log(`Generando botones para asignación ${asignacion.idAsignacion}:`, {
+        estadoEmpleado: estadoEmpleado,
+        estadoAsignacion: estadoAsignacion,
+        tieneEmpleados: asignacion.empleados && asignacion.empleados.length > 0
+    });
+
+    // Si la asignación no está ACTIVA, no mostrar botones de estado
+    if (estadoAsignacion !== 'ACTIVA') {
+        console.log(`Asignación ${asignacion.idAsignacion} no está ACTIVA, sin botones`);
+        return '<span class="text-muted small">No disponible</span>';
+    }
+
+    const primerEmpleado = asignacion.empleados && asignacion.empleados.length > 0 ? asignacion.empleados[0] : null;
+    if (!primerEmpleado) {
+        console.log(`Asignación ${asignacion.idAsignacion} no tiene empleados`);
+        return '<span class="text-muted small">Sin empleado</span>';
+    }
+
+    const idEmpleado = primerEmpleado.idEmpleado;
+    let buttons = '';
+
+    console.log(`Estado del empleado: ${estadoEmpleado} para asignación ${asignacion.idAsignacion}`);
+
+    // CORREGIDO: Lógica mejorada para mostrar botones
+    switch(estadoEmpleado) {
+        case 'ASIGNADA':
+            buttons = `
+                <button class="btn btn-sm btn-custom iniciar-btn mx-1" 
+                        data-id="${asignacion.idAsignacion}" 
+                        data-empleado="${idEmpleado}" 
+                        title="Iniciar tarea">
+                    <i class="fa-solid fa-play"></i>
+                </button>
+                <button class="btn btn-sm btn-custom cancelar-btn" 
+                        data-id="${asignacion.idAsignacion}" 
+                        data-empleado="${idEmpleado}" 
+                        title="Cancelar tarea">
+                    <i class="fa-solid fa-ban"></i>
+                </button>
+            `;
+            break;
+            
+        case 'EN_PROCESO':
+            buttons = `
+                <button class="btn btn-sm btn-custom finalizar-btn mx-1" 
+                        data-id="${asignacion.idAsignacion}" 
+                        data-empleado="${idEmpleado}" 
+                        title="Finalizar tarea">
+                    <i class="fa-solid fa-flag-checkered"></i>
+                </button>
+                <button class="btn btn-sm btn-custom cancelar-btn mx-1" 
+                        data-id="${asignacion.idAsignacion}" 
+                        data-empleado="${idEmpleado}" 
+                        title="Cancelar tarea">
+                    <i class="fa-solid fa-ban"></i>
+                </button>
+            `;
+            break;
+            
+        case 'FINALIZADA':
+        case 'CANCELADA':
+            buttons = `<span class="text-muted small">Completada</span>`;
+            break;
+            
+        default:
+            buttons = `
+                <button class="btn btn-sm btn-custom iniciar-btn mx-1" 
+                        data-id="${asignacion.idAsignacion}" 
+                        data-empleado="${idEmpleado}" 
+                        title="Iniciar tarea">
+                    <i class="fa-solid fa-play"></i>
+                </button>
+                <button class="btn btn-sm btn-custom cancelar-btn" 
+                        data-id="${asignacion.idAsignacion}" 
+                        data-empleado="${idEmpleado}" 
+                        title="Cancelar tarea">
+                    <i class="fa-solid fa-ban"></i>
+                </button>
+            `;
+            break;
+    }
+
+    console.log(`Botones generados para ${asignacion.idAsignacion}:`, buttons);
+    return buttons;
+}
+
+function getBadgeClassAsignacion(estado) {
     const classes = {
-        'ASIGNADA': 'bg-success',
-        'EN_PROCESO': 'bg-primary',
-        'FINALIZADA': 'bg-info',
+        'ASIGNADA': 'bg-secondary',
+        'EN_PROCESO': 'bg-warning text-dark',
+        'FINALIZADA': 'bg-success',
+        'CANCELADA': 'bg-danger',
+        'ACTIVA': 'bg-primary',
+        'LIBERADA': 'bg-info',
+        'INACTIVA': 'bg-dark'
     };
-    return classes[estado] || 'bg-light text-dark';
+    return classes[estado] || 'bg-secondary';
+}
+
+// ==================== MODALES ASIGNACIONES ====================
+async function abrirModalAsignacion(asignacion = null) {
+    const form = document.getElementById('asignacionForm');
+    if (!form) return;
+
+    // Limpiar errores previos
+    form.querySelectorAll('.error-message').forEach(em => em.remove());
+    form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+    if (asignacion && asignacion.idAsignacion) {
+        console.log('Modo edición - Datos:', asignacion);
+        
+        // Modo edición - mostrar datos existentes
+        form.querySelector('input[name="idAsignacion"]').value = asignacion.idAsignacion || '';
+        
+        // CORREGIDO: Usar el primer empleado de la lista
+        const primerEmpleado = asignacion.empleados && asignacion.empleados.length > 0 ? asignacion.empleados[0] : null;
+        if (primerEmpleado) {
+            form.querySelector('select[name="idEmpleado"]').value = primerEmpleado.idEmpleado || '';
+        }
+        
+        form.querySelector('select[name="idCampana"]').value = asignacion.idCampana || '';
+        form.querySelector('select[name="idTarea"]').value = asignacion.idTarea || '';
+        form.querySelector('input[name="fecha"]').value = asignacion.fecha ? asignacion.fecha.split('T')[0] : '';
+        form.querySelector('textarea[name="observaciones"]').value = asignacion.observaciones || '';
+
+        document.querySelector('#asignacionModal .modal-title').textContent = 'Editar Asignación';
+        document.getElementById('guardarAsignacionBtn').textContent = 'Actualizar';
+        document.getElementById('guardarAsignacionBtn').dataset.mode = 'edit';
+    } else {
+        // Modo creación - resetear formulario
+        form.reset();
+        document.querySelector('#asignacionModal .modal-title').textContent = 'Nueva Asignación';
+        document.getElementById('guardarAsignacionBtn').textContent = 'Guardar';
+        document.getElementById('guardarAsignacionBtn').dataset.mode = 'create';
+    }
+
+    const modalElement = document.getElementById('asignacionModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
+}
+
+async function abrirModalEdicionAsignacion(idAsignacion) {
+    try {
+        console.log('Abriendo modal de edición para asignación:', idAsignacion);
+        const response = await fetch(`/api/asignaciones/${idAsignacion}`);
+        if (!response.ok) throw new Error('Asignación no encontrada');
+
+        const asignacion = await response.json();
+        console.log('Datos de asignación recibidos:', asignacion);
+        
+        // CORREGIDO: Pasar el objeto asignación completo
+        await abrirModalAsignacion(asignacion);
+
+    } catch (error) {
+        console.error("Error al abrir modal:", error);
+        Swal.fire('Error', 'No se pudo cargar la asignación para edición', 'error');
+    }
+}
+
+// ==================== GUARDAR ASIGNACIÓN CORREGIDO ====================
+async function guardarAsignacion() {
+    try {
+        const form = document.getElementById('asignacionForm');
+        if (!form) return;
+
+        const formData = new FormData(form);
+        const modo = document.getElementById('guardarAsignacionBtn').dataset.mode;
+
+        // Validaciones básicas
+        if (!formData.get('idEmpleado') || !formData.get('idCampana') || !formData.get('idTarea') || !formData.get('fecha')) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Formulario incompleto',
+                text: 'Por favor completa todos los campos requeridos',
+                background: '#edf3f4',
+                iconColor: '#23A7C1'
+            });
+            return;
+        }
+
+        const fechaInput = formData.get('fecha');
+        let fechaValida = fechaInput + 'T00:00:00';
+        
+        const dto = {
+            idCampana: parseInt(formData.get('idCampana')),
+            idTarea: parseInt(formData.get('idTarea')),
+            fecha: fechaValida,
+            observaciones: formData.get('observaciones'),
+            estado: 'ACTIVA', // Estado fijo para la asignación
+            empleados: [
+                {
+                    idEmpleado: parseInt(formData.get('idEmpleado')),
+                    estado: 'ASIGNADA', // Estado inicial del empleado
+                    fechaInicio: null,
+                    fechaFin: null
+                }
+            ]
+        };
+
+        let url, method;
+
+        if (modo === 'edit' && formData.get('idAsignacion')) {
+            // MODO EDICIÓN
+            const idAsignacion = formData.get('idAsignacion');
+            url = `/api/asignaciones/${idAsignacion}/actualizar`;
+            method = 'PUT';
+            dto.idAsignacion = parseInt(idAsignacion);
+        } else {
+            // MODO CREACIÓN
+            url = '/api/asignaciones';
+            method = 'POST';
+        }
+
+        console.log('Enviando datos:', dto);
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dto)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al guardar asignación');
+        }
+
+        // Cerrar modal y recargar
+        const modalElement = document.getElementById('asignacionModal');
+        if (modalElement) {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) modal.hide();
+        }
+        
+        cargarAsignaciones();
+        
+        Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: `Asignación ${modo === 'edit' ? 'actualizada' : 'creada'} correctamente`,
+            timer: 2000,
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
+        });
+
+    } catch (error) {
+        console.error("Error al guardar:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'Error al guardar la asignación',
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
+        });
+    }
+}
+
+// ==================== CAMBIOS DE ESTADO ====================
+async function cambiarEstadoEmpleado(idAsignacion, idEmpleado, nuevoEstado) {
+    try {
+        const actionText = {
+            'EN_PROCESO': 'iniciar',
+            'FINALIZADA': 'finalizar', 
+            'CANCELADA': 'cancelar'
+        }[nuevoEstado];
+
+        const result = await Swal.fire({
+            title: `¿${actionText.charAt(0).toUpperCase() + actionText.slice(1)} tarea?`,
+            text: "Esta acción cambiará el estado de la tarea",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#23a7c1',
+            cancelButtonColor: '#d33',
+            confirmButtonText: `Sí, ${actionText}`,
+            cancelButtonText: 'Cancelar',
+            background: '#edf3f4'
+        });
+
+        if (!result.isConfirmed) return;
+
+        // CORREGIDO: Usar el endpoint correcto
+        const response = await fetch(`/api/asignaciones/${idAsignacion}/empleados/${idEmpleado}/estado?nuevoEstado=${nuevoEstado}`, {
+            method: 'PATCH'
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Error al cambiar estado a ${nuevoEstado}`);
+        }
+
+        await cargarAsignaciones();
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: `Tarea ${actionText}da correctamente`,
+            timer: 2000,
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
+        });
+
+    } catch (error) {
+        console.error(`Error al cambiar estado:`, error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || `No se pudo cambiar el estado de la tarea`,
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
+        });
+    }
+}
+
+
+async function cambiarEstadoAsignacion(idAsignacion, nuevoEstado) {
+    try {
+        const result = await Swal.fire({
+            title: `¿${nuevoEstado === 'EN_PROCESO' ? 'Iniciar' : nuevoEstado === 'FINALIZADA' ? 'Finalizar' : 'Cancelar'} asignación?`,
+            text: "Esta acción cambiará el estado de la asignación",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#23a7c1',
+            cancelButtonColor: '#d33',
+            confirmButtonText: `Sí, ${nuevoEstado === 'EN_PROCESO' ? 'iniciar' : nuevoEstado === 'FINALIZADA' ? 'finalizar' : 'cancelar'}`,
+            cancelButtonText: 'Cancelar',
+            background: '#edf3f4'
+        });
+
+        if (!result.isConfirmed) return;
+
+        // Usar el endpoint específico según el estado
+        let url = '';
+        if (nuevoEstado === 'EN_PROCESO') {
+            url = `/api/asignaciones/${idAsignacion}/iniciar`;
+        } else if (nuevoEstado === 'FINALIZADA') {
+            url = `/api/asignaciones/${idAsignacion}/finalizar`;
+        } else if (nuevoEstado === 'CANCELADA') {
+            url = `/api/asignaciones/${idAsignacion}/cancelar`;
+        }
+
+        console.log('Cambiando estado. URL:', url);
+
+        const response = await fetch(url, {
+            method: 'PUT'
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Error al cambiar estado a ${nuevoEstado}`);
+        }
+
+        cargarAsignaciones();
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: `Asignación ${nuevoEstado === 'EN_PROCESO' ? 'iniciada' : nuevoEstado === 'FINALIZADA' ? 'finalizada' : 'cancelada'} correctamente`,
+            timer: 2000,
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
+        });
+
+    } catch (error) {
+        console.error(`Error al cambiar estado:`, error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || `No se pudo cambiar el estado de la asignación`,
+            background: '#edf3f4',
+            iconColor: '#23A7C1'
+        });
+    }
 }
 
 // ==================== PAGINACIÓN ====================
 function actualizarPaginacion() {
     const pagination = document.getElementById('pagination');
+    if (!pagination) return;
+
     pagination.innerHTML = '';
 
     // Info de paginación
-    document.getElementById('paginationInfo').textContent =
-        `Mostrando página ${currentPage + 1} de ${totalPages}`;
+    const paginationInfo = document.getElementById('paginationInfo');
+    if (paginationInfo) {
+        paginationInfo.textContent = `Mostrando página ${currentPage + 1} de ${totalPages}`;
+    }
 
     // Botón Anterior
     const prevLi = document.createElement('li');
@@ -653,159 +1042,4 @@ function actualizarPaginacion() {
         }
     });
     pagination.appendChild(nextLi);
-}
-
-// ==================== MODALES ====================
-function abrirModal(asignacion = {}) {
-    const form = document.getElementById('asignacionForm');
-
-    form.idAsignacion.value = asignacion.idAsignacion || '';
-    form.idEmpleado.value = asignacion.idEmpleado || '';
-    form.idCampana.value = asignacion.idCampana || '';
-    form.idTarea.value = asignacion.idTarea || '';
-    form.fecha.value = asignacion.fecha || '';
-    form.observaciones.value = asignacion.observaciones || '';
-    form.estado.value = asignacion.estado || 'ASIGNADA';
-
-    new bootstrap.Modal('#asignacionModal').show();
-}
-
-async function abrirModalEdicion(idAsignacion) {
-    try {
-        const response = await fetch(`/api/asignaciones/${idAsignacion}`);
-        if (!response.ok) throw new Error('Asignación no encontrada');
-
-        const asignacion = await response.json();
-        const form = document.getElementById('asignacionForm');
-
-        // Llenar formulario
-        form.idAsignacion.value = asignacion.idAsignacion || '';
-        form.idEmpleado.value = asignacion.idEmpleado || '';
-        form.idCampana.value = asignacion.idCampana || '';
-        form.idTarea.value = asignacion.idTarea || '';
-        form.fecha.value = asignacion.fecha || '';
-        form.observaciones.value = asignacion.observaciones || '';
-        form.estado.value = asignacion.estado || 'ACTIVA';
-
-        // Mostrar modal
-        new bootstrap.Modal('#asignacionModal').show();
-
-    } catch (error) {
-        console.error("Error al abrir modal:", error);
-        Swal.fire('Error', 'No se pudo cargar la asignación para edición', 'error');
-    }
-}
-
-async function guardarAsignacion() {
-    try {
-        const form = document.getElementById('asignacionForm');
-
-        const fechaInput = form.fecha.value;
-        if (!fechaInput) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Fecha requerida',
-                text: 'Debes seleccionar una fecha para la asignación',
-                background: '#edf3f4',
-                iconColor: '#23A7C1'
-            });
-            return;
-        }
-        let fechaValida = fechaInput + 'T00:00:00';
-
-        const dto = {
-            idCampana: parseInt(form.idCampana.value),
-            idTarea: parseInt(form.idTarea.value),
-            fecha: fechaValida,
-            observaciones: form.observaciones.value,
-            estado: 'ACTIVA',
-            empleados: [
-                {
-                    idEmpleado: parseInt(form.idEmpleado.value),
-                    estado: 'ASIGNADA',
-                    fechaInicio: null,
-                    fechaFin: null
-                }
-            ]
-        };
-
-        let url = '/api/asignaciones';
-        let method = 'POST';
-
-        if (form.idAsignacion.value) {
-            dto.idAsignacion = parseInt(form.idAsignacion.value);
-            url = `/api/asignaciones/${form.idAsignacion.value}/actualizar`;
-            method = 'PUT';
-        }
-
-        console.log('Enviando datos:', dto);
-
-        const response = await fetch(url, {
-            method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dto)
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Error al guardar asignación');
-        }
-
-        // Cerrar modal y recargar
-        const modal = bootstrap.Modal.getInstance(document.getElementById('asignacionModal'));
-        modal.hide();
-        cargarAsignaciones();
-        
-        Swal.fire({
-            icon: 'success',
-            title: 'Éxito',
-            text: 'Asignación guardada correctamente',
-            timer: 2000,
-            background: '#edf3f4',
-            iconColor: '#23A7C1'
-        });
-
-    } catch (error) {
-        console.error("Error al guardar:", error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: error.message,
-            background: '#edf3f4',
-            iconColor: '#23A7C1'
-        });
-    }
-}
-
-// ==================== ACCIONES DE ESTADO ====================
-function confirmarAccion(idAsignacion, accion, mensaje) {
-    const modal = new bootstrap.Modal('#accionModal');
-    const modalTitle = document.getElementById('accionModalTitle');
-    const modalBody = document.getElementById('accionModalBody');
-    const confirmBtn = document.getElementById('confirmarAccionBtn');
-
-    // Configurar modal
-    modalTitle.textContent = mensaje;
-    modalBody.textContent = '¿Está seguro de realizar esta acción?';
-
-    // Limpiar eventos anteriores y asignar nuevo
-    const oldConfirmBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(oldConfirmBtn, confirmBtn);
-    oldConfirmBtn.addEventListener('click', async () => {
-        try {
-            const response = await fetch(`/api/asignaciones/${idAsignacion}/${accion}`, {
-                method: 'PUT'
-            });
-
-            if (!response.ok) throw new Error('Error al realizar la acción');
-
-            modal.hide();
-            cargarAsignaciones();
-            Swal.fire('Éxito', `Asignación ${accion}da correctamente`, 'success');
-        } catch (error) {
-            console.error(`Error al ${accion} asignación:`, error);
-            Swal.fire('Error', `No se pudo ${accion} la asignación`, 'error');
-        }
-    });
-    modal.show();
 }

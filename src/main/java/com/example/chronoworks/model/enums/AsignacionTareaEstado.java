@@ -4,4 +4,5 @@ public enum AsignacionTareaEstado {
     ASIGNADA,
     EN_PROCESO,
     FINALIZADA,
+    CANCELADA
 }

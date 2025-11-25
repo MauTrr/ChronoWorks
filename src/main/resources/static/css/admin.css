@@ -71,59 +71,99 @@ body, html {
    ============================== */
 
 .tarjeta {
-  background-color: #23A7C1;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
   backdrop-filter: blur(10px);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  border-radius: 16px;
+  border: 1px solid rgba(35, 167, 193, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: block;
   text-decoration: none;
-  color: black;
+  color: #112F3B;
   position: relative;
   overflow: hidden;
-  max-width: 18rem;
-  min-height: 20rem;
-  height: 18rem;
-  min-width: 18rem;
+  width: 100%;
+  min-height: 200px;
+  padding: 1.5rem;
 }
 
+.tarjeta:hover::before {
+  transform: scaleX(1);
+}
+
+
 .tarjeta:hover {
-  box-shadow: 0px 10px 20px rgb(0, 0, 0, 0.2);
-  transform: translateY(-5px);
+  box-shadow: 0px 12px 32px rgba(35, 167, 193, 0.25);
+  transform: translateY(-8px);
+  border-color: rgba(35, 167, 193, 0.25);
   cursor: pointer;
 }
 
 /* Imagen de la tarjeta */
 .tarjeta img {
-  padding: 15px 5px;
+  padding: 0;
   height: auto;
-  width: 100%;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
-  max-height: 10rem;
+  margin-bottom: 1rem;
+  filter: brightness(0) saturate(100%) invert(19%) sepia(37%) saturate(1086%) hue-rotate(158deg) brightness(95%) contrast(93%);
+  transition: filter 0.3s ease;
 }
+
+.tarjeta:hover img {
+  filter: brightness(0) saturate(100%) invert(54%) sepia(75%) saturate(1086%) hue-rotate(158deg) brightness(95%) contrast(89%);}
 
 /* Cuerpo de la tarjeta */
 .tarjeta .card-body {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  text-align: center;
-  height: 100%;
-  padding: 1rem;
-  position: relative;
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
+  padding: 0;
 }
 
 .tarjeta .card-title {
-  font-size: 1.8rem;
+  font-size: 1.25rem;
+  font-weight: 600;
   margin-bottom: 0.5rem;
+  color: #112F3B;
 }
 
 .tarjeta .card-text {
-  flex-grow: 1;
-  font-size: 1.1rem;
-  overflow-wrap: break-word;
+  font-size: 0.95rem;
+  color: #5a6c77;
+  line-height: 1.5;
+}
+
+/* Variantes de color para diferentes categorías */
+.tarjeta.primary::before {
+  background: linear-gradient(90deg, #23A7C1 0%, #42a5f5 100%);
+}
+
+.tarjeta.success::before {
+  background: linear-gradient(90deg, #4caf50 0%, #8bc34a 100%);
+}
+
+.tarjeta.warning::before {
+  background: linear-gradient(90deg, #ff9800 0%, #ffc107 100%);
+}
+
+.tarjeta.info::before {
+  background: linear-gradient(90deg, #9c27b0 0%, #e91e63 100%);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tarjeta {
+    min-height: 180px;
+  }
+  
+  .tarjeta img {
+    width: 50px;
+    height: 50px;
+  }
 }
 
 /* =======================
