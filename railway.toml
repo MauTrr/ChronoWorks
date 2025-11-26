@@ -1,8 +1,0 @@
-[build]
-builder = "maven"
-
-[deploy]
-startCommand = "java -jar target/*.jar"
-
-[build.env]
-JAVA_VERSION = "17"
