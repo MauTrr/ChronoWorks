@@ -1,6 +1,5 @@
 package com.example.chronoworks.config;
 
-import com.example.chronoworks.filter.AuthValidationFilter;
 import com.example.chronoworks.service.EmpleadoService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -85,9 +84,7 @@ public class SecurityConfig {
                                 response.sendRedirect("/login.html");
                             }
                         })
-                )
-                .addFilterBefore(new AuthValidationFilter(empleadoService),
-                        UsernamePasswordAuthenticationFilter.class);
+                );
 
         return http.build();
     }
