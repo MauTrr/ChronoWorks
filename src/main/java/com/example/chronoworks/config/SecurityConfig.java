@@ -72,11 +72,9 @@ public class SecurityConfig {
                     logout.permitAll();
                 })
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
-                        .invalidSessionUrl("/login.html")
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .maximumSessions(1)
                         .maxSessionsPreventsLogin(false)
-                        .expiredUrl("/login.html?session=expired")
                 )
                 .headers(headers -> headers
                         .cacheControl(cache -> cache.disable())
@@ -91,6 +89,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) -> {
                             if (request.getRequestURI().startsWith("/api")) {
                                 response.sendError(HttpStatus.UNAUTHORIZED.value(), "Unauthorized");
+                                response.getWriter().write("{\"error\": \"Unauthorized\"}");
                             } else {
                                 response.sendRedirect("/login.html");
                             }
