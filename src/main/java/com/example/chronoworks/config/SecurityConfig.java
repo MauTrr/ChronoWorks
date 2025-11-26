@@ -17,6 +17,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+
 import java.util.Arrays;
 
 @Configuration
@@ -35,7 +36,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // Archivos estáticos
+                        // Archivos estáticos y páginas públicas
                         .requestMatchers(
                                 "/",
                                 "/index.html",
@@ -43,18 +44,19 @@ public class SecurityConfig {
                                 "/css/**",
                                 "/js/**",
                                 "/img/**",
+                                "/static/**",
                                 "/favicon.ico"
                         ).permitAll()
 
                         // Endpoints públicos
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        .requestMatchers("/api/auth/validate").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/validate").authenticated()
 
                         // Páginas restringidas por rol
-                        .requestMatchers("/admin.html").hasRole("ADMIN")
-                        .requestMatchers("/agente.html").hasRole("AGENTE")
-                        .requestMatchers("/lider.html").hasRole("LIDER")
+                        .requestMatchers("/admin.html", "/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/agente.html", "/agente/**").hasRole("AGENTE")
+                        .requestMatchers("/lider.html", "/lider/**").hasRole("LIDER")
 
                         // APIs restringidas por rol
                         .requestMatchers("/api/Admin/**").hasRole("ADMIN")
@@ -64,10 +66,11 @@ public class SecurityConfig {
                         // Todo lo demás requiere autenticación
                         .anyRequest().authenticated()
                 )
-                .formLogin(form -> form.disable()) // deshabilitar login de Spring
+                .formLogin(form -> form.disable())
                 .logout(logout -> {
                     logout.logoutUrl("/api/auth/logout");
                     logout.logoutSuccessHandler((request, response, authentication) -> {
+                        response.setStatus(HttpStatus.OK.value());
                         response.setContentType("application/json");
                         response.getWriter().write("{\"success\": true}");
                     });
@@ -77,25 +80,28 @@ public class SecurityConfig {
                 })
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .sessionFixation().none()
                         .invalidSessionUrl("/login.html")
                 )
                 .headers(headers -> headers
                         .cacheControl(cache -> cache.disable())
                         .frameOptions(frame -> frame.sameOrigin())
-                        .httpStrictTransportSecurity(hsts -> hsts
-                                .includeSubDomains(true)
-                                .maxAgeInSeconds(31536000)
-                                .preload(true)
-                        )
                 )
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((request, response, authException) -> {
-                            if (request.getRequestURI().startsWith("/api")) {
-                                response.sendError(HttpStatus.UNAUTHORIZED.value());
+                            String requestUri = request.getRequestURI();
+
+                            if (requestUri.startsWith("/api")) {
+                                response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                                response.setContentType("application/json");
                                 response.getWriter().write("{\"error\": \"Unauthorized\"}");
                             } else {
+                                // NO redirigir a /error, ir directo a /login.html
                                 response.sendRedirect("/login.html");
                             }
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.sendRedirect("/login.html?error=access_denied");
                         })
                 )
                 .addFilterBefore(new AuthValidationFilter(empleadoService), UsernamePasswordAuthenticationFilter.class);
