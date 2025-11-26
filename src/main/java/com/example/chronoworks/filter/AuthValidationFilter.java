@@ -28,6 +28,11 @@ public class AuthValidationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
+        if(isProtectedPage(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if (isProtectedPage(request)) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -45,6 +50,18 @@ public class AuthValidationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isPublicPage(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return uri.equals("/") ||
+                uri.equals("/login.html") ||
+                uri.startsWith("/css/") ||
+                uri.startsWith("/js/") ||
+                uri.startsWith("/img/") ||
+                uri.equals("/favicon.ico") ||
+                uri.startsWith("/api/public/") ||
+                uri.startsWith("/api/auth/login");
     }
 
     private boolean isProtectedPage(HttpServletRequest request) {

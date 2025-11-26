@@ -13,6 +13,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -29,7 +34,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ Archivos estáticos (permitir TODO lo de /static)
+                        // Archivos estáticos
                         .requestMatchers(
                                 "/",
                                 "/index.html",
@@ -43,9 +48,7 @@ public class SecurityConfig {
                         // Endpoints públicos
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-
-                        // Validación de sesión
-                        .requestMatchers("/api/auth/validate").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/validate").authenticated()
 
                         // Páginas restringidas por rol
                         .requestMatchers("/admin.html").hasRole("ADMIN")
@@ -73,12 +76,14 @@ public class SecurityConfig {
                 })
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .invalidSessionUrl("/login.html")
                         .maximumSessions(1)
                         .maxSessionsPreventsLogin(false)
+                        .expiredUrl("/login.html?session=expired")
                 )
                 .headers(headers -> headers
                         .cacheControl(cache -> cache.disable())
-                        .frameOptions(frame -> frame.deny())
+                        .frameOptions(frame -> frame.sameOrigin())
                         .httpStrictTransportSecurity(hsts -> hsts
                                 .includeSubDomains(true)
                                 .maxAgeInSeconds(31536000)
@@ -88,16 +93,42 @@ public class SecurityConfig {
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((request, response, authException) -> {
                             if (request.getRequestURI().startsWith("/api")) {
-                                response.sendError(HttpStatus.UNAUTHORIZED.value(), "Unauthorized");
+                                response.sendError(HttpStatus.UNAUTHORIZED.value());
                                 response.getWriter().write("{\"error\": \"Unauthorized\"}");
                             } else {
                                 response.sendRedirect("/login.html");
                             }
                         })
-                );
-                //.addFilterBefore(new AuthValidationFilter(empleadoService), UsernamePasswordAuthenticationFilter.class);
+                )
+                .addFilterBefore(new AuthValidationFilter(empleadoService), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        String allowedOrigins = System.getenv("ALLOWED_ORIGINS");
+        if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
+            configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        } else {
+            configuration.setAllowedOrigins(Arrays.asList(
+                    "http://localhost:3000",
+                    "http://localhost:8080",
+                    "http://localhost:8888",
+                    "https://chronoworks-production.up.railway.app"
+            ));
+        }
+
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowCredentials(true);
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     @Bean
