@@ -94,8 +94,8 @@ public class SecurityConfig {
                                 response.sendRedirect("/login.html");
                             }
                         })
-                )
-                .addFilterBefore(new AuthValidationFilter(empleadoService), UsernamePasswordAuthenticationFilter.class);
+                );
+                //.addFilterBefore(new AuthValidationFilter(empleadoService), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
