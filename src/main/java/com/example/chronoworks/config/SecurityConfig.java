@@ -48,7 +48,7 @@ public class SecurityConfig {
                         // Endpoints públicos
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/auth/validate").authenticated()
+                        .requestMatchers("/api/auth/validate").authenticated()
 
                         // Páginas restringidas por rol
                         .requestMatchers("/admin.html").hasRole("ADMIN")
@@ -77,9 +77,6 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .invalidSessionUrl("/login.html")
-                        .maximumSessions(1)
-                        .maxSessionsPreventsLogin(false)
-                        .expiredUrl("/login.html?session=expired")
                 )
                 .headers(headers -> headers
                         .cacheControl(cache -> cache.disable())

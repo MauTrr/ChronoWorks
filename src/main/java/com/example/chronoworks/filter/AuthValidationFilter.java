@@ -25,23 +25,27 @@ public class AuthValidationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+                                    FilterChain filterChain) throws ServletException, IOException {
 
-        if(isProtectedPage(request)) {
+        String uri = request.getRequestURI();
+
+        // permitir recursos estáticos y endpoints públicos (evitar loop)
+        if (isPublicPage(uri)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        if (isProtectedPage(request)) {
+        // solo validar rutas protegidas (admin/lider/agente u otras que quiera proteger)
+        if (isProtectedPage(uri)) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (!isAuthenticated(authentication)) {
+                // redirigir a login.html y retornar (no seguir ejecutando)
                 response.sendRedirect("/login.html");
                 return;
             }
 
-            // Verificar si el usuario está activo
+            // comprobar si usuario activo (si aplica)
             if (authentication != null && !isUserActive(authentication)) {
                 SecurityContextHolder.clearContext();
                 response.sendRedirect("/login.html?error=account_inactive");
@@ -52,22 +56,27 @@ public class AuthValidationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private boolean isPublicPage(HttpServletRequest request) {
-        String uri = request.getRequestURI();
+    private boolean isPublicPage(String uri) {
         return uri.equals("/") ||
+                uri.equals("/index.html") ||
                 uri.equals("/login.html") ||
                 uri.startsWith("/css/") ||
                 uri.startsWith("/js/") ||
                 uri.startsWith("/img/") ||
+                uri.startsWith("/static/") ||
                 uri.equals("/favicon.ico") ||
                 uri.startsWith("/api/public/") ||
-                uri.startsWith("/api/auth/login");
+                uri.startsWith("/api/auth/login") ||
+                uri.startsWith("/api/auth/");
     }
 
-    private boolean isProtectedPage(HttpServletRequest request) {
-        return request.getRequestURI().startsWith("/admin") ||
-                request.getRequestURI().startsWith("/lider") ||
-                request.getRequestURI().startsWith("/agente");
+    private boolean isProtectedPage(String uri) {
+        return uri.startsWith("/admin") ||
+                uri.startsWith("/lider") ||
+                uri.startsWith("/agente") ||
+                uri.startsWith("/api/Admin/") ||
+                uri.startsWith("/api/lider/") ||
+                uri.startsWith("/api/agente/");
     }
 
     private boolean isAuthenticated(Authentication authentication) {
@@ -77,6 +86,7 @@ public class AuthValidationFilter extends OncePerRequestFilter {
     }
 
     private boolean isUserActive(Authentication authentication) {
+        // ajustar según tu servicio: buscar por username o id
         return empleadoService.findByUsuario(authentication.getName())
                 .map(empleado -> empleado.isActivo())
                 .orElse(false);
