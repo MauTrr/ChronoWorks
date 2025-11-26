@@ -66,8 +66,10 @@ public class AuthValidationFilter extends OncePerRequestFilter {
                 uri.startsWith("/static/") ||
                 uri.equals("/favicon.ico") ||
                 uri.startsWith("/api/public/") ||
-                uri.startsWith("/api/auth/login") ||
-                uri.startsWith("/api/auth/");
+                uri.startsWith("/api/auth/") ||
+                uri.startsWith("/error") ||
+                uri.equals("/health") ||
+                uri.startsWith("/public/");
     }
 
     private boolean isProtectedPage(String uri) {

@@ -51,7 +51,6 @@ public class SecurityConfig {
                         // Endpoints públicos
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/auth/validate").authenticated()
 
                         // Páginas restringidas por rol
                         .requestMatchers("/admin.html", "/admin/**").hasRole("ADMIN")
@@ -81,23 +80,23 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .sessionFixation().none()
-                        .invalidSessionUrl("/login.html")
-                )
-                .headers(headers -> headers
-                        .cacheControl(cache -> cache.disable())
-                        .frameOptions(frame -> frame.sameOrigin())
                 )
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((request, response, authException) -> {
                             String requestUri = request.getRequestURI();
 
                             if (requestUri.startsWith("/api")) {
+                                // APIs devuelven 401 en vez de redirigir
                                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
                                 response.setContentType("application/json");
                                 response.getWriter().write("{\"error\": \"Unauthorized\"}");
                             } else {
-                                // NO redirigir a /error, ir directo a /login.html
-                                response.sendRedirect("/login.html");
+                                // Páginas web: redirigir al login SOLO si no estás ya en login.html
+                                if (!requestUri.equals("/login.html")) {
+                                    response.sendRedirect("/login.html");
+                                } else {
+                                    response.setStatus(HttpStatus.OK.value());
+                                }
                             }
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
