@@ -4,8 +4,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -23,75 +21,80 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // 1. Deshabilitar CSRF para APIs
                 .csrf(csrf -> csrf.disable())
+
+                // 2. Configurar CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // 3. REGLAS DE AUTORIZACIÓN - SIMPLIFICADAS
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ TODOS los recursos estáticos y páginas HTML permitidos
+                        // ✅ PERMITIR TODOS los recursos estáticos y páginas HTML
                         .requestMatchers(
-                                "/", "/index.html", "/login.html", "/login",
-                                "/css/**", "/js/**", "/img/**", "/static/**",
-                                "/favicon.ico", "/error",
-                                "/admin/admin.html", "/lider/lider.html", "/agente/agente.html",
-                                "/access-denied.html"
+                                "/", "/index.html", "/login.html",
+                                "/health", "/error", "/favicon.ico",
+                                "/css/**", "/js/**", "/img/**", "/static/**"
                         ).permitAll()
 
-                        // ✅ APIs públicas
+                        // ✅ PERMITIR archivos HTML de las carpetas de roles
+                        .requestMatchers("/admin/**", "/lider/**", "/agente/**").permitAll()
+
+                        // ✅ PERMITIR APIs públicas
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/validate").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/current-role").permitAll()
 
-                        // ✅ APIs protegidas por rol
+                        // ✅ PROTEGER APIs por rol
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/lider/**").hasRole("LIDER")
                         .requestMatchers("/api/agente/**").hasRole("AGENTE")
 
-                        // ✅ Rutas de vistas protegidas
-                        .requestMatchers("/admin", "/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/lider", "/lider/**").hasRole("LIDER")
-                        .requestMatchers("/agente", "/agente/**").hasRole("AGENTE")
-
-                        // ✅ APIs de autenticación
-                        .requestMatchers("/api/auth/validate", "/api/auth/current-role").authenticated()
-
                         // ✅ Cualquier otra cosa requiere autenticación
                         .anyRequest().authenticated()
                 )
+
+                // 4. Deshabilitar form login
                 .formLogin(form -> form.disable())
-                .logout(logout -> {
-                    logout.logoutUrl("/api/auth/logout");
-                    logout.logoutSuccessHandler((request, response, auth) -> {
-                        response.setStatus(HttpStatus.OK.value());
-                        response.setContentType("application/json");
-                        response.getWriter().write("{\"success\": true}");
-                    });
-                    logout.deleteCookies("JSESSIONID");
-                    logout.invalidateHttpSession(true);
-                    logout.permitAll();
-                })
+
+                // 5. Configurar logout
+                .logout(logout -> logout
+                        .logoutUrl("/api/auth/logout")
+                        .logoutSuccessHandler((request, response, auth) -> {
+                            response.setStatus(HttpStatus.OK.value());
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"success\": true}");
+                        })
+                        .deleteCookies("JSESSIONID")
+                        .invalidateHttpSession(true)
+                        .permitAll()
+                )
+
+                // 6. Configuración de sesiones para Railway
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .sessionFixation().migrateSession()
-                        .invalidSessionUrl("/login.html")
-                        .maximumSessions(1)
                 )
+
+                // 7. Manejo de excepciones - EVITAR BUCLE
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((request, response, authException) -> {
-                            String requestUri = request.getRequestURI();
-                            System.out.println("🔐 Authentication required for: " + requestUri);
+                            String uri = request.getRequestURI();
+                            System.out.println("🔐 Authentication required for: " + uri);
 
-                            if (requestUri.startsWith("/api/")) {
+                            // Para APIs, devolver JSON
+                            if (uri.startsWith("/api/")) {
                                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
                                 response.setContentType("application/json");
                                 response.getWriter().write("{\"error\": \"Unauthorized\"}");
+                            }
+                            // Para páginas HTML, redirigir SOLO si no es login
+                            else if (!uri.equals("/login.html") && !uri.endsWith(".html")) {
+                                response.sendRedirect("/login.html");
                             } else {
-                                // Solo redirigir si no estamos ya en login
-                                if (!requestUri.equals("/login.html") && !requestUri.equals("/login")) {
-                                    System.out.println("🔄 Redirecting to login from: " + requestUri);
-                                    response.sendRedirect("/login.html");
-                                } else {
-                                    // Si ya estamos en login, solo devolver 401
-                                    response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                                }
+                                // Si ya está en login, no redirigir
+                                response.setStatus(HttpStatus.UNAUTHORIZED.value());
                             }
                         })
                 );
@@ -104,7 +107,6 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.asList(
                 "http://localhost:8080",
-                "http://localhost:8888",
                 "https://chronoworks-production.up.railway.app"
         ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
@@ -115,10 +117,5 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
     }
 }
