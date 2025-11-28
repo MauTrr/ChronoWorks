@@ -1,18 +1,21 @@
 package com.example.chronoworks.config;
 
+import com.example.chronoworks.service.EmpleadoService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 
 import java.util.Arrays;
 
@@ -20,40 +23,34 @@ import java.util.Arrays;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final EmpleadoService empleadoService;
+
+    public SecurityConfig(EmpleadoService empleadoService) {
+        this.empleadoService = empleadoService;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ TODOS los recursos estáticos y páginas HTML permitidos
-                        .requestMatchers(
-                                "/", "/index.html", "/login.html", "/login",
+                        // ✅ Públicas
+                        .requestMatchers("/", "/index.html", "/login.html",
                                 "/css/**", "/js/**", "/img/**", "/static/**",
-                                "/favicon.ico", "/error",
-                                "/admin/admin.html", "/lider/lider.html", "/agente/agente.html",
-                                "/access-denied.html"
-                        ).permitAll()
-
-                        // ✅ APIs públicas
+                                "/favicon.ico").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
 
-                        // ✅ APIs protegidas por rol
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/lider/**").hasRole("LIDER")
-                        .requestMatchers("/api/agente/**").hasRole("AGENTE")
+                        // ✅ Protegidas por rol
+                        .requestMatchers("/admin.html", "/admin", "/api/Admin/**").hasRole("ADMIN")
+                        .requestMatchers("/lider.html", "/lider", "/api/lider/**").hasRole("LIDER")
+                        .requestMatchers("/agente.html", "/agente", "/api/agente/**").hasRole("AGENTE")
 
-                        // ✅ Rutas de vistas protegidas
-                        .requestMatchers("/admin", "/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/lider", "/lider/**").hasRole("LIDER")
-                        .requestMatchers("/agente", "/agente/**").hasRole("AGENTE")
-
-                        // ✅ APIs de autenticación
+                        // ✅ Autenticado
                         .requestMatchers("/api/auth/validate", "/api/auth/current-role").authenticated()
 
-                        // ✅ Cualquier otra cosa requiere autenticación
+                        // ✅ Resto requiere autenticación
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form.disable())
@@ -72,26 +69,19 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .sessionFixation().migrateSession()
                         .invalidSessionUrl("/login.html")
-                        .maximumSessions(1)
+                )
+                .headers(headers -> headers
+                        .cacheControl(cache -> cache.disable())
+                        .frameOptions(frame -> frame.sameOrigin())
                 )
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((request, response, authException) -> {
-                            String requestUri = request.getRequestURI();
-                            System.out.println("🔐 Authentication required for: " + requestUri);
-
-                            if (requestUri.startsWith("/api/")) {
+                            if (request.getRequestURI().startsWith("/api")) {
                                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
                                 response.setContentType("application/json");
                                 response.getWriter().write("{\"error\": \"Unauthorized\"}");
                             } else {
-                                // Solo redirigir si no estamos ya en login
-                                if (!requestUri.equals("/login.html") && !requestUri.equals("/login")) {
-                                    System.out.println("🔄 Redirecting to login from: " + requestUri);
-                                    response.sendRedirect("/login.html");
-                                } else {
-                                    // Si ya estamos en login, solo devolver 401
-                                    response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                                }
+                                response.sendRedirect("/login.html");
                             }
                         })
                 );
