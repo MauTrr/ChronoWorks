@@ -1,4 +1,4 @@
-/*package com.example.chronoworks.filter;
+package com.example.chronoworks.filter;
 
 import com.example.chronoworks.service.EmpleadoService;
 import jakarta.servlet.FilterChain;
@@ -93,4 +93,4 @@ public class AuthValidationFilter extends OncePerRequestFilter {
                 .map(empleado -> empleado.isActivo())
                 .orElse(false);
     }
-}*/
+}
