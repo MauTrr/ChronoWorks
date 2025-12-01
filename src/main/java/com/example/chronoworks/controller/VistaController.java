@@ -26,7 +26,7 @@ public class VistaController {
 
     @GetMapping("/login")
     public String login() {
-        return "login";
+        return "forward:/login.html";
     }
 
     @GetMapping("/access-denied")
