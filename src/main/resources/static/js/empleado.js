@@ -37,6 +37,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('guardarEmpleadoBtn').addEventListener('click', crearEmpleado);
     document.getElementById('actualizarEmpleadoBtn').addEventListener('click', actualizarEmpleado);
+
+    const homeButton = document.getElementById('home-button');
+    if (homeButton) {
+        homeButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Redirigir al dashboard de admin
+            window.location.href = '/admin.html';
+        });
+    }
       
     const telefonoInput = document.getElementById('telefono');
     if (telefonoInput) {
