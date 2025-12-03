@@ -54,16 +54,6 @@ public class SecurityConfig {
                         // Validación de sesión
                         .requestMatchers("/api/auth/validate").authenticated()
 
-                        //Permitir las rutas de forward desde VistaController
-                        .requestMatchers("/admin/admin.html").hasRole("ADMIN")
-                        .requestMatchers("/lider/lider.html").hasRole("LIDER")
-                        .requestMatchers("/agente/agente.html").hasRole("AGENTE")
-
-                        // Páginas restringidas por rol
-                        .requestMatchers("/admin.html").hasRole("ADMIN")
-                        .requestMatchers("/agente.html").hasRole("AGENTE")
-                        .requestMatchers("/lider.html").hasRole("LIDER")
-
                         // APIs restringidas por rol
                         .requestMatchers("/api/Admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/lider/**").hasRole("LIDER")

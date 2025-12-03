@@ -1,27 +1,34 @@
 package com.example.chronoworks.controller;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class VistaController {
 
-    // Muestra la vista principal del Admin
     @GetMapping("/admin")
-    public String admin() {
-        return "forward:/admin/admin.html";
+    public String admin(Authentication authentication) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            return "redirect:/admin.html";  // ✅ Sin subcarpeta
+        }
+        return "redirect:/login.html";
     }
 
-    // Muestra la vista principal del Líder
     @GetMapping("/lider")
-    public String lider() {
-        return "forward:/lider/lider.html";
+    public String lider(Authentication authentication) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            return "redirect:/lider.html";  // ✅ Sin subcarpeta
+        }
+        return "redirect:/login.html";
     }
 
-    // Muestra la vista principal del Agente
     @GetMapping("/agente")
-    public String agente() {
-        return "forward:/agente/agente.html";
+    public String agente(Authentication authentication) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            return "redirect:/agente.html";  // ✅ Sin subcarpeta
+        }
+        return "redirect:/login.html";
     }
 
     @GetMapping("/login")
