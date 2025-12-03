@@ -36,7 +36,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         registry.addViewController("/").setViewName("forward:/index.html");
-        registry.addViewController("/index.html").setViewName("forward:/index.html");
         registry.addViewController("/login").setViewName("forward:/login.html");
         registry.addViewController("/access-denied").setViewName("forward:/access-denied.html");
     }
