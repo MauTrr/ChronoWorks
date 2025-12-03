@@ -1,16 +1,3 @@
-function mostrarContraseña(idcontraseña, idicono) {
-    let inputcontraseña = document.getElementById(idcontraseña);
-    let icon = document.getElementById(idicono);
-    if (inputcontraseña.type == "password" && icon.classList.contains("fa-eye")) {
-        inputcontraseña.type = "text";
-        icon.classList.replace("fa-eye", "fa-eye-slash")
-    }
-    else {
-        inputcontraseña.type = "password";
-        icon.classList.replace("fa-eye-slash", "fa-eye")
-    }
-
-} 
 function expandirObservaciones(selector) {
     document.querySelectorAll(`${selector} .ver-mas`).forEach((button) => {
         button.addEventListener("click", () => {
