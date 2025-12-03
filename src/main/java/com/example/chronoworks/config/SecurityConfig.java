@@ -35,22 +35,36 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ Públicas
-                        .requestMatchers("/", "/index.html", "/index.html/**", "/login.html",
-                                "/css/**", "/js/**", "/img/**", "/static/**",
-                                "/favicon.ico").permitAll()
+                        // ✅ Archivos estáticos (permitir TODO lo de /static)
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/index.html/**",
+                                "/login.html",
+                                "/css/**",
+                                "/js/**",
+                                "/img/**",
+                                "/favicon.ico"
+                        ).permitAll()
+
+                        // Endpoints públicos
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 
-                        // ✅ Protegidas por rol
-                        .requestMatchers("/admin.html", "/admin", "/api/Admin/**").hasRole("ADMIN")
-                        .requestMatchers("/lider.html", "/lider", "/api/lider/**").hasRole("LIDER")
-                        .requestMatchers("/agente.html", "/agente", "/api/agente/**").hasRole("AGENTE")
+                        // Validación de sesión
+                        .requestMatchers("/api/auth/validate").authenticated()
 
-                        // ✅ Autenticado
-                        .requestMatchers("/api/auth/validate", "/api/auth/current-role").authenticated()
+                        // Páginas restringidas por rol
+                        .requestMatchers("/admin.html").hasRole("ADMIN")
+                        .requestMatchers("/agente.html").hasRole("AGENTE")
+                        .requestMatchers("/lider.html").hasRole("LIDER")
 
-                        // ✅ Resto requiere autenticación
+                        // APIs restringidas por rol
+                        .requestMatchers("/api/Admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/lider/**").hasRole("LIDER")
+                        .requestMatchers("/api/agente/**").hasRole("AGENTE")
+
+                        // Todo lo demás requiere autenticación
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form.disable())
