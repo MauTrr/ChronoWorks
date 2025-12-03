@@ -138,74 +138,95 @@
 </div>
 
 <script>
+    // 1. DEFINIR LAS FUNCIONES QUE FALTAN
+    function initializeAdminApp() {
+        console.log('Admin app inicializada');
+        // Tu lógica de inicialización aquí
+    }
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        console.log('[1/3]Verificando autenticación...');
+    async function gracefulLogout() {
+        console.log('Ejecutando logout...');
+        try {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Error en logout API:', error);
+        }
+        // Redirigir de todos modos
+        window.location.href = '/login.html';
+    }
 
-        const authcHECK = await fetch('/api/auth/validate', {
-            credentials: 'include',
-            headers: {
-                'Cache-Control': 'no-cache',
-                'X-Requested-With': 'XMLHttpRequest'
+    // 2. TU CÓDIGO ORIGINAL (EXACTO)
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            console.log('[1/3]Verificando autenticación...');
+
+            const authcHECK = await fetch('/api/auth/validate', {
+                credentials: 'include',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!authcHECK.ok) {
+                console.warn('[Auth] Autenticación fallida, redirigiendo a login...');
+                await gracefulLogout();
+                return;
             }
-        });
 
-        if (!authcHECK.ok) {
-            console.warn('[Auth] Autenticación fallida, redirigiendo a login...');
+            const roleCheck = await fetch('/api/auth/current-role', {
+                credentials: 'include',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+
+            if (!roleCheck.ok) {
+                console.warn('[Role] Error al verificar rol, redirigiendo...');
+                await gracefulLogout();
+                return;
+            }
+
+            const { role, normalizedRole, isAdmin } = await roleCheck.json();
+            console.log(`[Role] Datos recibidos: ${role} (${normalizedRole})`, { isAdmin });
+
+            if (!isAdmin) {
+                console.warn(`[Role] Acceso denegado. Rol actual: ${role}`);
+                await gracefulLogout();
+                return;
+            }
+
+            console.log('[Access] Acceso concedido como administrador');
+            initializeAdminApp();
+
+        } catch (error) {
+            console.error('Error en verificación de acceso:', error);
             await gracefulLogout();
-            return;
         }
+    });
 
-        const roleCheck = await fetch('/api/auth/current-role', {
-            credentials: 'include',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
+    // 3. TU FUNCIÓN DE CORREOS (EXACTA)
+    async function enviarCorreo() {
+        const payload = {
+            roles: document.getElementById("roles").value.split(",").map(r => r.trim()),
+            subject: document.getElementById("subject").value,
+            body: document.getElementById("body").value
+        };
 
-        if (!roleCheck.ok) {
-            console.warn('[Role] Error al verificar rol, redirigiendo...')
-            await gracefulLogout();
-            return;
+        try {
+            const res = await fetch("/api/admin/email/send-massive", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const msg = await res.text();
+            alert(msg);
+        } catch (e) {
+            alert("Error enviando correos: " + e);
         }
-
-        const { role, normalizedRole, isAdmin } = await roleCheck.json();
-        console.log(`[Role] Datos recibidos: ${role} (${normalizedRole})`, { isAdmin });
-
-        if (!isAdmin) {
-            console.warn(`[Role] Acceso denegado. Rol actual: ${role}`);
-            await gracefulLogout();
-            return;
-        }
-
-        console.log('[Access] Acceso concedido como administrador');
-        initializeAdminApp();
-
-    } catch (error) {
-        console.error('Error en verificación de acceso:', error);
-        await gracefulLogout();
     }
-  });
-
-  async function enviarCorreo() {
-    const payload = {
-      roles: document.getElementById("roles").value.split(",").map(r => r.trim()),
-      subject: document.getElementById("subject").value,
-      body: document.getElementById("body").value
-    };
-
-    try {
-      const res = await fetch("/api/admin/email/send-massive", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      const msg = await res.text();
-      alert(msg);
-    } catch (e) {
-      alert("Error enviando correos: " + e);
-    }
-  }
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
