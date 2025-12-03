@@ -1,0 +1,347 @@
+/* =============================================
+   DASHBOARD LÍDER - REDISEÑADO
+   ============================================= */
+
+.dashboard-container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ==================== HEADER SUPERIOR ==================== */
+.header-info {
+    background: linear-gradient(135deg, #112F3B 0%, #1a4a5c 100%);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+.header-info h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.header-info h2 span {
+    color: #23A7C1;
+    font-weight: 700;
+}
+
+.header-info .text-muted {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+/* Botón de turno */
+.btn-turno {
+    background-color: #23A7C1;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(35, 167, 193, 0.3);
+}
+
+.btn-turno:hover {
+    background-color: #1a8a9e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(35, 167, 193, 0.4);
+}
+
+/* ==================== CARDS DE INFORMACIÓN ==================== */
+.info-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 1px solid rgba(35, 167, 193, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Acento superior animado */
+.info-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #23A7C1 0%, #42a5f5 100%);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+
+.info-card:hover::before {
+    transform: scaleX(1);
+}
+
+.info-card:hover {
+    box-shadow: 0 12px 32px rgba(35, 167, 193, 0.25);
+    transform: translateY(-4px);
+    border-color: rgba(35, 167, 193, 0.4);
+}
+
+.info-card h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #112F3B;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
+}
+
+.info-card p {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #23A7C1;
+    margin-bottom: 0;
+}
+
+/* Botón dentro de card */
+.btn-nueva-asignacion {
+    background-color: #23A7C1;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(35, 167, 193, 0.2);
+}
+
+.btn-nueva-asignacion:hover {
+    background-color: #1a8a9e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(35, 167, 193, 0.3);
+}
+
+/* ==================== CONTENEDORES DE TABLAS ==================== */
+.table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(35, 167, 193, 0.1);
+}
+
+.table-container h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #112F3B;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #23A7C1;
+}
+
+/* ==================== TABLAS ==================== */
+.table-container .table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background-color: #23A7C1;
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+    border: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.table tbody td {
+    padding: 0.875rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+    color: #495057;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Scroll en tablas */
+.table-responsive {
+    max-height: 500px;
+    overflow-y: auto;
+    border-radius: 8px;
+}
+
+.table-responsive::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #23A7C1;
+    border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #1a8a9e;
+}
+
+/* ==================== BADGES DE ESTADO ==================== */
+.badge {
+    padding: 0.4rem 0.75rem;
+    font-weight: 500;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    letter-spacing: 0.3px;
+}
+
+.badge-asignada {
+    background-color: #6c757d;
+    color: white;
+}
+
+.badge-en-curso {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.badge-completada {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-pendiente {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.badge-cancelada {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* ==================== FILTROS Y BÚSQUEDA ==================== */
+.table-container .form-control,
+.table-container .form-select {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.table-container .form-control:focus,
+.table-container .form-select:focus {
+    border-color: #23A7C1;
+    box-shadow: 0 0 0 0.2rem rgba(35, 167, 193, 0.25);
+}
+
+/* ==================== BOTONES DE ACCIÓN EN TABLAS ==================== */
+.table .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.table .btn-primary {
+    background-color: #23A7C1;
+    border-color: #23A7C1;
+}
+
+.table .btn-primary:hover {
+    background-color: #1a8a9e;
+    border-color: #1a8a9e;
+}
+
+.table .btn-danger:hover {
+    background-color: #c82333;
+}
+
+.table .btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.table .btn-success:hover {
+    background-color: #218838;
+}
+
+.table .btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+.table .btn-info:hover {
+    background-color: #138496;
+}
+
+/* ==================== ESTADOS VACÍOS ==================== */
+.table tbody td[colspan] {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.table tbody .fa-spinner,
+.table tbody .fa-tasks,
+.table tbody .fa-search {
+    display: block;
+    margin: 0 auto 1rem;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 992px) {
+    .dashboard-container {
+        padding: 1rem;
+    }
+
+    .header-info {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+
+    .info-card {
+        margin-bottom: 1rem;
+    }
+
+    .table-container {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-info h2 {
+        font-size: 1.25rem;
+    }
+
+    .info-card p {
+        font-size: 1.5rem;
+    }
+
+    .table thead th {
+        font-size: 0.8rem;
+        padding: 0.5rem;
+    }
+
+    .table tbody td {
+        font-size: 0.85rem;
+        padding: 0.5rem;
+    }
+}
