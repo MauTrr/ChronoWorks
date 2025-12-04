@@ -445,8 +445,8 @@ async function cargarEmpresas() {
             empresaSeleccionadaId = parseInt(e.target.value); 
             resetearSelecciones();
             if (empresaSeleccionadaId) {
-                await cargarLideresDisponibles();
-                await cargarAgentesDisponibles();
+                await cargarLideresDisponibles('LIDER');
+                await cargarAgentesDisponibles('AGENTE');
             }
         })
 
@@ -480,35 +480,36 @@ async function cargarEmpresas() {
     }
 }
 
-// ===========CARGAR LIDERES DISPONIBLES============ 
+// =========== CARGAR LIDERES DISPONIBLES ============ 
 async function cargarLideresDisponibles() {
     try {
         if (!empresaSeleccionadaId) return;
 
-        const response = await fetch (`/api/empleados?nombreRol=LIDER&idEmpresa=${empresaSeleccionadaId}&activo=true&size=1000`);
-        if (!response.ok) throw new Error ("Error al cargar lideres");
+        const response = await fetch(`/api/campanas/empleados/disponibles?rol=LIDER&idEmpresa=${empresaSeleccionadaId}&activo=true`);
+        if (!response.ok) throw new Error("Error al cargar líderes");
 
         const data = await response.json();
-        empleadosDisponibles = data.content;
-        console.log("Lideres cargados:", empleadosDisponibles);
+        empleadosDisponibles = data; // Ya es una lista, no data.content
+        console.log("Líderes cargados:", empleadosDisponibles);
 
     } catch (error) {
-        console.error("Error cargando lideres", error);
-        Swal.fire('Error', 'No se pudieron cargar los lideres disponibles', 'error');
+        console.error("Error cargando líderes", error);
+        Swal.fire('Error', 'No se pudieron cargar los líderes disponibles', 'error');
     }
 }
 
-// ===========CARGAR AGENTES DISPONIBLES============ 
+// =========== CARGAR AGENTES DISPONIBLES ============ 
 async function cargarAgentesDisponibles() {
     try {
         if (!empresaSeleccionadaId) return;
 
-        const response = await fetch(`/api/empleados?nombreRol=AGENTE&idEmpresa=${empresaSeleccionadaId}&activo=true&size=1000`);
+        const response = await fetch(`/api/campanas/empleados/disponibles?rol=AGENTE&idEmpresa=${empresaSeleccionadaId}&activo=true`);
         if (!response.ok) throw new Error("Error al cargar agentes");
 
         const data = await response.json();
-        empleadosDisponibles = data.content || data || [];
+        empleadosDisponibles = data; // Ya es una lista, no data.content
         console.log("Agentes cargados:", empleadosDisponibles);
+        
     } catch (error) {
         console.error("Error cargando agentes", error);
         Swal.fire('Error', 'No se pudieron cargar agentes disponibles', 'error');
@@ -997,14 +998,13 @@ async function cargarEmpleadosporRolEditar(rol) {
             });
             return;
         }
-        const response = await fetch(`/api/campanas/empleados/disponibles?rol=${rol}&idEmpresa=${idEmpresa}&activo=true&size=1000`);
+        const response = await fetch(`/api/campanas/empleados/disponibles?rol=${rol}&idEmpresa=${idEmpresa}&activo=true`);
         if(!response.ok) throw new Error('Error al cargar empleados disponibles');
 
         empleadosDisponiblesEditar = await response.json();
         console.log(`Empleados ${rol} disponibles:`, empleadosDisponiblesEditar);
 
         renderizarEmpleadosModalEditar(rol === 'LIDER');
-
     } catch (error) {
         console.error("Error al cargar empleados:", error);
         Swal.fire('Error', error.message, 'error');
@@ -1221,7 +1221,7 @@ async function cargarEmpleadosporRol(rol) {
             return;
         }
         
-        const response = await fetch(`/api/campanas/empleados/disponibles?rol=${rol}&idEmpresa=${empresaSeleccionadaId}&activo=true&size=1000`);
+        const response = await fetch(`/api/campanas/empleados/disponibles?rol=${rol}&idEmpresa=${empresaSeleccionadaId}&activo=true`);
         if(!response.ok) throw new Error('Error al cargar empleados disponibles');
 
         empleadosDisponibles = await response.json();
@@ -1603,4 +1603,13 @@ async function archivarCampana(idCampana) {
         console.error("Error al archivar:", error);
         Swal.fire('Error', 'No se pudo archivar la campaña', 'error');
     }
+}
+
+// ==================== FUNCION PARA RESETEAR SELECCIONES ====================
+function resetearSelecciones() {
+    liderSeleccionado = null;
+    agentesSeleccionados = [];
+    document.getElementById('inputLider').value = '';
+    document.getElementById('listaAgentes').innerHTML = '';
+    document.getElementById('contadorAgentes').textContent = '0 agentes seleccionados';
 }

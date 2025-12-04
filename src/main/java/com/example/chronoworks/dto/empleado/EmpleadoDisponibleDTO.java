@@ -8,4 +8,5 @@ public class EmpleadoDisponibleDTO {
     private String nombre;
     private String apellido;
     private String correo;
+    private boolean activo;
 }

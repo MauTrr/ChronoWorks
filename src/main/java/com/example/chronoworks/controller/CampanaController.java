@@ -138,18 +138,52 @@ public class CampanaController {
     @GetMapping("/empleados/disponibles")
     public ResponseEntity<List<EmpleadoDisponibleDTO>> getEmpleadosDisponibles(
             @RequestParam String rol,
-            @RequestParam(required = false) Integer idEmpresa // <-- lo agregas aquí
+            @RequestParam(required = false) Integer idEmpresa,
+            @RequestParam(required = false) Boolean activo
     ) {
+        // Obtener empleados por rol
         List<Empleado> empleados = empleadoRepository.findByNombreRol(rol);
-        List<Empleado> empleadosDisponibles = empleados.stream()
-                .filter(empleado -> {
-                    // Solo empleados NO asignados a campañas activas
-                    List<AsignacionCampana> asignacionesActivas = asignacionCampanaRepository
-                            .findByEmpleadoIdEmpleadoAndEstado(empleado.getIdEmpleado(), AsignacionCampanaEstado.ACTIVA);
-                    return asignacionesActivas.isEmpty();
-                })
-                .toList();
-        List<EmpleadoDisponibleDTO> respuesta = empleadosDisponibles.stream()
+
+        // Filtrar por estado activo si se especifica
+        if (activo != null) {
+            empleados = empleados.stream()
+                    .filter(empleado -> empleado.isActivo() == activo)
+                    .toList();
+        }
+
+        // Si se especifica idEmpresa, filtrar empleados que NO estén asignados
+        // a campañas activas de ESA empresa específica
+        if (idEmpresa != null) {
+            empleados = empleados.stream()
+                    .filter(empleado -> {
+                        // Buscar si el empleado está asignado a alguna campaña activa
+                        // de la empresa especificada
+                        List<AsignacionCampana> asignacionesActivas = asignacionCampanaRepository
+                                .findByEmpleadoIdEmpleadoAndEstado(empleado.getIdEmpleado(), AsignacionCampanaEstado.ACTIVA);
+
+                        // Si no tiene asignaciones activas, está disponible
+                        if (asignacionesActivas.isEmpty()) {
+                            return true;
+                        }
+
+                        // Si tiene asignaciones activas, verificar si son de la misma empresa
+                        return asignacionesActivas.stream()
+                                .noneMatch(asignacion ->
+                                        asignacion.getCampana().getEmpresa().getIdEmpresa().equals(idEmpresa));
+                    })
+                    .toList();
+        } else {
+            // Sin filtro de empresa: solo empleados sin asignaciones activas
+            empleados = empleados.stream()
+                    .filter(empleado -> {
+                        List<AsignacionCampana> asignacionesActivas = asignacionCampanaRepository
+                                .findByEmpleadoIdEmpleadoAndEstado(empleado.getIdEmpleado(), AsignacionCampanaEstado.ACTIVA);
+                        return asignacionesActivas.isEmpty();
+                    })
+                    .toList();
+        }
+
+        List<EmpleadoDisponibleDTO> respuesta = empleados.stream()
                 .map(empleado -> {
                     EmpleadoDisponibleDTO dto = new EmpleadoDisponibleDTO();
                     dto.setIdEmpleado(empleado.getIdEmpleado());
