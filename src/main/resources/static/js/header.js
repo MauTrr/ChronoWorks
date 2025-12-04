@@ -1,8 +1,8 @@
 // Mapeo de roles a rutas físicas
 const ROLE_PATHS = {
-    'ADMIN': '/admin/admin.html',
-    'LIDER': '/lider/lider.html',
-    'AGENTE': '/agente/agente.html'
+    'ADMIN': '/admin.html',
+    'LIDER': '/lider.html',
+    'AGENTE': '/agente.html'
 };
 
 // Función para navegar a la página de inicio según el rol
