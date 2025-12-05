@@ -5,6 +5,8 @@ import com.example.chronoworks.dto.campana.*;
 import com.example.chronoworks.dto.empleado.EmpleadoDisponibleDTO;
 import com.example.chronoworks.dto.empleado.RespuestaEmpleadoDTO;
 import com.example.chronoworks.dto.tarea.TareaDTO;
+import com.example.chronoworks.exception.BadRequestException;
+import com.example.chronoworks.exception.ResourceNotFoundException;
 import com.example.chronoworks.model.AsignacionCampana;
 import com.example.chronoworks.model.Empleado;
 import com.example.chronoworks.model.enums.AsignacionCampanaEstado;
@@ -27,7 +29,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -47,15 +52,61 @@ public class CampanaController {
     }
 
     @PostMapping
-    public ResponseEntity<RespuestaCampanaDTO> crearCampana(@Valid @RequestBody CrearCampanaCompletaDTO request) {
+    public ResponseEntity<?> crearCampana(@Valid @RequestBody CrearCampanaCompletaDTO request) {
+        try {
+            System.out.println("=== CREAR CAMPAÑA ===");
+            System.out.println("Request recibido:");
+            System.out.println("- Nombre campaña: " + request.getCampana().getNombreCampana());
+            System.out.println("- ID Empresa: " + request.getCampana().getIdEmpresa());
+            System.out.println("- Número de asignaciones: " +
+                    (request.getAsignaciones() != null ? request.getAsignaciones().size() : 0));
 
-        System.out.println("=== LLAMADA A CREAR CAMPANA ===");
-        System.out.println("Request: " + request);
+            if (request.getAsignaciones() != null) {
+                request.getAsignaciones().forEach(a -> {
+                    System.out.println("  - Empleado ID: " + a.getIdEmpleado() + ", Es líder: " + a.getEsLider());
+                });
+            }
 
-        RespuestaCampanaDTO nuevaCampana = campanaService.crearCampana(
-                request.getCampana(),
-                request.getAsignaciones());
-        return new ResponseEntity<>(nuevaCampana, HttpStatus.CREATED);
+            RespuestaCampanaDTO nuevaCampana = campanaService.crearCampana(
+                    request.getCampana(),
+                    request.getAsignaciones());
+
+            System.out.println("Campaña creada exitosamente: ID " + nuevaCampana.getIdCampana());
+            return new ResponseEntity<>(nuevaCampana, HttpStatus.CREATED);
+
+        } catch (BadRequestException e) {
+            System.err.println("BadRequestException: " + e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Solicitud inválida");
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+
+        } catch (ResourceNotFoundException e) {
+            System.err.println("ResourceNotFoundException: " + e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Recurso no encontrado");
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+
+        } catch (IllegalStateException e) {
+            System.err.println("IllegalStateException: " + e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Estado inválido");
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+
+        } catch (Exception e) {
+            System.err.println("ERROR INESPERADO AL CREAR CAMPAÑA:");
+            e.printStackTrace();
+
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Error interno del servidor");
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("timestamp", LocalDateTime.now().toString());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(errorResponse);
+        }
     }
 
     @GetMapping("/{idCampana}")
