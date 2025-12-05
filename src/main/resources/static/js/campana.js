@@ -488,13 +488,12 @@ async function cargarLideresDisponibles() {
             return;
         }
 
-        const response = await fetch(
-            `/api/campanas/empleados/disponibles?rol=LIDER&idEmpresa=${empresaSeleccionadaId}`
-        );
-
-        if (!response.ok) {
-            throw new Error("Error al cargar líderes disponibles");
-        }
+        const url = `/api/campanas/empleados/disponibles?rol=LIDER&idEmpresa=${empresaSeleccionadaId}`;
+        const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'include',
+            headers: { 'Accept': 'application/json' }
+        });
 
         empleadosDisponibles = await response.json();
         console.log("Líderes disponibles cargados:", empleadosDisponibles);

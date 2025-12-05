@@ -104,9 +104,9 @@ public class SecurityConfig {
         config.setAllowedOrigins(Arrays.asList(
                 "http://localhost:8080",
                 "http://localhost:8888",
-                "https://chronoworks-production.up.railway.app"
+                "https://chronoworks-uf0m.onrender.com"
         ));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowCredentials(true);
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setMaxAge(3600L);
