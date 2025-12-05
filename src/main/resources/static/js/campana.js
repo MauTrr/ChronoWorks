@@ -118,6 +118,7 @@ async function guardarCampana() {
 
         const response = await fetch(url, {
             method: method,
+            credentials: 'include', // AÑADIDO: Incluye cookies de sesión
             headers: { 
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -189,7 +190,7 @@ function mostrarErrores(errores, formId = 'campanaForm') {
 }
 
 function validarFormulario(formData) {
-    const errores = [];
+    const errores = {};
 
     if (!formData.get('nombreCampana')?.trim()) errores.nombreCampana = 'El nombre de la campaña es obligatorio';
     if (!formData.get('fechaInicio')) errores.fechaInicio = 'La fecha de inicio es obligatoria';
@@ -203,8 +204,6 @@ function validarFormulario(formData) {
     }
 
     return errores;
-
-
 }
 
 async function actualizarCampana() {
@@ -250,6 +249,7 @@ async function actualizarCampana() {
 
         const response = await fetch(`/api/campanas/${idCampana}`, {
             method: 'PUT',
+            credentials: 'include', // AÑADIDO: Incluye cookies de sesión
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({ campana: campanaDTO, asignaciones })
         });
@@ -418,7 +418,9 @@ async function cargarCampanas() {
             }
         }
 
-        const response = await fetch(`/api/campanas?${params.toString()}`);
+        const response = await fetch(`/api/campanas?${params.toString()}`, {
+            credentials: 'include' // AÑADIDO: Incluye cookies de sesión
+        });
 
         if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
 
@@ -445,12 +447,14 @@ async function cargarEmpresas() {
             empresaSeleccionadaId = parseInt(e.target.value); 
             resetearSelecciones();
             if (empresaSeleccionadaId) {
-                await cargarLideresDisponibles('LIDER');
-                await cargarAgentesDisponibles('AGENTE');
+                await cargarLideresDisponibles();
+                await cargarAgentesDisponibles();
             }
         })
 
-        const response = await fetch('/api/empresa?page=0&size=1000');
+        const response = await fetch('/api/empresa?page=0&size=1000', {
+            credentials: 'include' // AÑADIDO: Incluye cookies de sesión
+        });
         const data = await response.json();
         const empresas = data.content || [];
 
@@ -483,62 +487,54 @@ async function cargarEmpresas() {
 // =========== CARGAR LIDERES DISPONIBLES ============ 
 async function cargarLideresDisponibles() {
     try {
-        if (!empresaSeleccionadaId) {
-            Swal.fire('Advertencia', 'Selecciona una empresa primero', 'warning');
-            return;
-        }
+        if (!empresaSeleccionadaId) return;
 
-        const url = `/api/campanas/empleados/disponibles?rol=LIDER&idEmpresa=${empresaSeleccionadaId}`;
-        const response = await fetch(url, {
-            method: 'GET',
-            credentials: 'include',
-            headers: { 'Accept': 'application/json' }
-        });
+        const response = await fetch(
+            `/api/campanas/empleados/disponibles?rol=Lider&idEmpresa=${empresaSeleccionadaId}&activo=true`, 
+            {
+                credentials: 'include' // AÑADIDO: Incluye cookies de sesión
+            }
+        );
+        if (!response.ok) throw new Error("Error al cargar lideres");
 
-        empleadosDisponibles = await response.json();
-        console.log("Líderes disponibles cargados:", empleadosDisponibles);
-
-        // Renderizar opciones en el modal
-        renderizarLideresModal();
+        const data = await response.json();
+        empleadosDisponibles = data;
+        console.log("Lideres disponibles cargados:", empleadosDisponibles);
 
     } catch (error) {
-        console.error("Error cargando líderes", error);
-        Swal.fire('Error', 'No se pudieron cargar los líderes disponibles', 'error');
+        console.error("Error cargando lideres", error);
+        Swal.fire('Error', 'No se pudieron cargar los lideres disponibles', 'error');
     }
 }
 
 // =========== CARGAR AGENTES DISPONIBLES ============ 
 async function cargarAgentesDisponibles() {
     try {
-        if (!empresaSeleccionadaId) {
-            Swal.fire('Advertencia', 'Selecciona una empresa primero', 'warning');
-            return;
-        }
+        if (!empresaSeleccionadaId) return;
 
         const response = await fetch(
-            `/api/campanas/empleados/disponibles?rol=AGENTE&idEmpresa=${empresaSeleccionadaId}`
+            `/api/campanas/empleados/disponibles?rol=Agente&idEmpresa=${empresaSeleccionadaId}&activo=true`, 
+            {
+                credentials: 'include' // AÑADIDO: Incluye cookies de sesión
+            }
         );
+        if (!response.ok) throw new Error("Error al cargar agentes");
 
-        if (!response.ok) {
-            throw new Error("Error al cargar agentes disponibles");
-        }
-
-        empleadosDisponibles = await response.json();
+        const data = await response.json();
+        empleadosDisponibles = data;
         console.log("Agentes disponibles cargados:", empleadosDisponibles);
-
-        // Renderizar opciones en el modal
-        renderizarAgentesModal();
-
     } catch (error) {
         console.error("Error cargando agentes", error);
         Swal.fire('Error', 'No se pudieron cargar agentes disponibles', 'error');
     }
 }
 
-// ===========CARGAR AGENTES DISPONIBLES============ 
+// =========== CARGAR ASIGNACIONES CAMPAÑA ============ 
 async function cargarAsignacionesCampana(idCampana) {
     try {
-        const response = await fetch(`/api/campanas/${idCampana}/asignaciones`);
+        const response = await fetch(`/api/campanas/${idCampana}/asignaciones`, {
+            credentials: 'include' // AÑADIDO: Incluye cookies de sesión
+        });
         if (!response.ok) throw new Error("Error al cargar asignaciones"); 
 
         const asignaciones = await response.json();
@@ -613,7 +609,9 @@ function renderizarCampanas(campanas) {
 
 async function mostrarEmpleadosAsignados(idCampana) {
     try {
-        const response = await fetch(`/api/campanas/${idCampana}/asignaciones`);
+        const response = await fetch(`/api/campanas/${idCampana}/asignaciones`, {
+            credentials: 'include' // AÑADIDO: Incluye cookies de sesión
+        });
         if (!response.ok) throw new Error("Error al cargar asignaciones");
 
         const asignaciones = await response.json();
@@ -754,6 +752,7 @@ async function cambiarEstadoCampana(idCampana, nuevoEstado) {
     try {
         const response = await fetch(`/api/campanas/${idCampana}/estado`, {
             method: 'PUT',
+            credentials: 'include', // AÑADIDO: Incluye cookies de sesión
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 estado: nuevoEstado,
@@ -761,7 +760,7 @@ async function cambiarEstadoCampana(idCampana, nuevoEstado) {
             })
         });
 
-        if (!response) throw new Error(await response.text());
+        if (!response.ok) throw new Error(await response.text());
 
         Swal.fire('Éxito', `Campaña ${nuevoEstado.toLowerCase()} correctamente`, 'success');
         cargarCampanas();
@@ -794,7 +793,9 @@ async function generarReporteExcel() {
         });
 
         // Hacer la petición al endpoint de Excel
-        const response = await fetch(`/api/campanas/reporte-excel?${params.toString()}`);
+        const response = await fetch(`/api/campanas/reporte-excel?${params.toString()}`, {
+            credentials: 'include' // AÑADIDO: Incluye cookies de sesión
+        });
 
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
@@ -902,7 +903,9 @@ function abrirModal(campana = {}) {
 // ==================== MODALES ====================
 async function abrirModalEdicion(idCampana) {
     try {
-        const response = await fetch(`/api/campanas/${idCampana}`);
+        const response = await fetch(`/api/campanas/${idCampana}`, {
+            credentials: 'include' // AÑADIDO: Incluye cookies de sesión
+        });
         if (!response.ok) throw new Error('Campaña no encontrada');
 
         const campana = await response.json();
@@ -933,7 +936,9 @@ async function abrirModalEdicion(idCampana) {
 
 async function cargarAsignacionesCampanaEditar(idCampana) {
     try {
-        const response = await fetch(`/api/campanas/${idCampana}/asignaciones`);
+        const response = await fetch(`/api/campanas/${idCampana}/asignaciones`, {
+            credentials: 'include' // AÑADIDO: Incluye cookies de sesión
+        });
         if (!response.ok) throw new Error("Error al cargar asignaciones");
 
         const asignaciones = await response.json();
@@ -991,11 +996,11 @@ function abrirModalSeleccionEditar(tipo) {
     const btnConfirmar = document.getElementById('btnConfirmarSeleccionEditar');
     if (tipo === 'lider') {
         btnConfirmar.style.display = 'none';
-        cargarEmpleadosporRolEditar('LIDER');
+        cargarEmpleadosporRolEditar('Lider');
     } else {
         btnConfirmar.style.display = 'block';
         btnConfirmar.onclick = confirmarSeleccionAgentesEditar;
-        cargarEmpleadosporRolEditar('AGENTE');
+        cargarEmpleadosporRolEditar('Agente');
     }
 
     modal.show();
@@ -1017,13 +1022,18 @@ async function cargarEmpleadosporRolEditar(rol) {
             });
             return;
         }
-        const response = await fetch(`/api/campanas/empleados/disponibles?rol=${rol}&idEmpresa=${idEmpresa}&activo=true`);
+        const response = await fetch(
+            `/api/campanas/empleados/disponibles?rol=${rol}&idEmpresa=${idEmpresa}&activo=true`,
+            {
+                credentials: 'include' // AÑADIDO: Incluye cookies de sesión
+            }
+        );
         if(!response.ok) throw new Error('Error al cargar empleados disponibles');
 
         empleadosDisponiblesEditar = await response.json();
         console.log(`Empleados ${rol} disponibles:`, empleadosDisponiblesEditar);
 
-        renderizarEmpleadosModalEditar(rol === 'LIDER');
+        renderizarEmpleadosModalEditar(rol === 'Lider');
     } catch (error) {
         console.error("Error al cargar empleados:", error);
         Swal.fire('Error', error.message, 'error');
@@ -1134,7 +1144,9 @@ async function guardarCambiosEdicion() {
         }
 
         // Obtener los datos actuales para completar los campos que no se editan
-        const responseCampana = await fetch(`/api/campanas/${idCampana}`);
+        const responseCampana = await fetch(`/api/campanas/${idCampana}`, {
+            credentials: 'include' // AÑADIDO: Incluye cookies de sesión
+        });
         if (!responseCampana.ok) throw new Error('Error al obtener campaña');
         const campanaActual = await responseCampana.json();
 
@@ -1167,6 +1179,7 @@ async function guardarCambiosEdicion() {
 
         const response = await fetch(`/api/campanas/${idCampana}`, {
             method: 'PUT',
+            credentials: 'include', // AÑADIDO: Incluye cookies de sesión
             headers: { 
                 'Content-Type': 'application/json', 
                 'Accept': 'application/json' 
@@ -1216,11 +1229,11 @@ function abrirModalSeleccion(tipo) {
     const btnConfirmar = document.getElementById('btnConfirmarSeleccion');
     if (tipo === 'lider') {
         btnConfirmar.style.display = 'none';
-        cargarEmpleadosporRol('LIDER');
+        cargarEmpleadosporRol('Lider');
     } else {
         btnConfirmar.style.display = 'block';
         btnConfirmar.onclick = confirmarSeleccionAgentes;
-        cargarEmpleadosporRol('AGENTE');
+        cargarEmpleadosporRol('Agente');
     }
 
     modal.show();
@@ -1240,13 +1253,18 @@ async function cargarEmpleadosporRol(rol) {
             return;
         }
         
-        const response = await fetch(`/api/campanas/empleados/disponibles?rol=${rol}&idEmpresa=${empresaSeleccionadaId}&activo=true`);
+        const response = await fetch(
+            `/api/campanas/empleados/disponibles?rol=${rol}&idEmpresa=${empresaSeleccionadaId}&activo=true`,
+            {
+                credentials: 'include' // AÑADIDO: Incluye cookies de sesión
+            }
+        );
         if(!response.ok) throw new Error('Error al cargar empleados disponibles');
 
         empleadosDisponibles = await response.json();
         console.log(`Empleados ${rol} disponibles:`, empleadosDisponibles);
 
-        renderizarEmpleadosModal(rol === 'LIDER');
+        renderizarEmpleadosModal(rol === 'Lider');
     } catch (error) {
         console.error("Error al cargar empleados:", error);
         Swal.fire('Error', error.message, 'error');
@@ -1401,7 +1419,6 @@ function filtrarEmpleadosModal() {
 }
 
 // ==================== EXPORTAR PDF ====================
-// ==================== EXPORTAR PDF ====================
 async function generarReportePDF() {
     let btnPdf = document.getElementById('generarPdfBtn');
     
@@ -1453,7 +1470,9 @@ async function generarReportePDF() {
         console.log('Solicitando PDF con filtros:', Object.fromEntries(params));
 
         // Hacer la petición al endpoint de PDF
-        const response = await fetch(`/api/campanas/reporte-pdf?${params.toString()}`);
+        const response = await fetch(`/api/campanas/reporte-pdf?${params.toString()}`, {
+            credentials: 'include' // AÑADIDO: Incluye cookies de sesión
+        });
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -1529,6 +1548,7 @@ async function procesarCargaMasiva() {
         
         const response = await fetch('/api/campanas/carga-masiva', {
             method: 'POST',
+            credentials: 'include', // AÑADIDO: Incluye cookies de sesión
             body: formData
         });
         
@@ -1638,7 +1658,8 @@ async function archivarCampana(idCampana) {
         if (!result.isConfirmed) return;
 
         const response = await fetch(`/api/campanas/${idCampana}/archivar`, {
-            method: 'PUT'
+            method: 'PUT',
+            credentials: 'include' // AÑADIDO: Incluye cookies de sesión
         });
 
         if (!response.ok) throw new Error('Error al archivar');
@@ -1660,3 +1681,21 @@ function resetearSelecciones() {
     document.getElementById('listaAgentes').innerHTML = '';
     document.getElementById('contadorAgentes').textContent = '0 agentes seleccionados';
 }
+
+// ==================== FUNCIÓN PARA VERIFICAR SESIÓN ====================
+function verificarSesion() {
+    const cookies = document.cookie;
+    console.log('Cookies disponibles:', cookies);
+    
+    const tieneSesion = cookies.includes('JSESSIONID') || cookies.includes('SESSION');
+    console.log('¿Tiene sesión activa?', tieneSesion);
+    
+    if (!tieneSesion) {
+        console.warn('No se encontró cookie de sesión. El usuario podría no estar autenticado.');
+    }
+    
+    return tieneSesion;
+}
+
+// Verificar sesión al cargar la página
+document.addEventListener('DOMContentLoaded', verificarSesion);
