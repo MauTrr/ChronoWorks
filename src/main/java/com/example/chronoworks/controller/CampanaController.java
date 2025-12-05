@@ -142,7 +142,7 @@ public class CampanaController {
     ) {
         try {
             // 1. Obtener todos los empleados activos con el rol especificado
-            List<Empleado> empleados = empleadoRepository.findByNombreRol(rol);
+            List<Empleado> empleados = empleadoRepository.findByNombreRolIgnoreCase(rol);
 
             empleados = empleados.stream()
                     .filter(Empleado::isActivo)
