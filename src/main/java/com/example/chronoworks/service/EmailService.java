@@ -2,7 +2,9 @@ package com.example.chronoworks.service;
 
 import com.example.chronoworks.model.Empleado;
 import com.example.chronoworks.repository.EmpleadoRepository;
+import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.eclipse.angus.mail.smtp.SMTPSendFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,10 +25,11 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final EmpleadoRepository empleadoRepository;
     private final String defaultFrom;
+
     private final Logger log = LoggerFactory.getLogger(EmailService.class);
 
-    // Tiempo entre correos para Mailtrap Free (1 email/seg)
-    private static final long MAILTRAP_DELAY_MS = 1200; // 1.2 segundos
+    // Mailtrap Free → máximo 1 correo cada ~3 segundos
+    private static final long MAILTRAP_DELAY_MS = 3200;
 
     public EmailService(JavaMailSender mailSender,
                         EmpleadoRepository empleadoRepository,
@@ -37,12 +40,13 @@ public class EmailService {
     }
 
     /**
-     * Obtiene lista de correos de empleados según roles
+     * Obtener correos de empleados según roles
      */
     public List<String> obtenerCorreosPorRoles(List<String> roles) {
         if (roles == null || roles.isEmpty()) {
             return List.of();
         }
+
         return empleadoRepository.findByNombreRolIn(roles).stream()
                 .map(Empleado::getCorreo)
                 .filter(Objects::nonNull)
@@ -53,87 +57,96 @@ public class EmailService {
     }
 
     /**
-     * Envío masivo con control de rate limit y retry automático
+     * Envío masivo con ejecución asíncrona
      */
     @Async("mailTaskExecutor")
     public void sendMassiveEmail(List<String> destinatarios, String asunto, String contenidoHtml) {
 
         if (destinatarios == null || destinatarios.isEmpty()) {
-            log.warn("Lista de destinatarios vacía, no se envía nada.");
+            log.warn("Lista vacía. No se enviaron correos.");
             return;
         }
 
-        log.info("Iniciando envío masivo a {} destinatarios...", destinatarios.size());
+        log.info("Iniciando envío masivo. {} destinatarios.", destinatarios.size());
 
         for (String to : destinatarios) {
-
-            boolean enviado = false;
-            int intentos = 0;
-
-            while (!enviado && intentos < 3) {
-                try {
-                    intentos++;
-                    enviarUno(to, asunto, contenidoHtml, true);
-                    enviado = true;
-
-                } catch (MailException ex) {
-
-                    // Caso límite Mailtrap: "Too many emails per second"
-                    if (ex.getMessage().contains("Too many emails")) {
-                        log.warn("Rate limit alcanzado. Reintentando en 1500ms... ({}/3)", intentos);
-                        dormir(1500);
-                    } else {
-                        log.error("Fallo SMTP permanente con {}: {}", to, ex.getMessage());
-                        break;
-                    }
-
-                } catch (Exception e) {
-                    log.error("Error enviando a {}: {}", to, e.getMessage());
-                    break;
-                }
-            }
-
-            // Delay para respetar 1 email por segundo en Mailtrap Free
-            dormir(MAILTRAP_DELAY_MS);
+            enviarConRateLimit(to, asunto, contenidoHtml);
         }
 
         log.info("Envío masivo completado.");
     }
 
     /**
-     * Envío individual con logs y control de errores
+     * Controlador de rate-limit + reintentos
      */
-    public void enviarUno(String to, String asunto, String contenido, boolean esHtml) {
+    private void enviarConRateLimit(String to, String asunto, String contenidoHtml) {
+        int intentos = 0;
 
-        try {
-            MimeMessage mime = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(
-                    mime,
-                    MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
-                    StandardCharsets.UTF_8.name()
-            );
+        while (intentos < 3) {
+            try {
+                enviarUno(to, asunto, contenidoHtml, true);
+                dormir(MAILTRAP_DELAY_MS);  // delay obligatorio entre correos
+                return;
 
-            helper.setTo(to);
-            helper.setSubject(asunto);
-            helper.setFrom(defaultFrom);
+            } catch (MailException ex) {
+                if (esRateLimit(ex)) {
+                    intentos++;
+                    log.warn("Rate limit alcanzado. Reintentando en 3500ms... ({}/3)", intentos);
+                    dormir(3500);
+                } else {
+                    log.error("Fallo SMTP enviando correo a {}: {}", to, ex.getMessage());
+                    return; // no reintentar si no es rate limit
+                }
 
-            helper.setText(contenido, esHtml);
-
-            mailSender.send(mime);
-            log.info("Correo enviado a {}", to);
-
-        } catch (MailException ex) {
-            log.error("Fallo SMTP enviando correo a {}: {}", to, ex.getMessage(), ex);
-            throw ex;
-
-        } catch (Exception ex) {
-            log.error("Error general enviando correo a {}: {}", to, ex.getMessage(), ex);
-            throw new RuntimeException("Error enviando correo a " + to, ex);
+            } catch (Exception ex) {
+                log.error("Error general enviando correo a {}: {}", to, ex.getMessage());
+                return;
+            }
         }
+
+        log.error("No se pudo enviar el correo a {} después de 3 intentos por rate limit.", to);
     }
 
     /**
-     * Helper para controlar rate limit
+     * Enviar un correo individual
+     */
+    public void enviarUno(String to, String asunto, String contenido, boolean esHtml)
+            throws MessagingException {
+
+        MimeMessage mime = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(
+                mime,
+                MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
+                StandardCharsets.UTF_8.name()
+        );
+
+        helper.setTo(to);
+        helper.setFrom(defaultFrom);
+        helper.setSubject(asunto);
+
+        if (esHtml) {
+            helper.setText(contenido, true);
+        } else {
+            helper.setText(contenido, false);
+        }
+
+        mailSender.send(mime);
+        log.info("Correo enviado a {}", to);
+    }
+
+    /**
+     * Detecta si Spring Mail lanzó un error de rate limit (550)
+     */
+    private boolean esRateLimit(Exception ex) {
+        Throwable causa = ex.getCause();
+
+        return (causa instanceof SMTPSendFailedException failed) &&
+                failed.getMessage() != null &&
+                failed.getMessage().contains("Too many emails per second");
+    }
+
+    /**
+     * Pequeño delay sin interrumpir el hilo
      */
     private void dormir(long ms) {
         try {
