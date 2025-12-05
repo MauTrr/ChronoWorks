@@ -71,7 +71,7 @@ async function initializeAgenteDashboard() {
 
 // ==================== CARGA DE DATOS ====================
 async function cargarDashboardData() {
-    console.log("📊 Cargando datos del dashboard agente...");
+    console.log("Cargando datos del dashboard agente...");
     try {
         // 1. Primero cargar la campaña del agente
         await cargarCampanaActual();
@@ -88,26 +88,26 @@ async function cargarDashboardData() {
 
 async function cargarCampanaActual() {
     try {
-        console.log("🎯 Cargando campaña actual del agente...");
+        console.log("Cargando campaña actual del agente...");
 
         // CORREGIDO: Usar endpoint existente para agente
-        const response = await fetch(`/api/campanas/empleado/${empleadoActualId}`, {
+        const response = await fetch(`/api/campanas/agente/${empleadoActualId}`, {
             credentials: 'include'
         });
 
         if (response.ok) {
             campanaActual = await response.json();
-            console.log("✅ Campaña actual encontrada:", campanaActual);
+            console.log("Campaña actual encontrada:", campanaActual);
         } else if (response.status === 404) {
             campanaActual = null;
-            console.log("ℹ️ El agente no tiene campaña asignada");
+            console.log("El agente no tiene campaña asignada");
         } else {
-            console.error(`❌ Error HTTP al cargar campaña: ${response.status}`);
+            console.error(` Error HTTP al cargar campaña: ${response.status}`);
             campanaActual = null;
         }
 
     } catch (error) {
-        console.error('❌ Error cargando campaña actual:', error);
+        console.error('Error cargando campaña actual:', error);
         campanaActual = null;
     }
 }
