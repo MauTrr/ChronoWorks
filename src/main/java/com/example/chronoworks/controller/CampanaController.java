@@ -138,63 +138,76 @@ public class CampanaController {
     @GetMapping("/empleados/disponibles")
     public ResponseEntity<List<EmpleadoDisponibleDTO>> getEmpleadosDisponibles(
             @RequestParam String rol,
-            @RequestParam(required = false) Integer idEmpresa,
-            @RequestParam(required = false) Boolean activo
+            @RequestParam(required = false) Integer idEmpresa
     ) {
-        // Obtener empleados por rol
-        List<Empleado> empleados = empleadoRepository.findByNombreRol(rol);
+        try {
+            // 1. Obtener todos los empleados activos con el rol especificado
+            List<Empleado> empleados = empleadoRepository.findByNombreRol(rol);
 
-        // Filtrar por estado activo si se especifica
-        if (activo != null) {
             empleados = empleados.stream()
-                    .filter(empleado -> empleado.isActivo() == activo)
+                    .filter(Empleado::isActivo)
                     .toList();
-        }
 
-        // Si se especifica idEmpresa, filtrar empleados que NO estén asignados
-        // a campañas activas de ESA empresa específica
-        if (idEmpresa != null) {
-            empleados = empleados.stream()
-                    .filter(empleado -> {
-                        // Buscar si el empleado está asignado a alguna campaña activa
-                        // de la empresa especificada
-                        List<AsignacionCampana> asignacionesActivas = asignacionCampanaRepository
-                                .findByEmpleadoIdEmpleadoAndEstado(empleado.getIdEmpleado(), AsignacionCampanaEstado.ACTIVA);
+            // 2. Si se especifica empresa, filtrar empleados que NO estén asignados
+            //    a campaña ACTIVA de esa empresa
+            if (idEmpresa != null) {
+                empleados = empleados.stream()
+                        .filter(empleado -> {
+                            // Obtener todas las asignaciones activas del empleado
+                            List<AsignacionCampana> asignacionesActivas = asignacionCampanaRepository
+                                    .findByEmpleadoIdEmpleadoAndEstado(
+                                            empleado.getIdEmpleado(),
+                                            AsignacionCampanaEstado.ACTIVA
+                                    );
 
-                        // Si no tiene asignaciones activas, está disponible
-                        if (asignacionesActivas.isEmpty()) {
-                            return true;
-                        }
+                            // Si no tiene asignaciones activas, está disponible
+                            if (asignacionesActivas.isEmpty()) {
+                                return true;
+                            }
 
-                        // Si tiene asignaciones activas, verificar si son de la misma empresa
-                        return asignacionesActivas.stream()
-                                .noneMatch(asignacion ->
-                                        asignacion.getCampana().getEmpresa().getIdEmpresa().equals(idEmpresa));
+                            // Si tiene asignaciones activas, verificar que NINGUNA sea
+                            // de la empresa especificada
+                            return asignacionesActivas.stream()
+                                    .noneMatch(asignacion ->
+                                            asignacion.getCampana() != null &&
+                                                    asignacion.getCampana().getEmpresa() != null &&
+                                                    asignacion.getCampana().getEmpresa().getIdEmpresa()
+                                                            .equals(idEmpresa)
+                                    );
+                        })
+                        .toList();
+            } else {
+                // Sin empresa especificada, devolver empleados sin asignaciones activas
+                empleados = empleados.stream()
+                        .filter(empleado -> {
+                            List<AsignacionCampana> asignacionesActivas = asignacionCampanaRepository
+                                    .findByEmpleadoIdEmpleadoAndEstado(
+                                            empleado.getIdEmpleado(),
+                                            AsignacionCampanaEstado.ACTIVA
+                                    );
+                            return asignacionesActivas.isEmpty();
+                        })
+                        .toList();
+            }
+
+            // 3. Mapear a DTO
+            List<EmpleadoDisponibleDTO> respuesta = empleados.stream()
+                    .map(empleado -> {
+                        EmpleadoDisponibleDTO dto = new EmpleadoDisponibleDTO();
+                        dto.setIdEmpleado(empleado.getIdEmpleado());
+                        dto.setNombre(empleado.getNombre());
+                        dto.setApellido(empleado.getApellido());
+                        dto.setCorreo(empleado.getCorreo());
+                        return dto;
                     })
-                    .toList();
-        } else {
-            // Sin filtro de empresa: solo empleados sin asignaciones activas
-            empleados = empleados.stream()
-                    .filter(empleado -> {
-                        List<AsignacionCampana> asignacionesActivas = asignacionCampanaRepository
-                                .findByEmpleadoIdEmpleadoAndEstado(empleado.getIdEmpleado(), AsignacionCampanaEstado.ACTIVA);
-                        return asignacionesActivas.isEmpty();
-                    })
-                    .toList();
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(respuesta);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(List.of());
         }
-
-        List<EmpleadoDisponibleDTO> respuesta = empleados.stream()
-                .map(empleado -> {
-                    EmpleadoDisponibleDTO dto = new EmpleadoDisponibleDTO();
-                    dto.setIdEmpleado(empleado.getIdEmpleado());
-                    dto.setNombre(empleado.getNombre());
-                    dto.setApellido(empleado.getApellido());
-                    dto.setCorreo(empleado.getCorreo());
-                    return dto;
-                })
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(respuesta);
     }
 
     @GetMapping("/reporte-pdf")

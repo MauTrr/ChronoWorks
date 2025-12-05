@@ -483,14 +483,24 @@ async function cargarEmpresas() {
 // =========== CARGAR LIDERES DISPONIBLES ============ 
 async function cargarLideresDisponibles() {
     try {
-        if (!empresaSeleccionadaId) return;
+        if (!empresaSeleccionadaId) {
+            Swal.fire('Advertencia', 'Selecciona una empresa primero', 'warning');
+            return;
+        }
 
-        const response = await fetch(`/api/campanas/empleados/disponibles?rol=LIDER&idEmpresa=${empresaSeleccionadaId}&activo=true`);
-        if (!response.ok) throw new Error("Error al cargar líderes");
+        const response = await fetch(
+            `/api/campanas/empleados/disponibles?rol=LIDER&idEmpresa=${empresaSeleccionadaId}`
+        );
 
-        const data = await response.json();
-        empleadosDisponibles = data; // Ya es una lista, no data.content
-        console.log("Líderes cargados:", empleadosDisponibles);
+        if (!response.ok) {
+            throw new Error("Error al cargar líderes disponibles");
+        }
+
+        empleadosDisponibles = await response.json();
+        console.log("Líderes disponibles cargados:", empleadosDisponibles);
+
+        // Renderizar opciones en el modal
+        renderizarLideresModal();
 
     } catch (error) {
         console.error("Error cargando líderes", error);
@@ -501,15 +511,25 @@ async function cargarLideresDisponibles() {
 // =========== CARGAR AGENTES DISPONIBLES ============ 
 async function cargarAgentesDisponibles() {
     try {
-        if (!empresaSeleccionadaId) return;
+        if (!empresaSeleccionadaId) {
+            Swal.fire('Advertencia', 'Selecciona una empresa primero', 'warning');
+            return;
+        }
 
-        const response = await fetch(`/api/campanas/empleados/disponibles?rol=AGENTE&idEmpresa=${empresaSeleccionadaId}&activo=true`);
-        if (!response.ok) throw new Error("Error al cargar agentes");
+        const response = await fetch(
+            `/api/campanas/empleados/disponibles?rol=AGENTE&idEmpresa=${empresaSeleccionadaId}`
+        );
 
-        const data = await response.json();
-        empleadosDisponibles = data; // Ya es una lista, no data.content
-        console.log("Agentes cargados:", empleadosDisponibles);
-        
+        if (!response.ok) {
+            throw new Error("Error al cargar agentes disponibles");
+        }
+
+        empleadosDisponibles = await response.json();
+        console.log("Agentes disponibles cargados:", empleadosDisponibles);
+
+        // Renderizar opciones en el modal
+        renderizarAgentesModal();
+
     } catch (error) {
         console.error("Error cargando agentes", error);
         Swal.fire('Error', 'No se pudieron cargar agentes disponibles', 'error');
@@ -1232,6 +1252,34 @@ async function cargarEmpleadosporRol(rol) {
         console.error("Error al cargar empleados:", error);
         Swal.fire('Error', error.message, 'error');
     }
+}
+
+function renderizarLideresModal() {
+    const selectLider = document.getElementById('selectLider');
+    if (!selectLider) return;
+
+    selectLider.innerHTML = '<option value="">-- Seleccionar Líder --</option>';
+
+    empleadosDisponibles.forEach(empleado => {
+        const option = document.createElement('option');
+        option.value = empleado.idEmpleado;
+        option.textContent = `${empleado.nombre} ${empleado.apellido} (${empleado.correo})`;
+        selectLider.appendChild(option);
+    });
+}
+
+function renderizarAgentesModal() {
+    const selectAgentes = document.getElementById('selectAgentes');
+    if (!selectAgentes) return;
+
+    selectAgentes.innerHTML = '<option value="">-- Seleccionar Agentes --</option>';
+
+    empleadosDisponibles.forEach(empleado => {
+        const option = document.createElement('option');
+        option.value = empleado.idEmpleado;
+        option.textContent = `${empleado.nombre} ${empleado.apellido} (${empleado.correo})`;
+        selectAgentes.appendChild(option);
+    });
 }
 
 function renderizarEmpleadosModal(esParaLider, lista = empleadosDisponibles) {
