@@ -25,6 +25,9 @@ public class EmailService {
     private final String defaultFrom;
     private final Logger log = LoggerFactory.getLogger(EmailService.class);
 
+    // Tiempo entre correos para Mailtrap Free (1 email/seg)
+    private static final long MAILTRAP_DELAY_MS = 1200; // 1.2 segundos
+
     public EmailService(JavaMailSender mailSender,
                         EmpleadoRepository empleadoRepository,
                         @Value("${app.mail.from:no-reply@mi-dominio.com}") String defaultFrom) {
@@ -50,27 +53,58 @@ public class EmailService {
     }
 
     /**
-     * Envío masivo: itera destinatarios y envía individualmente.
+     * Envío masivo con control de rate limit y retry automático
      */
-    @Async("mailTaskExecutor") // 👈 aquí usamos tu executor específico
+    @Async("mailTaskExecutor")
     public void sendMassiveEmail(List<String> destinatarios, String asunto, String contenidoHtml) {
+
         if (destinatarios == null || destinatarios.isEmpty()) {
             log.warn("Lista de destinatarios vacía, no se envía nada.");
             return;
         }
+
+        log.info("Iniciando envío masivo a {} destinatarios...", destinatarios.size());
+
         for (String to : destinatarios) {
-            try {
-                enviarUno(to, asunto, contenidoHtml, true); // siempre HTML
-            } catch (Exception e) {
-                log.error("Error enviando email a {}: {}", to, e.getMessage(), e);
+
+            boolean enviado = false;
+            int intentos = 0;
+
+            while (!enviado && intentos < 3) {
+                try {
+                    intentos++;
+                    enviarUno(to, asunto, contenidoHtml, true);
+                    enviado = true;
+
+                } catch (MailException ex) {
+
+                    // Caso límite Mailtrap: "Too many emails per second"
+                    if (ex.getMessage().contains("Too many emails")) {
+                        log.warn("Rate limit alcanzado. Reintentando en 1500ms... ({}/3)", intentos);
+                        dormir(1500);
+                    } else {
+                        log.error("Fallo SMTP permanente con {}: {}", to, ex.getMessage());
+                        break;
+                    }
+
+                } catch (Exception e) {
+                    log.error("Error enviando a {}: {}", to, e.getMessage());
+                    break;
+                }
             }
+
+            // Delay para respetar 1 email por segundo en Mailtrap Free
+            dormir(MAILTRAP_DELAY_MS);
         }
+
+        log.info("Envío masivo completado.");
     }
 
     /**
-     * Enviar un correo individual
+     * Envío individual con logs y control de errores
      */
     public void enviarUno(String to, String asunto, String contenido, boolean esHtml) {
+
         try {
             MimeMessage mime = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(
@@ -83,11 +117,7 @@ public class EmailService {
             helper.setSubject(asunto);
             helper.setFrom(defaultFrom);
 
-            if (esHtml) {
-                helper.setText(contenido, true);
-            } else {
-                helper.setText(contenido, false);
-            }
+            helper.setText(contenido, esHtml);
 
             mailSender.send(mime);
             log.info("Correo enviado a {}", to);
@@ -95,9 +125,19 @@ public class EmailService {
         } catch (MailException ex) {
             log.error("Fallo SMTP enviando correo a {}: {}", to, ex.getMessage(), ex);
             throw ex;
+
         } catch (Exception ex) {
             log.error("Error general enviando correo a {}: {}", to, ex.getMessage(), ex);
             throw new RuntimeException("Error enviando correo a " + to, ex);
         }
+    }
+
+    /**
+     * Helper para controlar rate limit
+     */
+    private void dormir(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException ignored) {}
     }
 }
