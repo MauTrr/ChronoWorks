@@ -11,15 +11,16 @@ import java.util.concurrent.Executor;
 @EnableAsync
 public class AsyncConfig {
 
-    @Bean(name = "mailTaskExecutor")
 
-    public Executor taskExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(5);
-        executor.setMaxPoolSize(10);
-        executor.setQueueCapacity(100);
-        executor.setThreadNamePrefix("EmailTask-");
-        executor.initialize();
-        return executor;
-    }
+    @Bean(name = "mailTaskExecutor")
+public Executor mailTaskExecutor() {
+    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    executor.setCorePoolSize(1);      // SOLO 1 HILO
+    executor.setMaxPoolSize(1);       // NO CREAR MÁS HILOS
+    executor.setQueueCapacity(500);   // cola grande para no perder correos
+    executor.setThreadNamePrefix("EmailTask-");
+    executor.initialize();
+    return executor;
+}
+
 }

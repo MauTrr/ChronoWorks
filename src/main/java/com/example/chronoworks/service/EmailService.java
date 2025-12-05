@@ -2,7 +2,9 @@ package com.example.chronoworks.service;
 
 import com.example.chronoworks.model.Empleado;
 import com.example.chronoworks.repository.EmpleadoRepository;
+import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.eclipse.angus.mail.smtp.SMTPSendFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +25,11 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final EmpleadoRepository empleadoRepository;
     private final String defaultFrom;
+
     private final Logger log = LoggerFactory.getLogger(EmailService.class);
+
+    // Mailtrap Free → máximo 1 correo cada ~3 segundos
+    private static final long MAILTRAP_DELAY_MS = 3200;
 
     public EmailService(JavaMailSender mailSender,
                         EmpleadoRepository empleadoRepository,
@@ -34,12 +40,13 @@ public class EmailService {
     }
 
     /**
-     * Obtiene lista de correos de empleados según roles
+     * Obtener correos de empleados según roles
      */
     public List<String> obtenerCorreosPorRoles(List<String> roles) {
         if (roles == null || roles.isEmpty()) {
             return List.of();
         }
+
         return empleadoRepository.findByNombreRolIn(roles).stream()
                 .map(Empleado::getCorreo)
                 .filter(Objects::nonNull)
@@ -50,54 +57,100 @@ public class EmailService {
     }
 
     /**
-     * Envío masivo: itera destinatarios y envía individualmente.
+     * Envío masivo con ejecución asíncrona
      */
-    @Async("mailTaskExecutor") // 👈 aquí usamos tu executor específico
+    @Async("mailTaskExecutor")
     public void sendMassiveEmail(List<String> destinatarios, String asunto, String contenidoHtml) {
+
         if (destinatarios == null || destinatarios.isEmpty()) {
-            log.warn("Lista de destinatarios vacía, no se envía nada.");
+            log.warn("Lista vacía. No se enviaron correos.");
             return;
         }
+
+        log.info("Iniciando envío masivo. {} destinatarios.", destinatarios.size());
+
         for (String to : destinatarios) {
+            enviarConRateLimit(to, asunto, contenidoHtml);
+        }
+
+        log.info("Envío masivo completado.");
+    }
+
+    /**
+     * Controlador de rate-limit + reintentos
+     */
+    private void enviarConRateLimit(String to, String asunto, String contenidoHtml) {
+        int intentos = 0;
+
+        while (intentos < 3) {
             try {
-                enviarUno(to, asunto, contenidoHtml, true); // siempre HTML
-            } catch (Exception e) {
-                log.error("Error enviando email a {}: {}", to, e.getMessage(), e);
+                enviarUno(to, asunto, contenidoHtml, true);
+                dormir(MAILTRAP_DELAY_MS);  // delay obligatorio entre correos
+                return;
+
+            } catch (MailException ex) {
+                if (esRateLimit(ex)) {
+                    intentos++;
+                    log.warn("Rate limit alcanzado. Reintentando en 3500ms... ({}/3)", intentos);
+                    dormir(3500);
+                } else {
+                    log.error("Fallo SMTP enviando correo a {}: {}", to, ex.getMessage());
+                    return; // no reintentar si no es rate limit
+                }
+
+            } catch (Exception ex) {
+                log.error("Error general enviando correo a {}: {}", to, ex.getMessage());
+                return;
             }
         }
+
+        log.error("No se pudo enviar el correo a {} después de 3 intentos por rate limit.", to);
     }
 
     /**
      * Enviar un correo individual
      */
-    public void enviarUno(String to, String asunto, String contenido, boolean esHtml) {
-        try {
-            MimeMessage mime = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(
-                    mime,
-                    MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
-                    StandardCharsets.UTF_8.name()
-            );
+    public void enviarUno(String to, String asunto, String contenido, boolean esHtml)
+            throws MessagingException {
 
-            helper.setTo(to);
-            helper.setSubject(asunto);
-            helper.setFrom(defaultFrom);
+        MimeMessage mime = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(
+                mime,
+                MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
+                StandardCharsets.UTF_8.name()
+        );
 
-            if (esHtml) {
-                helper.setText(contenido, true);
-            } else {
-                helper.setText(contenido, false);
-            }
+        helper.setTo(to);
+        helper.setFrom(defaultFrom);
+        helper.setSubject(asunto);
 
-            mailSender.send(mime);
-            log.info("Correo enviado a {}", to);
-
-        } catch (MailException ex) {
-            log.error("Fallo SMTP enviando correo a {}: {}", to, ex.getMessage(), ex);
-            throw ex;
-        } catch (Exception ex) {
-            log.error("Error general enviando correo a {}: {}", to, ex.getMessage(), ex);
-            throw new RuntimeException("Error enviando correo a " + to, ex);
+        if (esHtml) {
+            helper.setText(contenido, true);
+        } else {
+            helper.setText(contenido, false);
         }
+
+        mailSender.send(mime);
+        log.info("Correo enviado a {}", to);
+    }
+
+    /**
+     * Detecta si Spring Mail lanzó un error de rate limit (550)
+     */
+    private boolean esRateLimit(Exception ex) {
+        Throwable causa = ex.getCause();
+
+        return (causa instanceof SMTPSendFailedException failed) &&
+                failed.getMessage() != null &&
+                failed.getMessage().contains("Too many emails per second");
+    }
+
+    /**
+     * Pequeño delay sin interrumpir el hilo
+     */
+    private void dormir(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException ignored) {}
     }
 }
