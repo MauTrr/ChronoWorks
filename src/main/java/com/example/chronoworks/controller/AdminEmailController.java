@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/email")
@@ -23,24 +22,15 @@ public class AdminEmailController {
         this.empleadoRepository = empleadoRepository;
     }
 
-    /**
-     * Enviar correos masivos según roles
-     */
     @PostMapping("/send-massive")
-    public ResponseEntity<String> sendMassiveEmail(@RequestBody EmailRequestDTO emailRequestDTO) {
+    public ResponseEntity<String> sendMassive(@RequestBody EmailRequestDTO dto) {
 
-        List<Empleado> empleados = empleadoRepository.findByNombreRolIn(emailRequestDTO.getRoles());
+        List<String> destinatarios = emailService.obtenerCorreosPorRoles(dto.getRoles());
 
-        List<String> destinatarios = empleados.stream()
-                .map(Empleado::getCorreo)
-                .collect(Collectors.toList());
+        emailService.sendMassiveEmail(destinatarios, dto.getSubject(), dto.getBody());
 
-        //  ESTA ES LA LLAVE PARA ACTIVAR EL @ASYNC CORRECTO
-        emailService.iniciarEnvio(destinatarios,
-                emailRequestDTO.getSubject(),
-                emailRequestDTO.getBody());
-
-        return ResponseEntity.ok("Se inició el envío masivo a " + destinatarios.size() + " empleados.");
+        return ResponseEntity.ok("Envío masivo iniciado a " + destinatarios.size() + " empleados.");
     }
 }
+
 
