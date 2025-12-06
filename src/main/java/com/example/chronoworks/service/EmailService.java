@@ -26,17 +26,13 @@ public class EmailService {
     @Value("${app.mail.from}")
     private String fromEmail;
 
-    private static final long SENDGRID_DELAY = 1200; // evita rate-limit
+    private static final long SENDGRID_DELAY = 1200;
 
     public EmailService(EmpleadoRepository empleadoRepository) {
         this.empleadoRepository = empleadoRepository;
     }
 
-    /**
-     * Obtener correos por roles
-     */
     public List<String> obtenerCorreosPorRoles(List<String> roles) {
-
         if (roles == null || roles.isEmpty()) return List.of();
 
         return empleadoRepository.findByNombreRolIn(roles).stream()
@@ -48,9 +44,6 @@ public class EmailService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Envío masivo vía SendGrid (asíncrono)
-     */
     @Async("mailTaskExecutor")
     public void sendMassiveEmail(List<String> destinatarios, String subject, String htmlContent) {
 
@@ -60,7 +53,6 @@ public class EmailService {
             try {
                 sendSingle(to, subject, htmlContent);
                 Thread.sleep(SENDGRID_DELAY);
-
             } catch (Exception e) {
                 log.error("Error enviando a {}: {}", to, e.getMessage());
             }
@@ -69,17 +61,13 @@ public class EmailService {
         log.info("Envío masivo SendGrid finalizado.");
     }
 
-    /**
-     * Enviar un correo individual
-     */
     public void sendSingle(String to, String subject, String htmlContent) throws IOException {
 
         Email from = new Email(fromEmail);
         Email receiver = new Email(to);
-
         Content content = new Content("text/html", htmlContent);
-        Mail mail = new Mail(from, subject, receiver, content);
 
+        Mail mail = new Mail(from, subject, receiver, content);
         SendGrid sg = new SendGrid(apiKey);
         Request request = new Request();
 
@@ -92,5 +80,6 @@ public class EmailService {
         log.info("SendGrid {} → Status {}", to, response.getStatusCode());
     }
 }
+
 
 
