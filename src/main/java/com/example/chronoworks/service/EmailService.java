@@ -1,6 +1,10 @@
 package com.example.chronoworks.service;
 
 import com.sendgrid.*;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Email;
+import com.sendgrid.helpers.mail.objects.Content;
+
 import com.example.chronoworks.model.Empleado;
 import com.example.chronoworks.repository.EmpleadoRepository;
 import org.slf4j.Logger;
@@ -8,9 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import com.sendgrid.helpers.mail.Mail;
-import com.sendgrid.helpers.mail.objects.Email;
-import com.sendgrid.helpers.mail.objects.Content;
 
 import java.io.IOException;
 import java.util.List;
@@ -83,6 +84,4 @@ public class EmailService {
         log.info("SendGrid {} → Status {}", to, response.getStatusCode());
     }
 }
-
-
 
