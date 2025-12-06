@@ -28,19 +28,19 @@ public class AdminEmailController {
      */
     @PostMapping("/send-massive")
     public ResponseEntity<String> sendMassiveEmail(@RequestBody EmailRequestDTO emailRequestDTO) {
-        // 1. Buscar empleados por roles
+
         List<Empleado> empleados = empleadoRepository.findByNombreRolIn(emailRequestDTO.getRoles());
 
-        // 2. Extraer correos
         List<String> destinatarios = empleados.stream()
                 .map(Empleado::getCorreo)
                 .collect(Collectors.toList());
 
-        // 3. Enviar correos
-        emailService.sendMassiveEmail(destinatarios,
+        //  ESTA ES LA LLAVE PARA ACTIVAR EL @ASYNC CORRECTO
+        emailService.iniciarEnvio(destinatarios,
                 emailRequestDTO.getSubject(),
                 emailRequestDTO.getBody());
 
-        return ResponseEntity.ok("Correos enviados exitosamente a " + destinatarios.size() + " empleados.");
+        return ResponseEntity.ok("Se inició el envío masivo a " + destinatarios.size() + " empleados.");
     }
 }
+
