@@ -7,7 +7,9 @@ import jakarta.mail.internet.MimeMessage;
 import org.eclipse.angus.mail.smtp.SMTPSendFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -26,6 +28,9 @@ public class EmailService {
     private final EmpleadoRepository empleadoRepository;
     private final String defaultFrom;
 
+    @Autowired
+    private ApplicationContext context; // ⭐ NECESARIO PARA ACTIVAR @Async
+
     private final Logger log = LoggerFactory.getLogger(EmailService.class);
 
     // Mailtrap Free → máximo 1 correo cada ~3 segundos
@@ -37,6 +42,16 @@ public class EmailService {
         this.mailSender = mailSender;
         this.empleadoRepository = empleadoRepository;
         this.defaultFrom = defaultFrom;
+    }
+
+    /**
+     * Método correcto para iniciar envío masivo desde el controller.
+     * Aquí sí se activa @Async.
+     */
+    public void iniciarEnvio(List<String> destinatarios, String asunto, String html) {
+        // ⭐ ACTIVA EL PROXY ASYNC CORRECTAMENTE
+        context.getBean(EmailService.class)
+                .sendMassiveEmail(destinatarios, asunto, html);
     }
 
     /**
@@ -57,7 +72,7 @@ public class EmailService {
     }
 
     /**
-     * Envío masivo con ejecución asíncrona
+     * Envío masivo ASÍNCRONO
      */
     @Async("mailTaskExecutor")
     public void sendMassiveEmail(List<String> destinatarios, String asunto, String contenidoHtml) {
@@ -95,7 +110,7 @@ public class EmailService {
                     dormir(3500);
                 } else {
                     log.error("Fallo SMTP enviando correo a {}: {}", to, ex.getMessage());
-                    return; // no reintentar si no es rate limit
+                    return;
                 }
 
             } catch (Exception ex) {
@@ -135,7 +150,7 @@ public class EmailService {
     }
 
     /**
-     * Detecta si Spring Mail lanzó un error de rate limit (550)
+     * Detectar error de rate-limit
      */
     private boolean esRateLimit(Exception ex) {
         Throwable causa = ex.getCause();
@@ -145,12 +160,10 @@ public class EmailService {
                 failed.getMessage().contains("Too many emails per second");
     }
 
-    /**
-     * Pequeño delay sin interrumpir el hilo
-     */
     private void dormir(long ms) {
         try {
             Thread.sleep(ms);
         } catch (InterruptedException ignored) {}
     }
 }
+
