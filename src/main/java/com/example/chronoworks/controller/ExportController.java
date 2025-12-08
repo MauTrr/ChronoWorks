@@ -12,7 +12,9 @@ import org.springframework.web.client.RestTemplate;
 @RestController
 public class ExportController {
 
-    private final String PYTHON_EXPORT_URL = "https://chronoworks-python.onrender.com/api/clientes/export";
+    
+    private final String PYTHON_EXPORT_URL = "https://chronoworks-pyhon.onrender.com/api/clientes/export";
+
 
 
     @GetMapping("/clientes/export")
