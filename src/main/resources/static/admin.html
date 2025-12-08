@@ -13,6 +13,58 @@
   <script src="https://kit.fontawesome.com/8eb65f8551.js" crossorigin="anonymous"></script>
 </head>
 
+<!-- Modal Bootstrap: Agregar Cliente -->
+<div class="modal fade" id="modalAgregarCliente" tabindex="-1" aria-labelledby="modalAgregarClienteLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalAgregarClienteLabel">Registrar Cliente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <form action="/admin/clientes/add" method="post">
+
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" name="nombre" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Teléfono</label>
+            <input type="text" name="telefono" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Dirección</label>
+            <input type="text" name="direccion" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Cédula</label>
+            <input type="text" name="cedula" class="form-control" required>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success">Guardar</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+
 <body>
 <div class="wrapper">
   <header>
@@ -35,6 +87,11 @@
   </header>
 
   <div class="content">
+
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAgregarCliente">
+      Agregar Cliente
+    </button>
+
     <div class="container mt-5">
       <div class="row">
         <!-- Tus cards existentes -->
