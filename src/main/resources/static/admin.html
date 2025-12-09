@@ -298,7 +298,7 @@ document.getElementById("formAgregarCliente").addEventListener("submit", functio
         cedula: this.cedula.value
     };
 
-    fetch("https://TU-SERVICIO-PYTHON.onrender.com/api/clientes/add", {
+    fetch("https://chronoworks-pyhon.onrender.com/api/clientes/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
