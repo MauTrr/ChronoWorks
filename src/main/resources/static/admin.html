@@ -23,7 +23,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
 
-      <form action="/admin/clientes/add" method="post">
+      <form id="formAgregarCliente">
 
         <div class="modal-body">
 
@@ -285,6 +285,42 @@
         }
     }
 </script>
+
+  <script>
+document.getElementById("formAgregarCliente").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const data = {
+        nombre: this.nombre.value,
+        email: this.email.value,
+        telefono: this.telefono.value,
+        direccion: this.direccion.value,
+        cedula: this.cedula.value
+    };
+
+    fetch("https://TU-SERVICIO-PYTHON.onrender.com/api/clientes/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    })
+    .then(resp => resp.json())
+    .then(response => {
+        alert(response.message);
+
+        // cerrar modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById("modalAgregarCliente"));
+        modal.hide();
+
+        // limpiar form
+        this.reset();
+    })
+    .catch(err => {
+        console.log(err);
+        alert("Error agregando cliente");
+    });
+});
+</script>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
