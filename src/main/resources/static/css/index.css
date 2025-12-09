@@ -6,6 +6,8 @@
   list-style: none;
 }
 
+
+
 /*Cabezero*/
 .container {
   max-width: 1200px;
@@ -14,6 +16,7 @@
 
 html {
   scroll-padding-top: 76px;
+  scroll-behavior: smooth;
   /* Cambia el valor según la altura de tu navbar */
 }
 
@@ -132,10 +135,11 @@ header {
 .Nosotros-cont {
     display: flex;
     flex-direction: row;
-    align-item: center;
+    align-items: center;
     background: #edf3f4;
-    padding: 10px;
-    height: 500px;
+    padding: 40px 20px;
+    min-height: 500px;
+    gap: 30px;
 }
 
 img {
@@ -149,17 +153,25 @@ img {
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     display: flex;
-    width: 255px;
-    height: 255px;
-    margin: auto;
-    align-item: center;
-    align-self: center;
+    width: 100%;
+    max-width: 255px;
+    height: auto;
+    aspect-ratio: 1;
+    margin: 0 auto;
+    align-items: center;
     justify-content: center;
     transition: transform 0.3s ease;
+    padding: 20px;
 }
 
 .logo:hover {
     transform: translateY(-5px);  /* Elevación sutil al pasar el mouse */
+}
+
+.logo img {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
 }
 
 .card-style {
@@ -366,7 +378,7 @@ img {
   align-items: center;
   background-color: #edf3f4;
   padding: 20px;
-  height: 600px;
+  min-height: 600px;
   border-bottom: 1px solid white;
 }
 
@@ -384,11 +396,10 @@ img {
     border-radius: 12px;
     box-shadow: 1px 8px 32px rgb(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    width: 40rem;
-    padding: 20px;
-    margin: auto;
-    margin-top: 20px;
-    align-items: center;
+    width: 100%;
+    max-width: 640px;
+    padding: 30px;
+    margin: 20px auto 0;
 }
 
 .form-control {
@@ -595,3 +606,132 @@ img {
     text-align: center;
   }
 } 
+
+/* TABLETS (768px - 1024px) */
+@media (max-width: 1024px) {
+  .Nosotros-cont {
+    flex-direction: column;
+    height: auto;
+    padding: 40px 20px;
+  }
+  
+  .logo {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 30px;
+  }
+  
+  .container {
+    width: 90%;
+    max-width: 600px;
+  }
+}
+
+/* MÓVILES (max-width: 768px) */
+@media (max-width: 768px) {
+  /* Video principal */
+  .videoss {
+    height: 300px;
+  }
+  
+  .info h1 {
+    font-size: 1.8rem;
+  }
+  
+  .info p {
+    font-size: 1.1rem;
+  }
+  
+  /* Sección Nosotros */
+  .Nosotros-cont {
+    flex-direction: column;
+    height: auto;
+    padding: 30px 15px;
+  }
+  
+  .logo {
+    width: 150px;
+    height: 150px;
+    margin-bottom: 20px;
+  }
+  
+  .card-style {
+    padding: 20px;
+    margin: 0 15px;
+  }
+  
+  .card-style h2 {
+    font-size: 1.6rem;
+  }
+  
+  .card-style p {
+    font-size: 0.95rem;
+  }
+  
+  /* Visión y Misión */
+  .vision-mision {
+    min-height: auto;
+    padding: 30px 15px;
+  }
+  
+  .titulo {
+    font-size: 1.8rem;
+  }
+  
+  .contenedor-vision-mision {
+    width: 100%;
+    padding: 0 15px;
+  }
+  
+  /* Formulario */
+  .contacto {
+    height: auto;
+    padding: 30px 15px;
+  }
+  
+  .container {
+    width: 95%;
+    padding: 15px;
+  }
+  
+  .row .col-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  
+  /* Footer */
+  .footer {
+    padding: 20px 15px;
+  }
+  
+  .menu {
+    flex-direction: column;
+  }
+  
+  .item-menu {
+    margin: 5px 0;
+  }
+}
+
+/* MÓVILES PEQUEÑOS (max-width: 480px) */
+@media (max-width: 480px) {
+  .videoss {
+    height: 250px;
+  }
+  
+  .info h1 {
+    font-size: 1.5rem;
+  }
+  
+  .info p {
+    font-size: 1rem;
+  }
+  
+  .card-style {
+    padding: 15px;
+  }
+  
+  .btn-custom {
+    width: 100%;
+  }
+}
